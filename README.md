@@ -73,20 +73,20 @@ Configured using Entity Framework Core Fluent API:
 - [x] Fluent API mapping and Data Seeding configuration
 - [x] EF Core Migrations setup and initial database deployment
 
-### 📌 Sprint 2: Security, DTOs & Authentication / Authorization (🔄 In Progress)
-- [ ] Standardized API response model (`ApiResponse<T>`) implementation
-- [ ] Global Exception Handling Middleware integration
-- [ ] DTO design (`RegisterDto`, `LoginDto`, `UserDto`, `TokenResponseDto`)
-- [ ] Password Hashing/Salting and JWT Token generation service
-- [ ] `Login` and `Register` endpoint integration
+### 📌 Sprint 2: Security, Authentication & Swagger UI (✅ Completed)
+- [x] Standardized API response model (`ApiResponse<T>`) implementation
+- [x] Global Exception Handling Middleware integration
+- [x] DTO design (`RegisterDto`, `LoginDto`, `UserDto`, `TokenResponseDto`)
+- [x] Password Hashing/Salting and JWT Token generation service
+- [x] `Login` and `Register` endpoint integration
+- [x] Swagger UI JWT Bearer Authorization setup & OpenAPI v2 architecture integration
 
 ### 📌 Sprint 3: Server-Side DataTables & User Service (⏳ Planned)
 - [ ] Server-Side DataTables request & response DTO modeling
 - [ ] Server-side pagination, sorting, and filtering logic via `IQueryable`
 - [ ] `UsersController` implementation returning DataTable-compliant JSON
 
-### 📌 Sprint 4: Swagger Integration, Testing & Documentation (⏳ Planned)
-- [ ] Swagger UI JWT Bearer Authorization setup
+### 📌 Sprint 4: Testing & Documentation (⏳ Planned)
 - [ ] Endpoint validation against HTTP status codes (200, 201, 400, 401, 403, 404, 500)
 - [ ] Code refactoring and technical documentation completion
 
@@ -103,7 +103,7 @@ Configured using Entity Framework Core Fluent API:
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/enesguneri/UserManagementSystem.git](https://github.com/enesguneri/UserManagementSystem.git)
+   git clone https://github.com/enesguneri/UserManagementSystem.git
    cd UserManagementSystem
    ```
 
