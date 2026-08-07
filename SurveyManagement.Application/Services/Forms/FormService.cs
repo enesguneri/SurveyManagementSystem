@@ -150,6 +150,68 @@ public class FormService : IFormService
             "Form taslak olarak başarıyla oluşturuldu.");
     }
 
+    public async Task<ApiResponse<FormCreatedDto>> PublishAsync(
+    Guid publicId,
+    int requesterUserId,
+    CancellationToken cancellationToken = default)
+    {
+        // Form, paylaşım için kullanılan PublicId üzerinden bulunur.
+        var form = await _context.Forms
+            .FirstOrDefaultAsync(
+                currentForm => currentForm.PublicId == publicId,
+                cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Yayınlanacak form bulunamadı.",
+                404);
+        }
+
+        // Form sahibi veya Admin yayınlama yetkisine sahiptir.
+        var isOwner = form.CreatedByUserId == requesterUserId;
+
+        var isAdmin = await _context.UserRoles
+            .AnyAsync(
+                userRole =>
+                    userRole.UserId == requesterUserId &&
+                    userRole.Role.Name == "Admin",
+                cancellationToken);
+
+        if (!isOwner && !isAdmin)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Bu formu yayınlama yetkiniz yok.",
+                403);
+        }
+
+        if (form.Status == FormStatus.Published)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Form zaten yayımlanmış durumda.",
+                400);
+        }
+
+        // Taslak veya kapalı form yeniden yayımlanabilir.
+        form.Status = FormStatus.Published;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var responseDto = new FormCreatedDto
+        {
+            Id = form.Id,
+            PublicId = form.PublicId,
+            Title = form.Title,
+            Status = form.Status,
+            AccessType = form.AccessType,
+            CreatedAt = form.CreatedAt
+        };
+
+        return ApiResponse<FormCreatedDto>.SuccessResult(
+            responseDto,
+            "Form başarıyla yayımlandı.");
+    }
+
     private static string? NormalizeOptionalText(string? value)
     {
         // Boş veya yalnızca boşluk içeren değerleri veritabanında null saklar.

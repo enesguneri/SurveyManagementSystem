@@ -41,10 +41,37 @@ public class FormsController : ControllerBase
 
         if (!result.IsSuccess)
         {
-            return BadRequest(result);
+            return StatusCode(result.HttpStatusCode, result);
         }
 
         // Form başarıyla oluşturulduğunda HTTP 201 dönülür.
         return StatusCode(StatusCodes.Status201Created, result);
+    }
+
+    [HttpPost("{publicId:guid}/publish")]
+    public async Task<IActionResult> Publish(
+    Guid publicId,
+    CancellationToken cancellationToken)
+    {
+        // Yayınlama yetkisi JWT içindeki kullanıcıya göre belirlenir.
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(ApiResponse<string>.FailureResult(
+                "Kimliği doğrulanmış kullanıcı bilgisi alınamadı."));
+        }
+
+        var result = await _formService.PublishAsync(
+            publicId,
+            userId,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(result.HttpStatusCode, result);
+        }
+
+        return Ok(result);
     }
 }

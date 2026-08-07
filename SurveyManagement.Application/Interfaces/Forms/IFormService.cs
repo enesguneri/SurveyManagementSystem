@@ -9,4 +9,9 @@ public interface IFormService
         CreateFormDto createFormDto,
         int createdByUserId,
         CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<FormCreatedDto>> PublishAsync(
+    Guid publicId,
+    int requesterUserId,
+    CancellationToken cancellationToken = default);
 }
