@@ -41,12 +41,12 @@ A production-ready RESTful API built with **.NET 10** and **PostgreSQL**, adheri
 ## 🏛 Project Architecture
 
 ```text
-UserManagementSystem/
+SurveyManagementSystem/
 ├── src/
-│   ├── UserManagement.Domain/        # Entities, Value Objects, Core Models
-│   ├── UserManagement.Application/   # DTOs, Interfaces, Service Logic
-│   ├── UserManagement.Persistence/   # AppDbContext, Fluent API Mappings, Migrations
-│   └── UserManagement.API/           # Controllers, Middlewares, Dependency Injection
+│   ├── SurveyManagement.Domain/        # Entities, Value Objects, Core Models
+│   ├── SurveyManagement.Application/   # DTOs, Interfaces, Service Logic
+│   ├── SurveyManagement.Persistence/   # AppDbContext, Fluent API Mappings, Migrations
+│   └── SurveyManagement.API/           # Controllers, Middlewares, Dependency Injection
 ```
 
 ---
@@ -103,24 +103,24 @@ Configured using Entity Framework Core Fluent API:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/enesguneri/UserManagementSystem.git
-   cd UserManagementSystem
+   git clone https://github.com/enesguneri/SurveyManagementSystem.git
+   cd SurveyManagementSystem
    ```
 
 2. **Configure Database Connection (User Secrets):**
    Set your local PostgreSQL connection string securely without exposing credentials to Git:
    ```bash
-   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=UserManagementDb;Username=postgres;Password=YOUR_POSTGRES_PASSWORD" --project src/UserManagement.API
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=SurveyManagementDb;Username=postgres;Password=YOUR_POSTGRES_PASSWORD" --project src/SurveyManagement.API
    ```
 
 3. **Apply Database Migrations:**
    ```bash
-   dotnet ef database update --project src/UserManagement.Persistence --startup-project src/UserManagement.API
+   dotnet ef database update --project src/SurveyManagement.Persistence --startup-project src/SurveyManagement.API
    ```
 
 4. **Run the Application:**
    ```bash
-   dotnet run --project src/UserManagement.API
+   dotnet run --project src/SurveyManagement.API
    ```
 
 ---
