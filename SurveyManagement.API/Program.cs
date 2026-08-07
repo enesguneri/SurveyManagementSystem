@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +8,8 @@ using SurveyManagement.API.Middlewares;
 using SurveyManagement.Application.Interfaces.Auth;
 using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Application.Interfaces.Security;
+using SurveyManagement.Application.Interfaces.Forms;
+using SurveyManagement.Application.Services.Forms;
 using SurveyManagement.Application.Services;
 using SurveyManagement.Persistence.Context;
 
@@ -23,6 +26,10 @@ builder.Services.AddScoped<IAppDbContext>(provider => provider.GetRequiredServic
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
 builder.Services.AddScoped<ITokenService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Form oluşturma ve soru türü doğrulama servisleri her HTTP isteği için oluşturulur.
+builder.Services.AddScoped<IFormRequestValidator, FormRequestValidator>();
+builder.Services.AddScoped<IFormService, FormService>();
 
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -48,7 +55,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // API enum değerlerini 1, 2 gibi sayılar yerine "Rating", "Published" gibi metin olarak işler.
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // 4. Swagger / OpenAPI Servis Kaydı ve JWT Desteği (V2.x Mimarisi)
 builder.Services.AddEndpointsApiExplorer();
