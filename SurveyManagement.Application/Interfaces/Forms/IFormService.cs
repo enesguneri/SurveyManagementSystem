@@ -14,4 +14,9 @@ public interface IFormService
     Guid publicId,
     int requesterUserId,
     CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<FormDetailsDto>> GetByPublicIdAsync(
+    Guid publicId,
+    int? requesterUserId,
+    CancellationToken cancellationToken = default);
 }

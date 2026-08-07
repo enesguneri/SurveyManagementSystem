@@ -212,6 +212,121 @@ public class FormService : IFormService
             "Form başarıyla yayımlandı.");
     }
 
+    public async Task<ApiResponse<FormDetailsDto>> GetByPublicIdAsync(
+    Guid publicId,
+    int? requesterUserId,
+    CancellationToken cancellationToken = default)
+    {
+        // Form yalnızca okunduğu için entity tracking kapatılır.
+        var form = await _context.Forms
+            .AsNoTracking()
+            .Include(formEntity => formEntity.Questions)
+                .ThenInclude(question => question.Validation)
+            .Include(formEntity => formEntity.Questions)
+                .ThenInclude(question => question.Options)
+            .Include(formEntity => formEntity.Questions)
+                .ThenInclude(question => question.MatrixRows)
+            .Include(formEntity => formEntity.Questions)
+                .ThenInclude(question => question.MatrixColumns)
+            .Where(formEntity => formEntity.PublicId == publicId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<FormDetailsDto>.FailureResult(
+                "Form bulunamadı.",
+                404);
+        }
+
+        // Taslak ve kapalı formlar cevaplama ekranına gösterilmez.
+        if (form.Status != FormStatus.Published)
+        {
+            return ApiResponse<FormDetailsDto>.FailureResult(
+                "Form şu anda cevap kabul etmiyor.",
+                404);
+        }
+
+        // Authenticated form için JWT zorunludur.
+        if (form.AccessType == FormAccessType.Authenticated &&
+            requesterUserId is null)
+        {
+            return ApiResponse<FormDetailsDto>.FailureResult(
+                "Bu formu görüntülemek için giriş yapmalısınız.",
+                401);
+        }
+
+        var responseDto = new FormDetailsDto
+        {
+            PublicId = form.PublicId,
+            Title = form.Title,
+            Description = form.Description,
+            Status = form.Status,
+            AccessType = form.AccessType,
+            Questions = form.Questions
+                .OrderBy(question => question.DisplayOrder)
+                .Select(MapQuestionDetails)
+                .ToList()
+        };
+
+        return ApiResponse<FormDetailsDto>.SuccessResult(responseDto);
+    }
+
+    private static QuestionDetailsDto MapQuestionDetails(Question question)
+    {
+        return new QuestionDetailsDto
+        {
+            Id = question.Id,
+            Title = question.Title,
+            Description = question.Description,
+            Type = question.Type,
+            IsRequired = question.IsRequired,
+            DisplayOrder = question.DisplayOrder,
+            RatingMinLabel = question.RatingMinLabel,
+            RatingMaxLabel = question.RatingMaxLabel,
+
+            Validation = question.Validation is null
+                ? null
+                : new QuestionValidationDetailsDto
+                {
+                    MinLength = question.Validation.MinLength,
+                    MaxLength = question.Validation.MaxLength,
+                    RegexPattern = question.Validation.RegexPattern,
+                    MinValue = question.Validation.MinValue,
+                    MaxValue = question.Validation.MaxValue
+                },
+
+            Options = question.Options
+                .OrderBy(option => option.DisplayOrder)
+                .Select(option => new QuestionOptionDetailsDto
+                {
+                    Id = option.Id,
+                    Text = option.Text,
+                    DisplayOrder = option.DisplayOrder
+                })
+                .ToList(),
+
+            MatrixRows = question.MatrixRows
+                .OrderBy(row => row.DisplayOrder)
+                .Select(row => new MatrixItemDetailsDto
+                {
+                    Id = row.Id,
+                    Text = row.Text,
+                    DisplayOrder = row.DisplayOrder
+                })
+                .ToList(),
+
+            MatrixColumns = question.MatrixColumns
+                .OrderBy(column => column.DisplayOrder)
+                .Select(column => new MatrixItemDetailsDto
+                {
+                    Id = column.Id,
+                    Text = column.Text,
+                    DisplayOrder = column.DisplayOrder
+                })
+                .ToList()
+        };
+    }
+
     private static string? NormalizeOptionalText(string? value)
     {
         // Boş veya yalnızca boşluk içeren değerleri veritabanında null saklar.

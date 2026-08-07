@@ -74,4 +74,33 @@ public class FormsController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("{publicId:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetByPublicId(
+    Guid publicId,
+    CancellationToken cancellationToken)
+    {
+        // Public form için null, Authenticated form için JWT kullanıcı Id'si gönderilir.
+        int? requesterUserId = null;
+
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (int.TryParse(userIdClaim, out var parsedUserId))
+        {
+            requesterUserId = parsedUserId;
+        }
+
+        var result = await _formService.GetByPublicIdAsync(
+            publicId,
+            requesterUserId,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(result.HttpStatusCode, result);
+        }
+
+        return Ok(result);
+    }
 }
