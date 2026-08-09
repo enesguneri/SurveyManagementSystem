@@ -103,4 +103,60 @@ public class FormsController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("{publicId:guid}/close")]
+    public async Task<IActionResult> Close(
+    Guid publicId,
+    CancellationToken cancellationToken)
+    {
+        // Kapatma işlemi yalnızca giriş yapmış kullanıcılar içindir.
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(ApiResponse<string>.FailureResult(
+                "Kimliği doğrulanmış kullanıcı bilgisi alınamadı."));
+        }
+
+        var result = await _formService.CloseAsync(
+            publicId,
+            userId,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(result.HttpStatusCode, result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPut("{publicId:guid}")]
+    public async Task<IActionResult> UpdateDraft(
+    Guid publicId,
+    [FromBody] CreateFormDto updateFormDto,
+    CancellationToken cancellationToken)
+    {
+        // Güncelleme yetkisi JWT içindeki kullanıcıdan alınır.
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(ApiResponse<string>.FailureResult(
+                "Kimliği doğrulanmış kullanıcı bilgisi alınamadı."));
+        }
+
+        var result = await _formService.UpdateDraftAsync(
+            publicId,
+            updateFormDto,
+            userId,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(result.HttpStatusCode, result);
+        }
+
+        return Ok(result);
+    }
 }

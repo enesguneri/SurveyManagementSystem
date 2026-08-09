@@ -19,4 +19,15 @@ public interface IFormService
     Guid publicId,
     int? requesterUserId,
     CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<FormCreatedDto>> CloseAsync(
+    Guid publicId,
+    int requesterUserId,
+    CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<FormCreatedDto>> UpdateDraftAsync(
+    Guid publicId,
+    CreateFormDto updateFormDto,
+    int requesterUserId,
+    CancellationToken cancellationToken = default);
 }

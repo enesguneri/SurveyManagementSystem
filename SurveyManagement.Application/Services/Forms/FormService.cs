@@ -64,71 +64,8 @@ public class FormService : IFormService
             CreatedAt = DateTime.UtcNow
         };
 
-        // Liste sırası, soruların ve alt öğelerin görüntülenme sırasını belirler.
-        for (var questionIndex = 0; questionIndex < createFormDto.Questions.Count; questionIndex++)
-        {
-            var questionDto = createFormDto.Questions[questionIndex];
-
-            var question = new Question
-            {
-                Title = questionDto.Title.Trim(),
-                Description = NormalizeOptionalText(questionDto.Description),
-                Type = questionDto.Type,
-                IsRequired = questionDto.IsRequired,
-                DisplayOrder = questionIndex + 1,
-                RatingMinLabel = NormalizeOptionalText(questionDto.RatingMinLabel),
-                RatingMaxLabel = NormalizeOptionalText(questionDto.RatingMaxLabel),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            // Doğrulama nesnesi yalnızca ilgili soru için gönderilmişse oluşturulur.
-            if (questionDto.Validation is not null)
-            {
-                question.Validation = new QuestionValidation
-                {
-                    MinLength = questionDto.Validation.MinLength,
-                    MaxLength = questionDto.Validation.MaxLength,
-                    RegexPattern = NormalizeOptionalText(questionDto.Validation.RegexPattern),
-                    MinValue = questionDto.Validation.MinValue,
-                    MaxValue = questionDto.Validation.MaxValue
-                };
-            }
-
-            // Radio ve checkbox soru türlerinin seçenekleri eklenir.
-            for (var optionIndex = 0; optionIndex < questionDto.Options.Count; optionIndex++)
-            {
-                question.Options.Add(new QuestionOption
-                {
-                    Text = questionDto.Options[optionIndex].Text.Trim(),
-                    DisplayOrder = optionIndex + 1,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-            // Tablo sorularının satırları eklenir.
-            for (var rowIndex = 0; rowIndex < questionDto.MatrixRows.Count; rowIndex++)
-            {
-                question.MatrixRows.Add(new MatrixRow
-                {
-                    Text = questionDto.MatrixRows[rowIndex].Text.Trim(),
-                    DisplayOrder = rowIndex + 1,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-            // Tablo sorularının sütunları eklenir.
-            for (var columnIndex = 0; columnIndex < questionDto.MatrixColumns.Count; columnIndex++)
-            {
-                question.MatrixColumns.Add(new MatrixColumn
-                {
-                    Text = questionDto.MatrixColumns[columnIndex].Text.Trim(),
-                    DisplayOrder = columnIndex + 1,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-            form.Questions.Add(question);
-        }
+        // Sorular ve soru alt öğeleri ortak mapper metodu ile oluşturulur.
+        AddQuestionsToForm(form, createFormDto.Questions);
 
         // Form kök entity olarak eklendiğinde EF Core bağlı alt entity'leri de takip eder.
         _context.Forms.Add(form);
@@ -168,17 +105,10 @@ public class FormService : IFormService
                 404);
         }
 
-        // Form sahibi veya Admin yayınlama yetkisine sahiptir.
-        var isOwner = form.CreatedByUserId == requesterUserId;
+        //Yetki kontrolü
+        var canManageForm = await CanManageFormAsync(form,requesterUserId,cancellationToken);
 
-        var isAdmin = await _context.UserRoles
-            .AnyAsync(
-                userRole =>
-                    userRole.UserId == requesterUserId &&
-                    userRole.Role.Name == "Admin",
-                cancellationToken);
-
-        if (!isOwner && !isAdmin)
+        if (!canManageForm)
         {
             return ApiResponse<FormCreatedDto>.FailureResult(
                 "Bu formu yayınlama yetkiniz yok.",
@@ -327,9 +257,255 @@ public class FormService : IFormService
         };
     }
 
+    public async Task<ApiResponse<FormCreatedDto>> CloseAsync(
+    Guid publicId,
+    int requesterUserId,
+    CancellationToken cancellationToken = default)
+    {
+        // Form, paylaşım için kullanılan PublicId üzerinden bulunur.
+        var form = await _context.Forms
+            .FirstOrDefaultAsync(
+                currentForm => currentForm.PublicId == publicId,
+                cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Kapatılacak form bulunamadı.",
+                404);
+        }
+
+        // Form sahibi veya Admin kapatma yetkisine sahiptir.
+        var canManageForm = await CanManageFormAsync(
+            form,
+            requesterUserId,
+            cancellationToken);
+
+        if (!canManageForm)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Bu formu kapatma yetkiniz yok.",
+                403);
+        }
+
+        if (form.Status != FormStatus.Published)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Yalnızca yayımlanmış formlar kapatılabilir.",
+                400);
+        }
+
+        // Form kapatılır; cevaplar veritabanında korunur.
+        form.Status = FormStatus.Closed;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var responseDto = new FormCreatedDto
+        {
+            Id = form.Id,
+            PublicId = form.PublicId,
+            Title = form.Title,
+            Status = form.Status,
+            AccessType = form.AccessType,
+            CreatedAt = form.CreatedAt
+        };
+
+        return ApiResponse<FormCreatedDto>.SuccessResult(
+            responseDto,
+            "Form başarıyla kapatıldı.");
+    }
+
+    public async Task<ApiResponse<FormCreatedDto>> UpdateDraftAsync(
+    Guid publicId,
+    CreateFormDto updateFormDto,
+    int requesterUserId,
+    CancellationToken cancellationToken = default)
+    {
+        // Güncellenen form, öncelikle aynı Create/Question kurallarıyla doğrulanır.
+        var validationErrors = _formRequestValidator.Validate(updateFormDto);
+
+        if (validationErrors.Count > 0)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                validationErrors,
+                "Form güncelleme doğrulaması başarısız.");
+        }
+
+        // Eski soruların silinebilmesi için form ve soruları yüklenir.
+        var form = await _context.Forms
+            .Include(currentForm => currentForm.Questions)
+            .FirstOrDefaultAsync(
+                currentForm => currentForm.PublicId == publicId,
+                cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Güncellenecek form bulunamadı.",
+                404);
+        }
+
+        // Form sahibi veya Admin güncelleme yapabilir.
+        var canManageForm = await CanManageFormAsync(
+            form,
+            requesterUserId,
+            cancellationToken);
+
+        if (!canManageForm)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Bu formu güncelleme yetkiniz yok.",
+                403);
+        }
+
+        // Yayınlanmış veya kapatılmış formlar bu endpoint ile değiştirilemez.
+        if (form.Status != FormStatus.Draft)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Yalnızca taslak formlar güncellenebilir.",
+                400);
+        }
+
+        // Taslak formun eski soru ağacı kaldırılır.
+        // Soru altındaki seçenek, validation ve matrix kayıtları
+        // veritabanındaki cascade kurallarıyla temizlenir.
+        var oldQuestions = form.Questions.ToList();
+
+        _context.Questions.RemoveRange(oldQuestions);
+        form.Questions.Clear();
+
+        // Formun kimliği ve sahibi korunur; düzenlenebilir alanlar güncellenir.
+        form.Title = updateFormDto.Title.Trim();
+        form.Description = NormalizeOptionalText(updateFormDto.Description);
+        form.AccessType = updateFormDto.AccessType;
+
+        // Yeni soru ağacı oluşturulur.
+        AddQuestionsToForm(form, updateFormDto.Questions);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var responseDto = new FormCreatedDto
+        {
+            Id = form.Id,
+            PublicId = form.PublicId,
+            Title = form.Title,
+            Status = form.Status,
+            AccessType = form.AccessType,
+            CreatedAt = form.CreatedAt
+        };
+
+        return ApiResponse<FormCreatedDto>.SuccessResult(
+            responseDto,
+            "Taslak form başarıyla güncellendi.");
+    }
+
     private static string? NormalizeOptionalText(string? value)
     {
         // Boş veya yalnızca boşluk içeren değerleri veritabanında null saklar.
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private async Task<bool> CanManageFormAsync(
+    Form form,
+    int requesterUserId,
+    CancellationToken cancellationToken)
+    {
+        // Form sahibi kendi formunu yönetebilir.
+        if (form.CreatedByUserId == requesterUserId)
+        {
+            return true;
+        }
+
+        // Admin tüm formları yönetebilir.
+        return await _context.UserRoles.AnyAsync(
+            userRole =>
+                userRole.UserId == requesterUserId &&
+                userRole.Role.Name == "Admin",
+            cancellationToken);
+    }
+
+    private static void AddQuestionsToForm(
+    Form form,
+    List<CreateQuestionDto> questionDtos)
+    {
+        for (var questionIndex = 0;
+             questionIndex < questionDtos.Count;
+             questionIndex++)
+        {
+            var questionDto = questionDtos[questionIndex];
+
+            // DTO, veritabanı Question entity'sine dönüştürülür.
+            var question = new Question
+            {
+                Form = form,
+                Title = questionDto.Title.Trim(),
+                Description = NormalizeOptionalText(questionDto.Description),
+                Type = questionDto.Type,
+                IsRequired = questionDto.IsRequired,
+                DisplayOrder = questionIndex + 1,
+                RatingMinLabel = NormalizeOptionalText(questionDto.RatingMinLabel),
+                RatingMaxLabel = NormalizeOptionalText(questionDto.RatingMaxLabel),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Soruya ait validation kaydı oluşturulur.
+            if (questionDto.Validation is not null)
+            {
+                question.Validation = new QuestionValidation
+                {
+                    Question = question,
+                    MinLength = questionDto.Validation.MinLength,
+                    MaxLength = questionDto.Validation.MaxLength,
+                    RegexPattern = NormalizeOptionalText(
+                        questionDto.Validation.RegexPattern),
+                    MinValue = questionDto.Validation.MinValue,
+                    MaxValue = questionDto.Validation.MaxValue
+                };
+            }
+
+            // Radio ve checkbox seçenekleri oluşturulur.
+            for (var optionIndex = 0;
+                 optionIndex < questionDto.Options.Count;
+                 optionIndex++)
+            {
+                question.Options.Add(new QuestionOption
+                {
+                    Question = question,
+                    Text = questionDto.Options[optionIndex].Text.Trim(),
+                    DisplayOrder = optionIndex + 1,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // Matrix satırları oluşturulur.
+            for (var rowIndex = 0;
+                 rowIndex < questionDto.MatrixRows.Count;
+                 rowIndex++)
+            {
+                question.MatrixRows.Add(new MatrixRow
+                {
+                    Question = question,
+                    Text = questionDto.MatrixRows[rowIndex].Text.Trim(),
+                    DisplayOrder = rowIndex + 1,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // Matrix sütunları oluşturulur.
+            for (var columnIndex = 0;
+                 columnIndex < questionDto.MatrixColumns.Count;
+                 columnIndex++)
+            {
+                question.MatrixColumns.Add(new MatrixColumn
+                {
+                    Question = question,
+                    Text = questionDto.MatrixColumns[columnIndex].Text.Trim(),
+                    DisplayOrder = columnIndex + 1,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            form.Questions.Add(question);
+        }
     }
 }
