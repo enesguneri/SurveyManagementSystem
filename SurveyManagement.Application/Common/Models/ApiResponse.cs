@@ -1,9 +1,7 @@
-﻿namespace SurveyManagement.Application.Common.Models;
+﻿using System.Text.Json.Serialization;
 
-/// <summary>
-/// Tüm API yanıtlarını standart bir formatta sarmalayan jenerik sınıf.
-/// </summary>
-/// <typeparam name="T">Yanıt verisinin tipi</typeparam>
+namespace SurveyManagement.Application.Common.Models;
+
 public class ApiResponse<T>
 {
     public bool IsSuccess { get; set; }
@@ -11,46 +9,62 @@ public class ApiResponse<T>
     public T? Data { get; set; }
     public List<string>? Errors { get; set; }
 
-    // --- Başarılı Yanıt Fabrika Metotları (Factory Methods) ---
+    // Controller'ın HTTP durum kodunu belirlemesi için kullanılır.
+    // JsonIgnore sayesinde istemciye JSON alanı olarak gönderilmez.
+    [JsonIgnore]
+    public int HttpStatusCode { get; set; } = 200;
 
-    public static ApiResponse<T> SuccessResult(T data, string? message = null)
+    // Başarılı veri yanıtı oluşturur.
+    public static ApiResponse<T> SuccessResult(
+        T data,
+        string? message = null)
     {
         return new ApiResponse<T>
         {
             IsSuccess = true,
             Data = data,
-            Message = message
+            Message = message,
+            HttpStatusCode = 200
         };
     }
 
+    // Veri içermeyen başarılı yanıt oluşturur.
     public static ApiResponse<T> SuccessResult(string message)
     {
         return new ApiResponse<T>
         {
             IsSuccess = true,
-            Message = message
+            Message = message,
+            HttpStatusCode = 200
         };
     }
 
-    // --- Hatalı Yanıt Fabrika Metotları ---
-
-    public static ApiResponse<T> FailureResult(string errorMessage)
+    // Tek hata mesajı içeren başarısız yanıt oluşturur.
+    public static ApiResponse<T> FailureResult(
+        string errorMessage,
+        int httpStatusCode = 400)
     {
         return new ApiResponse<T>
         {
             IsSuccess = false,
             Message = errorMessage,
-            Errors = new List<string> { errorMessage }
+            Errors = new List<string> { errorMessage },
+            HttpStatusCode = httpStatusCode
         };
     }
 
-    public static ApiResponse<T> FailureResult(List<string> errors, string? message = null)
+    // Birden fazla hata içeren başarısız yanıt oluşturur.
+    public static ApiResponse<T> FailureResult(
+        List<string> errors,
+        string? message = null,
+        int httpStatusCode = 400)
     {
         return new ApiResponse<T>
         {
             IsSuccess = false,
             Message = message,
-            Errors = errors
+            Errors = errors,
+            HttpStatusCode = httpStatusCode
         };
     }
 }

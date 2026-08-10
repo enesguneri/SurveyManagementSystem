@@ -22,6 +22,332 @@ namespace SurveyManagement.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.Form", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CreationSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique();
+
+                    b.ToTable("Forms");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.FormResponse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RespondentUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormId");
+
+                    b.HasIndex("RespondentUserId");
+
+                    b.ToTable("FormResponses");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixColumn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.ToTable("MatrixColumns");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.ToTable("MatrixRows");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.Question", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("RatingMaxLabel")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RatingMinLabel")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.ToTable("Questions");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.QuestionOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.ToTable("QuestionOptions");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.QuestionValidation", b =>
+                {
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("MaxLength")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("MaxValue")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("MinLength")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("MinValue")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("RegexPattern")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("QuestionId");
+
+                    b.ToTable("QuestionValidations");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.ResponseAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FormResponseId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("NumericValue")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TextValue")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("FormResponseId", "QuestionId")
+                        .IsUnique();
+
+                    b.ToTable("ResponseAnswers");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.ResponseAnswerOption", b =>
+                {
+                    b.Property<int>("ResponseAnswerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuestionOptionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ResponseAnswerId", "QuestionOptionId");
+
+                    b.HasIndex("QuestionOptionId");
+
+                    b.ToTable("ResponseAnswerOptions");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.ResponseMatrixAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MatrixColumnId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MatrixRowId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ResponseAnswerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatrixColumnId");
+
+                    b.HasIndex("MatrixRowId");
+
+                    b.HasIndex("ResponseAnswerId", "MatrixRowId", "MatrixColumnId")
+                        .IsUnique();
+
+                    b.ToTable("ResponseMatrixAnswers");
+                });
+
             modelBuilder.Entity("SurveyManagement.Domain.Entities.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -115,6 +441,155 @@ namespace SurveyManagement.Persistence.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.Form", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.User", "CreatedByUser")
+                        .WithMany("CreatedForms")
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.FormResponse", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.Form", "Form")
+                        .WithMany("Responses")
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SurveyManagement.Domain.Entities.User", "RespondentUser")
+                        .WithMany("SubmittedFormResponses")
+                        .HasForeignKey("RespondentUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Form");
+
+                    b.Navigation("RespondentUser");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixColumn", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.Question", "Question")
+                        .WithMany("MatrixColumns")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixRow", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.Question", "Question")
+                        .WithMany("MatrixRows")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.Question", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.Form", "Form")
+                        .WithMany("Questions")
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Form");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.QuestionOption", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.Question", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.QuestionValidation", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.Question", "Question")
+                        .WithOne("Validation")
+                        .HasForeignKey("SurveyManagement.Domain.Entities.QuestionValidation", "QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.ResponseAnswer", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.FormResponse", "FormResponse")
+                        .WithMany("Answers")
+                        .HasForeignKey("FormResponseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SurveyManagement.Domain.Entities.Question", "Question")
+                        .WithMany("ResponseAnswers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FormResponse");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.ResponseAnswerOption", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.QuestionOption", "QuestionOption")
+                        .WithMany("ResponseAnswerOptions")
+                        .HasForeignKey("QuestionOptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SurveyManagement.Domain.Entities.ResponseAnswer", "ResponseAnswer")
+                        .WithMany("SelectedOptions")
+                        .HasForeignKey("ResponseAnswerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("QuestionOption");
+
+                    b.Navigation("ResponseAnswer");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.ResponseMatrixAnswer", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.MatrixColumn", "MatrixColumn")
+                        .WithMany("ResponseMatrixAnswers")
+                        .HasForeignKey("MatrixColumnId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SurveyManagement.Domain.Entities.MatrixRow", "MatrixRow")
+                        .WithMany("ResponseMatrixAnswers")
+                        .HasForeignKey("MatrixRowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SurveyManagement.Domain.Entities.ResponseAnswer", "ResponseAnswer")
+                        .WithMany("MatrixAnswers")
+                        .HasForeignKey("ResponseAnswerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MatrixColumn");
+
+                    b.Navigation("MatrixRow");
+
+                    b.Navigation("ResponseAnswer");
+                });
+
             modelBuilder.Entity("SurveyManagement.Domain.Entities.UserRole", b =>
                 {
                     b.HasOne("SurveyManagement.Domain.Entities.Role", "Role")
@@ -134,6 +609,53 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.Form", b =>
+                {
+                    b.Navigation("Questions");
+
+                    b.Navigation("Responses");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.FormResponse", b =>
+                {
+                    b.Navigation("Answers");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixColumn", b =>
+                {
+                    b.Navigation("ResponseMatrixAnswers");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixRow", b =>
+                {
+                    b.Navigation("ResponseMatrixAnswers");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.Question", b =>
+                {
+                    b.Navigation("MatrixColumns");
+
+                    b.Navigation("MatrixRows");
+
+                    b.Navigation("Options");
+
+                    b.Navigation("ResponseAnswers");
+
+                    b.Navigation("Validation");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.QuestionOption", b =>
+                {
+                    b.Navigation("ResponseAnswerOptions");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.ResponseAnswer", b =>
+                {
+                    b.Navigation("MatrixAnswers");
+
+                    b.Navigation("SelectedOptions");
+                });
+
             modelBuilder.Entity("SurveyManagement.Domain.Entities.Role", b =>
                 {
                     b.Navigation("UserRoles");
@@ -141,6 +663,10 @@ namespace SurveyManagement.Persistence.Migrations
 
             modelBuilder.Entity("SurveyManagement.Domain.Entities.User", b =>
                 {
+                    b.Navigation("CreatedForms");
+
+                    b.Navigation("SubmittedFormResponses");
+
                     b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618

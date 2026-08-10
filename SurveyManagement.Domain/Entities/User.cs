@@ -16,4 +16,6 @@ public class User : BaseEntity
 
     // Çoka-Çok İlişki (Navigation Property)
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public ICollection<Form> CreatedForms { get; set; } = new List<Form>();
+    public ICollection<FormResponse> SubmittedFormResponses { get; set; } = new List<FormResponse>();
 }
