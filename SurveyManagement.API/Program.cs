@@ -7,6 +7,8 @@ using Microsoft.OpenApi;
 using SurveyManagement.API.Middlewares;
 using SurveyManagement.Application.Interfaces.Auth;
 using SurveyManagement.Application.Interfaces.Context;
+using SurveyManagement.Application.Interfaces.Responses;
+using SurveyManagement.Application.Services.Responses;
 using SurveyManagement.Application.Interfaces.Security;
 using SurveyManagement.Application.Interfaces.Forms;
 using SurveyManagement.Application.Services.Forms;
@@ -30,6 +32,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Form oluşturma ve soru türü doğrulama servisleri her HTTP isteği için oluşturulur.
 builder.Services.AddScoped<IFormRequestValidator, FormRequestValidator>();
 builder.Services.AddScoped<IFormService, FormService>();
+
+// Form yanıtlarının doğrulama ve kayıt servisleri.
+builder.Services.AddScoped<IFormResponseValidator, FormResponseValidator>();
+builder.Services.AddScoped<IFormResponseService, FormResponseService>();
 
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

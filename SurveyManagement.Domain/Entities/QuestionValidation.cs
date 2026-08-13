@@ -11,4 +11,7 @@ public class QuestionValidation
 
     public decimal? MinValue { get; set; }
     public decimal? MaxValue { get; set; }
+
+    public DateOnly? MinDate { get; set; }
+    public DateOnly? MaxDate { get; set; }
 }

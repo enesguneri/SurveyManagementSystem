@@ -61,7 +61,8 @@ public class FormService : IFormService
             CreationSource = FormCreationSource.Manual,
 
             CreatedByUserId = createdByUserId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ShowRespondentIdentity = createFormDto.ShowRespondentIdentity
         };
 
         // Sorular ve soru alt öğeleri ortak mapper metodu ile oluşturulur.
@@ -79,7 +80,8 @@ public class FormService : IFormService
             Title = form.Title,
             Status = form.Status,
             AccessType = form.AccessType,
-            CreatedAt = form.CreatedAt
+            CreatedAt = form.CreatedAt,
+            ShowRespondentIdentity = form.ShowRespondentIdentity
         };
 
         return ApiResponse<FormCreatedDto>.SuccessResult(
@@ -134,7 +136,8 @@ public class FormService : IFormService
             Title = form.Title,
             Status = form.Status,
             AccessType = form.AccessType,
-            CreatedAt = form.CreatedAt
+            CreatedAt = form.CreatedAt,
+            ShowRespondentIdentity = form.ShowRespondentIdentity
         };
 
         return ApiResponse<FormCreatedDto>.SuccessResult(
@@ -195,7 +198,8 @@ public class FormService : IFormService
             Questions = form.Questions
                 .OrderBy(question => question.DisplayOrder)
                 .Select(MapQuestionDetails)
-                .ToList()
+                .ToList(),
+            ShowRespondentIdentity = form.ShowRespondentIdentity
         };
 
         return ApiResponse<FormDetailsDto>.SuccessResult(responseDto);
@@ -222,7 +226,9 @@ public class FormService : IFormService
                     MaxLength = question.Validation.MaxLength,
                     RegexPattern = question.Validation.RegexPattern,
                     MinValue = question.Validation.MinValue,
-                    MaxValue = question.Validation.MaxValue
+                    MaxValue = question.Validation.MaxValue,
+                    MinDate = question.Validation.MinDate,
+                    MaxDate = question.Validation.MaxDate
                 },
 
             Options = question.Options
@@ -307,7 +313,8 @@ public class FormService : IFormService
             Title = form.Title,
             Status = form.Status,
             AccessType = form.AccessType,
-            CreatedAt = form.CreatedAt
+            CreatedAt = form.CreatedAt,
+            ShowRespondentIdentity = form.ShowRespondentIdentity
         };
 
         return ApiResponse<FormCreatedDto>.SuccessResult(
@@ -378,6 +385,7 @@ public class FormService : IFormService
         form.Title = updateFormDto.Title.Trim();
         form.Description = NormalizeOptionalText(updateFormDto.Description);
         form.AccessType = updateFormDto.AccessType;
+        form.ShowRespondentIdentity = updateFormDto.ShowRespondentIdentity;
 
         // Yeni soru ağacı oluşturulur.
         AddQuestionsToForm(form, updateFormDto.Questions);
@@ -391,7 +399,8 @@ public class FormService : IFormService
             Title = form.Title,
             Status = form.Status,
             AccessType = form.AccessType,
-            CreatedAt = form.CreatedAt
+            CreatedAt = form.CreatedAt,
+            ShowRespondentIdentity = form.ShowRespondentIdentity
         };
 
         return ApiResponse<FormCreatedDto>.SuccessResult(
@@ -459,7 +468,9 @@ public class FormService : IFormService
                     RegexPattern = NormalizeOptionalText(
                         questionDto.Validation.RegexPattern),
                     MinValue = questionDto.Validation.MinValue,
-                    MaxValue = questionDto.Validation.MaxValue
+                    MaxValue = questionDto.Validation.MaxValue,
+                    MinDate = questionDto.Validation.MinDate,
+                    MaxDate = questionDto.Validation.MaxDate
                 };
             }
 

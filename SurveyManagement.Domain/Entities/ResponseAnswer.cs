@@ -13,6 +13,9 @@ public class ResponseAnswer
     public string? TextValue { get; set; }
     public decimal? NumericValue { get; set; }
 
+    // Date türündeki soruların tarih olarak saklanmasını sağlar.
+    public DateOnly? DateValue { get; set; }
+
     public ICollection<ResponseAnswerOption> SelectedOptions { get; set; } = new List<ResponseAnswerOption>();
     public ICollection<ResponseMatrixAnswer> MatrixAnswers { get; set; } = new List<ResponseMatrixAnswer>();
 }

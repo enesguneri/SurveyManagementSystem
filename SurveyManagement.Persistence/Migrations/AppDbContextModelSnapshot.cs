@@ -53,6 +53,11 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("ShowRespondentIdentity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -82,6 +87,14 @@ namespace SurveyManagement.Persistence.Migrations
 
                     b.Property<int>("FormId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RespondentIpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<string>("RespondentNameSnapshot")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int?>("RespondentUserId")
                         .HasColumnType("integer");
@@ -251,12 +264,18 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Property<int>("QuestionId")
                         .HasColumnType("integer");
 
+                    b.Property<DateOnly?>("MaxDate")
+                        .HasColumnType("date");
+
                     b.Property<int?>("MaxLength")
                         .HasColumnType("integer");
 
                     b.Property<decimal?>("MaxValue")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
+
+                    b.Property<DateOnly?>("MinDate")
+                        .HasColumnType("date");
 
                     b.Property<int?>("MinLength")
                         .HasColumnType("integer");
@@ -281,6 +300,9 @@ namespace SurveyManagement.Persistence.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly?>("DateValue")
+                        .HasColumnType("date");
 
                     b.Property<int>("FormResponseId")
                         .HasColumnType("integer");
