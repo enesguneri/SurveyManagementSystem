@@ -70,6 +70,10 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasForeignKey(form => form.CreatedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<Form>()
+            .Property(form => form.ShowRespondentIdentity)
+            .HasDefaultValue(false);
+
         modelBuilder.Entity<Question>()
             .Property(question => question.Title)
             .HasMaxLength(1000)
@@ -109,6 +113,14 @@ public class AppDbContext : DbContext, IAppDbContext
             .WithOne(question => question.Validation)
             .HasForeignKey<QuestionValidation>(validation => validation.QuestionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<QuestionValidation>()
+            .Property(validation => validation.MinDate)
+            .HasColumnType("date");
+
+        modelBuilder.Entity<QuestionValidation>()
+            .Property(validation => validation.MaxDate)
+            .HasColumnType("date");
 
         modelBuilder.Entity<QuestionOption>()
             .Property(option => option.Text)
@@ -167,6 +179,14 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasForeignKey(response => response.RespondentUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<FormResponse>()
+            .Property(response => response.RespondentNameSnapshot)
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<FormResponse>()
+            .Property(response => response.RespondentIpAddress)
+            .HasMaxLength(45);
+
         modelBuilder.Entity<ResponseAnswer>()
             .HasIndex(answer => new { answer.FormResponseId, answer.QuestionId })
             .IsUnique();
@@ -182,6 +202,10 @@ public class AppDbContext : DbContext, IAppDbContext
             .WithMany(question => question.ResponseAnswers)
             .HasForeignKey(answer => answer.QuestionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ResponseAnswer>()
+            .Property(answer => answer.DateValue)
+            .HasColumnType("date");
 
         modelBuilder.Entity<ResponseAnswerOption>()
             .HasKey(selection => new

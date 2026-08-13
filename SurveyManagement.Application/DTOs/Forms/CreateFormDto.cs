@@ -12,6 +12,10 @@ public class CreateFormDto
     [StringLength(2000)]
     public string? Description { get; set; }
 
+    // Katılımcı adının sonuç ekranında gösterilip gösterilmeyeceğini belirtir.
+    // Katılımcı adı veritabanına her durumda kaydedilir.
+    public bool ShowRespondentIdentity { get; set; } = false;
+
     public FormAccessType AccessType { get; set; } = FormAccessType.Authenticated;
 
     [MinLength(1)]

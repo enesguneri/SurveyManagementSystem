@@ -8,4 +8,8 @@ public class CreateQuestionValidationDto
 
     public decimal? MinValue { get; set; }
     public decimal? MaxValue { get; set; }
+
+    // Yalnızca Date tipi sorular için kullanılacaktır.
+    public DateOnly? MinDate { get; set; }
+    public DateOnly? MaxDate { get; set; }
 }

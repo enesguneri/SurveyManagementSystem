@@ -8,5 +8,7 @@ public enum QuestionType
     MultipleChoice = 4,
     Rating = 5,
     MultipleChoiceGrid = 6,
-    CheckboxGrid = 7
+    CheckboxGrid = 7,
+
+    Date = 8
 }

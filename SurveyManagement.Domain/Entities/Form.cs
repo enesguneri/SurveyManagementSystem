@@ -11,6 +11,10 @@ public class Form : BaseEntity
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
 
+    // Katılımcı adının sonuç ekranında gösterilip gösterilmeyeceğini belirler.
+    // Katılımcı adı veritabanına her durumda kaydedilecektir.
+    public bool ShowRespondentIdentity { get; set; } = false;
+
     public FormStatus Status { get; set; } = FormStatus.Draft;
     public FormAccessType AccessType { get; set; } = FormAccessType.Authenticated;
     public FormCreationSource CreationSource { get; set; } = FormCreationSource.Manual;

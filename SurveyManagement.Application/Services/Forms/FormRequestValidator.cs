@@ -47,6 +47,13 @@ public class FormRequestValidator : IFormRequestValidator
             return;
         }
 
+        if (question.Type != QuestionType.Date && (question.Validation?.MinDate.HasValue == true ||
+            question.Validation?.MaxDate.HasValue == true))
+        {
+            errors.Add(
+                $"{prefix} tarih aralığı yalnızca Date tipi sorularda kullanılabilir.");
+        }
+
         switch (question.Type)
         {
             case QuestionType.ShortText:
@@ -66,6 +73,10 @@ public class FormRequestValidator : IFormRequestValidator
             case QuestionType.MultipleChoiceGrid:
             case QuestionType.CheckboxGrid:
                 ValidateGridQuestion(question, prefix, errors);
+                break;
+
+            case QuestionType.Date:
+                ValidateDateQuestion(question, prefix, errors);
                 break;
         }
     }
@@ -258,6 +269,40 @@ public class FormRequestValidator : IFormRequestValidator
         if (question.MatrixRows.Count > 0 || question.MatrixColumns.Count > 0)
         {
             errors.Add($"{prefix} bu soru türünde tablo satırı veya sütunu içeremez.");
+        }
+    }
+
+    private static void ValidateDateQuestion(
+    CreateQuestionDto question,
+    string prefix,
+    List<string> errors)
+    {
+        EnsureNoOptions(question, prefix, errors);
+        EnsureNoMatrix(question, prefix, errors);
+
+        if (question.Validation is null)
+        {
+            return;
+        }
+
+        var validation = question.Validation;
+
+        if (validation.MinLength.HasValue ||
+            validation.MaxLength.HasValue ||
+            !string.IsNullOrWhiteSpace(validation.RegexPattern) ||
+            validation.MinValue.HasValue ||
+            validation.MaxValue.HasValue)
+        {
+            errors.Add(
+                $"{prefix} tarih sorusunda metin veya sayısal doğrulama kullanılamaz.");
+        }
+
+        if (validation.MinDate.HasValue &&
+            validation.MaxDate.HasValue &&
+            validation.MinDate > validation.MaxDate)
+        {
+            errors.Add(
+                $"{prefix} için minimum tarih maksimum tarihten büyük olamaz.");
         }
     }
 }
