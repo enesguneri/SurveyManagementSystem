@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="UserManagement.API/UserManagement.API.csproj" />
-  <Project Path="UserManagement.Application/UserManagement.Application.csproj" />
-  <Project Path="UserManagement.Domain/UserManagement.Domain.csproj" />
-  <Project Path="UserManagement.Persistence/UserManagement.Persistence.csproj" />
-</Solution>
