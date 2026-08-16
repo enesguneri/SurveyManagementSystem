@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+    useLocation,
+    useNavigate,
+} from "react-router-dom";
 import {
     Alert,
     Box,
@@ -16,6 +19,7 @@ import { useAuth } from "../auth/AuthContext";
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
 
     const [usernameOrEmail, setUsernameOrEmail] = useState("");
@@ -40,7 +44,20 @@ export default function LoginPage() {
                 return;
             }
 
-            navigate("/");
+            const searchParams = new URLSearchParams(
+                location.search,
+            );
+
+            const returnUrl = searchParams.get("returnUrl");
+
+            // Yalnızca uygulama içindeki relative URL'lere izin verilir.
+            // Böylece dış siteye yönlendirme güvenlik açığı oluşmaz.
+            const safeReturnUrl =
+                returnUrl && returnUrl.startsWith("/")
+                    ? returnUrl
+                    : "/";
+
+            navigate(safeReturnUrl);
         } catch {
             setErrorMessage("Giriş sırasında beklenmeyen bir hata oluştu.");
         } finally {

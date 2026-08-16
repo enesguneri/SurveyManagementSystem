@@ -4,6 +4,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import FormBuilderPage from "./pages/FormBuilderPage";
+import PublishedFormPage from "./pages/PublishedFormPage";
 
 function App() {
   return (
@@ -16,6 +17,11 @@ function App() {
                   <Route path="/" element={<DashboardPage />} />
                   <Route path="/forms/new" element={<FormBuilderPage />} />
               </Route>
+
+              <Route
+                  path="/forms/:publicId"
+                  element={<PublishedFormPage />}
+              />
 
               <Route
                   path="*"

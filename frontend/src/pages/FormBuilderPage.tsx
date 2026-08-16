@@ -28,7 +28,10 @@ import {
 } from "../types/form";
 import QuestionTypeEditor from "../components/forms/QuestionTypeEditor";
 import { Alert } from "@mui/material";
-import { createForm } from "../api/formApi";
+import {
+    createForm,
+    publishForm,
+} from "../api/formApi";
 import type { ReactNode } from "react";
 import {
     CalendarToday,
@@ -43,7 +46,7 @@ import {
     ListItemIcon,
     ListItemText,
 } from "@mui/material";
-
+import type { FormCreatedResponse } from "../types/formApi";
 
 interface QuestionTypeOption {
     value: QuestionType;
@@ -107,6 +110,11 @@ export default function FormBuilderPage() {
 
     const [errorMessage, setErrorMessage] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+
+    const [createdForm, setCreatedForm] =
+        useState<FormCreatedResponse | null>(null);
+
+    const [isPublishing, setIsPublishing] = useState(false);
 
     function updateQuestion(
         clientId: string,
@@ -207,13 +215,47 @@ export default function FormBuilderPage() {
                 return;
             }
 
-            navigate("/");
+            if (result.data) {
+                setCreatedForm(result.data);
+            }
         } catch {
             setErrorMessage(
                 "Form oluşturulurken API bağlantısı kurulamadı.",
             );
         } finally {
             setIsSaving(false);
+        }
+    }
+
+    async function handlePublish() {
+        if (!createdForm) {
+            return;
+        }
+
+        setErrorMessage("");
+        setIsPublishing(true);
+
+        try {
+            const result = await publishForm(
+                createdForm.publicId,
+            );
+
+            if (!result.isSuccess || !result.data) {
+                setErrorMessage(
+                    result.errors?.join(" ") ||
+                    result.message ||
+                    "Form yayınlanamadı.",
+                );
+                return;
+            }
+
+            setCreatedForm(result.data);
+        } catch {
+            setErrorMessage(
+                "Form yayınlanırken API bağlantısı kurulamadı.",
+            );
+        } finally {
+            setIsPublishing(false);
         }
     }
 
@@ -453,6 +495,64 @@ export default function FormBuilderPage() {
                         Soru Ekle
                     </Button>
 
+                    {createdForm && (
+                        <Card>
+                            <CardContent>
+                                <Stack spacing={2}>
+                                    <Alert severity="success">
+                                        Taslak form başarıyla oluşturuldu.
+                                    </Alert>
+
+                                    <Typography>
+                                        PublicId: {createdForm.publicId}
+                                    </Typography>
+
+                                    <Typography>
+                                        Durum: {createdForm.status}
+                                    </Typography>
+
+                                    <Stack
+                                        direction={{ xs: "column", sm: "row" }}
+                                        spacing={2}
+                                    >
+                                        <Button
+                                            variant="contained"
+                                            onClick={handlePublish}
+                                            disabled={
+                                                isPublishing ||
+                                                createdForm.status === "Published"
+                                            }
+                                        >
+                                            {isPublishing
+                                                ? "Yayınlanıyor..."
+                                                : createdForm.status === "Published"
+                                                    ? "Yayınlandı"
+                                                    : "Formu Yayınla"}
+                                        </Button>
+
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/forms/${createdForm.publicId}`,
+                                                )
+                                            }
+                                        >
+                                            Formu Görüntüle
+                                        </Button>
+
+                                        <Button
+                                            variant="text"
+                                            onClick={() => navigate("/")}
+                                        >
+                                            Dashboard'a Dön
+                                        </Button>
+                                    </Stack>
+                                </Stack>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {errorMessage && (
                         <Alert severity="error">{errorMessage}</Alert>
                     )}
@@ -461,7 +561,7 @@ export default function FormBuilderPage() {
                         variant="contained"
                         size="large"
                         onClick={handleSave}
-                        disabled={isSaving || !formDraft.title.trim()}
+                        disabled={isSaving || Boolean(createdForm) || !formDraft.title.trim()}
                     >
                         {isSaving ? "Kaydediliyor..." : "Formu Kaydet"}
                     </Button>
