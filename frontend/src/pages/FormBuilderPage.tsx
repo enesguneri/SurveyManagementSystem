@@ -60,6 +60,8 @@ import { getAvailableRoles } from "../api/roleApi";
 import type { Role } from "../types/role";
 import type { ManageableFormDetails } from "../types/manageableForm";
 
+import { useAuth } from "../auth/useAuth";
+import BrandHeader from "../components/layout/BrandHeader";
 interface QuestionTypeOption {
     value: QuestionType;
     label: string;
@@ -173,6 +175,12 @@ function mapManageableFormToDraft(
 
 export default function FormBuilderPage() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    function handleLogout() {
+        logout();
+        navigate("/login");
+    }
 
     const { publicId } = useParams<{
         publicId?: string;
@@ -439,10 +447,11 @@ export default function FormBuilderPage() {
             sx={{
                 minHeight: "100vh",
                 backgroundColor: "background.default",
-                py: 5,
+                py: 0,
             }}
         >
-            <Container maxWidth="md">
+            <BrandHeader pageTitle={isEditMode ? "Taslak Formu Düzenle" : "Yeni Anket"} onHome={() => navigate("/")} onLogout={handleLogout} />
+            <Container maxWidth="md" sx={{ py: 5 }}>
                 <Stack spacing={3}>
                     <Stack
                         direction="row"
@@ -785,7 +794,7 @@ export default function FormBuilderPage() {
                                             variant="text"
                                             onClick={() => navigate("/")}
                                         >
-                                            Dashboard'a Dön
+                                             Ana Sayfa'ya Dön
                                         </Button>
                                     </Stack>
                                 </Stack>

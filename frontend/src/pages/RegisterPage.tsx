@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
     Alert,
     Box,
@@ -49,9 +50,9 @@ export default function RegisterPage() {
             }
 
             navigate("/login");
-        } catch (error: any) {
-            const apiErrors = error.response?.data?.errors;
-            const apiMessage = error.response?.data?.message;
+        } catch (error: unknown) {
+            const apiErrors = axios.isAxiosError(error) ? error.response?.data?.errors : undefined;
+            const apiMessage = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
 
             setErrorMessage(
                 apiErrors?.join(" ") ||
@@ -94,7 +95,7 @@ export default function RegisterPage() {
                                 </Typography>
 
                                 <Typography variant="body2" color="text.secondary">
-                                    Anket Yönetim Sistemi
+                                    İzmir Bakırçay Üniversitesi Anket Yönetim Sistemi
                                 </Typography>
                             </Box>
 

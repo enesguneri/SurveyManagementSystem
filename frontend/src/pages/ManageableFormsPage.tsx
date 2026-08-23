@@ -11,7 +11,6 @@ import {
     CircularProgress,
     Container,
     Stack,
-    Toolbar,
     Typography,
 } from "@mui/material";
 import {
@@ -20,6 +19,8 @@ import {
     publishForm,
 } from "../api/formApi";
 import type { ManageableForm } from "../types/manageableForm";
+import { useAuth } from "../auth/useAuth";
+import BrandHeader from "../components/layout/BrandHeader";
 
 function getStatusLabel(status: ManageableForm["status"]) {
     switch (status) {
@@ -51,6 +52,12 @@ function getStatusColor(
 
 export default function ManageableFormsPage() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    function handleLogout() {
+        logout();
+        navigate("/login");
+    }
 
     const [forms, setForms] = useState<ManageableForm[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -193,37 +200,21 @@ export default function ManageableFormsPage() {
                 backgroundColor: "background.default",
             }}
         >
-            <Toolbar
-                sx={{
-                    justifyContent: "space-between",
-                    backgroundColor: "white",
-                }}
-            >
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    Yönetilebilir Formlar
-                </Typography>
-
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate("/")}
-                >
-                    Dashboard
-                </Button>
-            </Toolbar>
+            <BrandHeader pageTitle="Formlarım" onHome={() => navigate("/")} onLogout={handleLogout} />
 
             <Container maxWidth="lg" sx={{ py: 5 }}>
                 <Stack spacing={3}>
                     <Box>
                         <Typography variant="h4" component="h1">
-                            Formlar
+                            Formlarım
                         </Typography>
 
                         <Typography
                             color="text.secondary"
                             sx={{ mt: 1 }}
                         >
-                            Sahibi olduğunuz veya birim rolleriniz
-                            üzerinden erişebildiğiniz formlar.
+                            Sahibi olduğunuz veya yetkili olduğunuz birimlere
+                            ait anketleri buradan yönetin.
                         </Typography>
                     </Box>
 

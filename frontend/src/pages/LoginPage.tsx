@@ -15,7 +15,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -92,7 +92,7 @@ export default function LoginPage() {
 
                             <Box sx={{ textAlign: "center" }}>
                                 <Typography variant="h4" component="h1" gutterBottom>
-                                    Anket Yönetim Sistemi
+                                    İzmir Bakırçay Üniversitesi Anket Yönetim Sistemi
                                 </Typography>
 
                                 <Typography variant="body2" color="text.secondary">

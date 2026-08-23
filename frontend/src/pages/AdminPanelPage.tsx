@@ -23,7 +23,6 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Toolbar,
     Typography,
 } from "@mui/material";
 import { getAdminUsers } from "../api/adminApi";
@@ -36,9 +35,17 @@ import type { Role } from "../types/role";
 import type { AdminUser } from "../types/admin";
 import type { ApiResponse } from "../types/api";
 
+import { useAuth } from "../auth/useAuth";
+import BrandHeader from "../components/layout/BrandHeader";
 
 export default function AdminPanelPage() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    function handleLogout() {
+        logout();
+        navigate("/login");
+    }
 
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -245,23 +252,7 @@ export default function AdminPanelPage() {
                 backgroundColor: "background.default",
             }}
         >
-            <Toolbar
-                sx={{
-                    justifyContent: "space-between",
-                    backgroundColor: "white",
-                }}
-            >
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    Admin Paneli
-                </Typography>
-
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate("/")}
-                >
-                    Dashboard
-                </Button>
-            </Toolbar>
+            <BrandHeader pageTitle="Yönetici Paneli" onHome={() => navigate("/")} onLogout={handleLogout} />
 
             <Container maxWidth="lg" sx={{ py: 5 }}>
                 <Stack spacing={3}>

@@ -4,14 +4,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
     Alert,
     Box,
-    Button,
     Card,
     CardContent,
     CircularProgress,
     Container,
     Divider,
     Stack,
-    Toolbar,
     Typography,
 } from "@mui/material";
 import { getFormResponses } from "../api/formApi";
@@ -21,6 +19,8 @@ import type {
     ResponseAnswerDetails,
 } from "../types/response";
 
+import { useAuth } from "../auth/useAuth";
+import BrandHeader from "../components/layout/BrandHeader";
 function ResponseAnswer({
                             answer,
                         }: {
@@ -125,6 +125,12 @@ function ResponseCard({
 
 export default function FormResponsesPage() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    function handleLogout() {
+        logout();
+        navigate("/login");
+    }
     const { publicId } = useParams<{
         publicId?: string;
     }>();
@@ -135,11 +141,7 @@ export default function FormResponsesPage() {
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
-        if (!publicId) {
-            setErrorMessage("Form kimliği bulunamadı.");
-            setIsLoading(false);
-            return;
-        }
+        if (!publicId) return;
 
         async function loadResponses() {
             try {
@@ -179,6 +181,17 @@ export default function FormResponsesPage() {
         void loadResponses();
     }, [publicId]);
 
+    if (!publicId) {
+        return (
+            <Box sx={{ minHeight: "100vh" }}>
+                <BrandHeader pageTitle="Yanıtlar" onHome={() => navigate("/forms")} />
+                <Container maxWidth="md" sx={{ py: 5 }}>
+                    <Alert severity="error">Form kimliği bulunamadı.</Alert>
+                </Container>
+            </Box>
+        );
+    }
+
     if (isLoading) {
         return (
             <Stack
@@ -200,23 +213,7 @@ export default function FormResponsesPage() {
                 backgroundColor: "background.default",
             }}
         >
-            <Toolbar
-                sx={{
-                    justifyContent: "space-between",
-                    backgroundColor: "white",
-                }}
-            >
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    Form Yanıtları
-                </Typography>
-
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate("/forms")}
-                >
-                    Formlara Dön
-                </Button>
-            </Toolbar>
+            <BrandHeader pageTitle="Yanıtlar" onHome={() => navigate("/forms")} onLogout={handleLogout} />
 
             <Container maxWidth="md" sx={{ py: 5 }}>
                 <Stack spacing={3}>
