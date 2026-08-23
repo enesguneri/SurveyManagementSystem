@@ -22,9 +22,12 @@ using SurveyManagement.Persistence.Context;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Veritabanı Bağlantısı ve IAppDbContext Kaydı
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection bulunamadı.");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseMySQL(connectionString));
 
 builder.Services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
@@ -102,9 +105,9 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "User Management API",
+        Title = "Survey Management API",
         Version = "v1",
-        Description = "User Management System - JWT & Role-Based API"
+        Description = "Survey Management System - JWT & Role-Based API"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -140,7 +143,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Survey Management API v1");
     });
 }
 
