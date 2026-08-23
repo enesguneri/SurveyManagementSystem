@@ -1,0 +1,58 @@
+import apiClient from "./apiClient";
+import type { ApiResponse } from "../types/api";
+import {
+    toCreateFormRequest,
+    type FormCreatedResponse,
+} from "../types/formApi";
+import type { FormDraft } from "../types/form";
+import type { PublishedForm } from "../types/publishedForm";
+import type {
+    ResponseSubmitted,
+    SubmitFormResponseRequest,
+} from "../types/response";
+
+export async function createForm(
+    formDraft: FormDraft,
+): Promise<ApiResponse<FormCreatedResponse>> {
+    const request = toCreateFormRequest(formDraft);
+
+    const response = await apiClient.post<
+        ApiResponse<FormCreatedResponse>
+    >("/forms", request);
+
+    return response.data;
+}
+
+// PublicId üzerinden yayınlanmış formun detaylarını getirir.
+export async function getPublishedForm(
+    publicId: string,
+): Promise<ApiResponse<PublishedForm>> {
+    const response = await apiClient.get<ApiResponse<PublishedForm>>(
+        `/forms/${publicId}`,
+    );
+
+    return response.data;
+}
+
+// Yayınlanmış forma verilen cevapları backend'e gönderir.
+export async function submitFormResponse(
+    publicId: string,
+    request: SubmitFormResponseRequest,
+): Promise<ApiResponse<ResponseSubmitted>> {
+    const response = await apiClient.post<
+        ApiResponse<ResponseSubmitted>
+    >(`/forms/${publicId}/responses`, request);
+
+    return response.data;
+}
+
+// Oluşturulmuş taslak formu yayınlar.
+export async function publishForm(
+    publicId: string,
+): Promise<ApiResponse<FormCreatedResponse>> {
+    const response = await apiClient.post<
+        ApiResponse<FormCreatedResponse>
+    >(`/forms/${publicId}/publish`);
+
+    return response.data;
+}

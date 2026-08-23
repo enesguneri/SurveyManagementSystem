@@ -10,5 +10,6 @@ public enum QuestionType
     MultipleChoiceGrid = 6,
     CheckboxGrid = 7,
 
-    Date = 8
+    Date = 8,
+    Dropdown = 9
 }

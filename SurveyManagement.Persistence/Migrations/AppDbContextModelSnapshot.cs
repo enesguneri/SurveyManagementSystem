@@ -111,6 +111,21 @@ namespace SurveyManagement.Persistence.Migrations
                     b.ToTable("FormResponses");
                 });
 
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.FormRole", b =>
+                {
+                    b.Property<int>("FormId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("FormId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("FormRoles");
+                });
+
             modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixColumn", b =>
                 {
                     b.Property<int>("Id")
@@ -384,6 +399,9 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsSystemRole")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -398,6 +416,7 @@ namespace SurveyManagement.Persistence.Migrations
                             Id = 1,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
+                            IsSystemRole = true,
                             Name = "Admin"
                         },
                         new
@@ -405,6 +424,7 @@ namespace SurveyManagement.Persistence.Migrations
                             Id = 2,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
+                            IsSystemRole = true,
                             Name = "User"
                         });
                 });
@@ -490,6 +510,25 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Navigation("Form");
 
                     b.Navigation("RespondentUser");
+                });
+
+            modelBuilder.Entity("SurveyManagement.Domain.Entities.FormRole", b =>
+                {
+                    b.HasOne("SurveyManagement.Domain.Entities.Form", "Form")
+                        .WithMany("FormRoles")
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SurveyManagement.Domain.Entities.Role", "Role")
+                        .WithMany("FormRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Form");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("SurveyManagement.Domain.Entities.MatrixColumn", b =>
@@ -633,6 +672,8 @@ namespace SurveyManagement.Persistence.Migrations
 
             modelBuilder.Entity("SurveyManagement.Domain.Entities.Form", b =>
                 {
+                    b.Navigation("FormRoles");
+
                     b.Navigation("Questions");
 
                     b.Navigation("Responses");
@@ -680,6 +721,8 @@ namespace SurveyManagement.Persistence.Migrations
 
             modelBuilder.Entity("SurveyManagement.Domain.Entities.Role", b =>
                 {
+                    b.Navigation("FormRoles");
+
                     b.Navigation("UserRoles");
                 });
 

@@ -161,6 +161,7 @@ public class FormResponseService : IFormResponseService
                     break;
 
                 case QuestionType.SingleChoice:
+                case QuestionType.Dropdown:
                 case QuestionType.MultipleChoice:
                     AddSelectedOptions(
                         responseAnswer,
@@ -316,7 +317,7 @@ public class FormResponseService : IFormResponseService
             QuestionType.Rating =>
                 answer.NumericValue.HasValue,
 
-            QuestionType.SingleChoice or QuestionType.MultipleChoice =>
+            QuestionType.SingleChoice or QuestionType.Dropdown or QuestionType.MultipleChoice =>
                 answer.SelectedOptionIds.Count > 0,
 
             QuestionType.MultipleChoiceGrid or QuestionType.CheckboxGrid =>
@@ -383,10 +384,18 @@ public class FormResponseService : IFormResponseService
         }
 
         // Admin tüm formların yanıtlarını görebilir.
+        // Birim rolüne sahip kullanıcılar ise
+        // kendi birimlerine bağlı formların yanıtlarını görebilir.
         return await _context.UserRoles.AnyAsync(
             userRole =>
                 userRole.UserId == requesterUserId &&
-                userRole.Role.Name == "Admin",
+                (
+                    userRole.Role.Name == "Admin" ||
+                    _context.FormRoles.Any(
+                        formRole =>
+                            formRole.FormId == form.Id &&
+                            formRole.RoleId == userRole.RoleId)
+                ),
             cancellationToken);
     }
 }

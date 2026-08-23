@@ -11,6 +11,8 @@ using SurveyManagement.Application.Interfaces.Responses;
 using SurveyManagement.Application.Services.Responses;
 using SurveyManagement.Application.Interfaces.Security;
 using SurveyManagement.Application.Interfaces.Forms;
+using SurveyManagement.Application.Interfaces.Roles;
+using SurveyManagement.Application.Services.Roles;
 using SurveyManagement.Application.Services.Forms;
 using SurveyManagement.Application.Services;
 using SurveyManagement.Persistence.Context;
@@ -37,6 +39,9 @@ builder.Services.AddScoped<IFormService, FormService>();
 builder.Services.AddScoped<IFormResponseValidator, FormResponseValidator>();
 builder.Services.AddScoped<IFormResponseService, FormResponseService>();
 
+// Birim rolü listeleme ve admin rol oluşturma servisleri.
+builder.Services.AddScoped<IRoleService, RoleService>();
+
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"]
@@ -59,6 +64,22 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
+});
+
+// Frontend ile API arasındaki browser isteklerine izin verir.
+var frontendOrigin =
+    builder.Configuration["Frontend:Origin"]
+    ?? "http://localhost:5173";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+            .WithOrigins(frontendOrigin)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 
 builder.Services.AddControllers()
@@ -117,6 +138,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// CORS middleware'i endpoint'lerden önce çalışmalıdır.
+app.UseCors("FrontendPolicy");
 
 // 🔑 Kimlik Doğrulama ve Yetkilendirme
 app.UseAuthentication();
