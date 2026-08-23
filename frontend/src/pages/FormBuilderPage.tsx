@@ -736,7 +736,9 @@ export default function FormBuilderPage() {
                             <CardContent>
                                 <Stack spacing={2}>
                                     <Alert severity="success">
-                                        Taslak form başarıyla oluşturuldu.
+                                        {isEditMode
+                                            ? "Taslak form başarıyla güncellendi."
+                                            : "Taslak form başarıyla oluşturuldu."}
                                     </Alert>
 
                                     <Typography>
@@ -766,16 +768,18 @@ export default function FormBuilderPage() {
                                                     : "Formu Yayınla"}
                                         </Button>
 
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/forms/${createdForm.publicId}`,
-                                                )
-                                            }
-                                        >
-                                            Formu Görüntüle
-                                        </Button>
+                                        {createdForm.status === "Published" && (
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/forms/${createdForm.publicId}`,
+                                                    )
+                                                }
+                                            >
+                                                Formu Görüntüle
+                                            </Button>
+                                        )}
 
                                         <Button
                                             variant="text"
@@ -797,7 +801,11 @@ export default function FormBuilderPage() {
                         variant="contained"
                         size="large"
                         onClick={handleSave}
-                        disabled={isSaving || Boolean(createdForm) || !formDraft.title.trim()}
+                        disabled={
+                            isSaving ||
+                            (!isEditMode && Boolean(createdForm)) ||
+                            !formDraft.title.trim()
+                        }
                     >
                         {isSaving ? "Kaydediliyor..." : "Formu Kaydet"}
                     </Button>
