@@ -16,6 +16,7 @@ import {
     Paper,
     Select,
     Stack,
+    TextField,
     Table,
     TableBody,
     TableCell,
@@ -28,10 +29,12 @@ import {
 import { getAdminUsers } from "../api/adminApi";
 import {
     assignRole,
+    createRole,
     getAllRoles,
 } from "../api/roleApi";
 import type { Role } from "../types/role";
 import type { AdminUser } from "../types/admin";
+import type { ApiResponse } from "../types/api";
 
 
 export default function AdminPanelPage() {
@@ -48,6 +51,10 @@ export default function AdminPanelPage() {
         useState<number | "">("");
     const [isAssigning, setIsAssigning] = useState(false);
     const [assignmentMessage, setAssignmentMessage] =
+        useState("");
+    const [newRoleName, setNewRoleName] = useState("");
+    const [isCreatingRole, setIsCreatingRole] = useState(false);
+    const [roleCreationMessage, setRoleCreationMessage] =
         useState("");
 
     useEffect(() => {
@@ -159,12 +166,75 @@ export default function AdminPanelPage() {
             if (usersResponse.isSuccess && usersResponse.data) {
                 setUsers(usersResponse.data);
             }
-        } catch {
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const apiError =
+                    error.response?.data as
+                        | ApiResponse<unknown>
+                        | undefined;
+
+                setAssignmentMessage(
+                    apiError?.errors?.join(" ") ??
+                    apiError?.message ??
+                    "Rol atanamadı.",
+                );
+
+                return;
+            }
+
             setAssignmentMessage(
                 "Rol atanırken API bağlantısı kurulamadı.",
             );
         } finally {
             setIsAssigning(false);
+        }
+    }
+
+    // Admin tarafından yeni birim rolü oluşturur.
+    async function handleCreateRole() {
+        const normalizedRoleName = newRoleName.trim();
+
+        if (!normalizedRoleName) {
+            setRoleCreationMessage(
+                "Birim rolü adı boş bırakılamaz.",
+            );
+            return;
+        }
+
+        setIsCreatingRole(true);
+        setRoleCreationMessage("");
+
+        try {
+            const response = await createRole(
+                normalizedRoleName,
+            );
+
+            if (!response.isSuccess) {
+                setRoleCreationMessage(
+                    response.errors?.join(" ") ??
+                    response.message ??
+                    "Birim rolü oluşturulamadı.",
+                );
+                return;
+            }
+
+            setRoleCreationMessage(
+                "Birim rolü başarıyla oluşturuldu.",
+            );
+            setNewRoleName("");
+
+            // Yeni rolü seçim listesinin güncel kalması için tekrar yükler.
+            const rolesResponse = await getAllRoles();
+
+            if (rolesResponse.isSuccess && rolesResponse.data) {
+                setRoles(rolesResponse.data);
+            }
+        } catch {
+            setRoleCreationMessage(
+                "Rol oluşturulurken API bağlantısı kurulamadı.",
+            );
+        } finally {
+            setIsCreatingRole(false);
         }
     }
 
@@ -214,6 +284,49 @@ export default function AdminPanelPage() {
                             {errorMessage}
                         </Alert>
                     )}
+
+                    <Card>
+                        <CardContent>
+                            <Stack spacing={2}>
+                                <Typography variant="h6">
+                                    Yeni Birim Rolü Oluştur
+                                </Typography>
+
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                >
+                                    Örneğin Kariyer Merkezi veya Mühendislik Fakültesi.
+                                </Typography>
+
+                                <TextField
+                                    fullWidth
+                                    label="Birim adı"
+                                    value={newRoleName}
+                                    onChange={(event) =>
+                                        setNewRoleName(event.target.value)
+                                    }
+                                    disabled={isCreatingRole}
+                                />
+
+                                <Button
+                                    variant="contained"
+                                    onClick={handleCreateRole}
+                                    disabled={isCreatingRole}
+                                >
+                                    {isCreatingRole
+                                        ? "Oluşturuluyor..."
+                                        : "Birim Rolü Oluştur"}
+                                </Button>
+
+                                {roleCreationMessage && (
+                                    <Alert severity="info">
+                                        {roleCreationMessage}
+                                    </Alert>
+                                )}
+                            </Stack>
+                        </CardContent>
+                    </Card>
 
                     <Card>
                         <CardContent>

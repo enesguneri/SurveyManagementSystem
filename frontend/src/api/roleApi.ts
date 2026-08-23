@@ -39,3 +39,16 @@ export async function assignRole(
 
     return response.data;
 }
+// Admin tarafından yeni birim rolü oluşturulmasını sağlar.
+export async function createRole(
+    name: string,
+): Promise<ApiResponse<Role>> {
+    const response = await apiClient.post<ApiResponse<Role>>(
+        "/roles",
+        {
+            name,
+        },
+    );
+
+    return response.data;
+}
