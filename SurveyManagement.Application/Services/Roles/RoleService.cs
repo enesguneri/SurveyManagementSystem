@@ -144,4 +144,21 @@ public class RoleService : IRoleService
         return ApiResponse<string>.SuccessResult(
             "Rol kullanıcıya başarıyla atandı.");
     }
+
+    public async Task<ApiResponse<List<RoleDto>>> GetAllActiveAsync(
+    CancellationToken cancellationToken = default)
+    {
+        var roles = await _context.Roles
+            .AsNoTracking()
+            .Where(role => role.IsActive)
+            .OrderBy(role => role.Name)
+            .Select(role => new RoleDto
+            {
+                Id = role.Id,
+                Name = role.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        return ApiResponse<List<RoleDto>>.SuccessResult(roles);
+    }
 }

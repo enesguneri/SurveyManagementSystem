@@ -85,4 +85,15 @@ public class RolesController : ControllerBase
             StatusCodes.Status201Created,
             result);
     }
+
+    [HttpGet("all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllActive(
+    CancellationToken cancellationToken)
+    {
+        var result = await _roleService.GetAllActiveAsync(
+            cancellationToken);
+
+        return Ok(result);
+    }
 }
