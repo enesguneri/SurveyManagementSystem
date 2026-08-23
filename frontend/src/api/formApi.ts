@@ -10,6 +10,7 @@ import type {
     ResponseSubmitted,
     SubmitFormResponseRequest,
 } from "../types/response";
+import type { ManageableForm } from "../types/manageableForm";
 
 export async function createForm(
     formDraft: FormDraft,
@@ -53,6 +54,17 @@ export async function publishForm(
     const response = await apiClient.post<
         ApiResponse<FormCreatedResponse>
     >(`/forms/${publicId}/publish`);
+
+    return response.data;
+}
+
+// Kullanıcının yönetebileceği formları getirir.
+export async function getManageableForms(): Promise<
+    ApiResponse<ManageableForm[]>
+> {
+    const response = await apiClient.get<
+        ApiResponse<ManageableForm[]>
+    >("/forms/manageable");
 
     return response.data;
 }

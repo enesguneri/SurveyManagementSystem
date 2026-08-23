@@ -123,7 +123,10 @@ export default function DashboardPage() {
                                         Taslak, yayımlanmış ve kapatılmış formlarınızı yönetin.
                                     </Typography>
 
-                                    <Button variant="outlined">
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => navigate("/forms")}
+                                    >
                                         Formları Görüntüle
                                     </Button>
                                 </Stack>

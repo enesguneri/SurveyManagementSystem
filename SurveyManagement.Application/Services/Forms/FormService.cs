@@ -21,6 +21,64 @@ public class FormService : IFormService
         _formRequestValidator = formRequestValidator;
     }
 
+    public async Task<ApiResponse<List<ManageableFormDto>>> GetManageableAsync(
+    int requesterUserId,
+    CancellationToken cancellationToken = default)
+    {
+        // Kullanıcının Admin rolüne sahip olup olmadığı kontrol edilir.
+        var isAdmin = await _context.UserRoles
+            .AnyAsync(
+                userRole =>
+                    userRole.UserId == requesterUserId &&
+                    userRole.Role.Name == "Admin" &&
+                    userRole.Role.IsActive,
+                cancellationToken);
+
+        // Kullanıcının aktif birim rolleri alınır.
+        var assignedRoleIds = await _context.UserRoles
+            .Where(
+                userRole =>
+                    userRole.UserId == requesterUserId &&
+                    userRole.Role.IsActive)
+            .Select(userRole => userRole.RoleId)
+            .ToListAsync(cancellationToken);
+
+        // Filtreleme veritabanı seviyesinde yapılır.
+        var forms = await _context.Forms
+            .AsNoTracking()
+            .Where(
+                form =>
+                    isAdmin ||
+                    form.CreatedByUserId == requesterUserId ||
+                    form.FormRoles.Any(
+                        formRole =>
+                            formRole.Role.IsActive &&
+                            assignedRoleIds.Contains(formRole.RoleId)))
+            .OrderByDescending(form => form.CreatedAt)
+            .Select(
+                form => new ManageableFormDto
+                {
+                    Id = form.Id,
+                    PublicId = form.PublicId,
+                    Title = form.Title,
+                    Description = form.Description,
+                    Status = form.Status,
+                    AccessType = form.AccessType,
+                    CreatedAt = form.CreatedAt,
+                    CreatedByUserId = form.CreatedByUserId,
+                    CreatedByUserName = form.CreatedByUser.Name,
+                    RoleNames = form.FormRoles
+                        .Where(formRole => formRole.Role.IsActive)
+                        .OrderBy(formRole => formRole.Role.Name)
+                        .Select(formRole => formRole.Role.Name)
+                        .ToList()
+                })
+            .ToListAsync(cancellationToken);
+
+        return ApiResponse<List<ManageableFormDto>>.SuccessResult(
+            forms);
+    }
+
     public async Task<ApiResponse<FormCreatedDto>> CreateAsync(
         CreateFormDto createFormDto,
         int createdByUserId,

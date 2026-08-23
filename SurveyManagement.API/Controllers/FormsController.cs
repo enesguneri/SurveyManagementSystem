@@ -19,6 +19,30 @@ public class FormsController : ControllerBase
         _formService = formService;
     }
 
+    [HttpGet("manageable")]
+    public async Task<IActionResult> GetManageable(
+    CancellationToken cancellationToken)
+    {
+        // Kullanıcı Id değeri JWT içindeki NameIdentifier claim'inden alınır.
+        var userIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(
+                ApiResponse<string>.FailureResult(
+                    "Kimliği doğrulanmış kullanıcı bilgisi alınamadı.",
+                    401));
+        }
+
+        // Admin, form sahibi veya birim rolü sahibi olduğu formlar döndürülür.
+        var result = await _formService.GetManageableAsync(
+            userId,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateFormDto createFormDto,
