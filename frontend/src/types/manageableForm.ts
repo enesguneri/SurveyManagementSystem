@@ -1,4 +1,5 @@
 import type { FormAccessType } from "./form";
+import type { PublishedForm } from "./publishedForm";
 
 export type FormStatus =
     | "Draft"
@@ -16,4 +17,10 @@ export interface ManageableForm {
     createdByUserId: number;
     createdByUserName: string;
     roleNames: string[];
+}
+
+// Taslak form düzenleme ekranında kullanılacak detay modeli.
+export interface ManageableFormDetails
+    extends PublishedForm {
+    roleIds: number[];
 }

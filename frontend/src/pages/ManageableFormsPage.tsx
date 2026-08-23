@@ -231,6 +231,19 @@ export default function ManageableFormsPage() {
                                             )}
                                         </Stack>
 
+                                        {form.status === "Draft" && (
+                                            <Button
+                                                variant="contained"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/forms/${form.publicId}/edit`,
+                                                    )
+                                                }
+                                            >
+                                                Düzenle
+                                            </Button>
+                                        )}
+
                                         {form.status === "Published" && (
                                             <Button
                                                 variant="outlined"

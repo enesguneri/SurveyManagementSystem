@@ -36,4 +36,10 @@ public interface IFormService
     Task<ApiResponse<List<ManageableFormDto>>> GetManageableAsync(
         int requesterUserId,
         CancellationToken cancellationToken = default);
+
+    // Kullanıcının yönetme yetkisi olan formun taslak detayını getirir.
+    Task<ApiResponse<FormDetailsDto>> GetManageableByPublicIdAsync(
+        Guid publicId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default);
 }

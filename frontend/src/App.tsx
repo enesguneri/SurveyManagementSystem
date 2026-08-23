@@ -18,6 +18,7 @@ function App() {
               <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<DashboardPage />} />
                   <Route path="/forms/new" element={<FormBuilderPage />} />
+                  <Route path="/forms/:publicId/edit" element={<FormBuilderPage />}/>
                   <Route path="/admin" element={<AdminPanelPage />} />
                   <Route path="/forms" element={<ManageableFormsPage />}
                   />

@@ -13,5 +13,7 @@ public class FormDetailsDto
     public FormStatus Status { get; set; }
     public FormAccessType AccessType { get; set; }
 
+    // Formun bağlı olduğu birim rollerinin Id değerleri.
+    public List<int> RoleIds { get; set; } = new();
     public List<QuestionDetailsDto> Questions { get; set; } = new();
 }

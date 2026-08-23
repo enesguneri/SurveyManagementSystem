@@ -10,7 +10,10 @@ import type {
     ResponseSubmitted,
     SubmitFormResponseRequest,
 } from "../types/response";
-import type { ManageableForm } from "../types/manageableForm";
+import type {
+    ManageableForm,
+    ManageableFormDetails,
+} from "../types/manageableForm";
 
 export async function createForm(
     formDraft: FormDraft,
@@ -65,6 +68,31 @@ export async function getManageableForms(): Promise<
     const response = await apiClient.get<
         ApiResponse<ManageableForm[]>
     >("/forms/manageable");
+
+    return response.data;
+}
+
+// Yetkili kullanıcının taslak form detayını getirir.
+export async function getManageableForm(
+    publicId: string,
+): Promise<ApiResponse<ManageableFormDetails>> {
+    const response = await apiClient.get<
+        ApiResponse<ManageableFormDetails>
+    >(`/forms/${publicId}/manage`);
+
+    return response.data;
+}
+
+// Taslak formu günceller.
+export async function updateDraftForm(
+    publicId: string,
+    formDraft: FormDraft,
+): Promise<ApiResponse<FormCreatedResponse>> {
+    const request = toCreateFormRequest(formDraft);
+
+    const response = await apiClient.put<
+        ApiResponse<FormCreatedResponse>
+    >(`/forms/${publicId}`, request);
 
     return response.data;
 }

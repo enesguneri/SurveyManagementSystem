@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+    useNavigate,
+    useParams,
+} from "react-router-dom";
 import {
     Box,
     Button,
     Card,
     CardContent,
+    CircularProgress,
     Checkbox,
     Container,
     FormControl,
@@ -32,7 +36,9 @@ import QuestionTypeEditor from "../components/forms/QuestionTypeEditor";
 import { Alert } from "@mui/material";
 import {
     createForm,
+    getManageableForm,
     publishForm,
+    updateDraftForm,
 } from "../api/formApi";
 import type { ReactNode } from "react";
 import {
@@ -52,6 +58,7 @@ import {
 import type { FormCreatedResponse } from "../types/formApi";
 import { getAvailableRoles } from "../api/roleApi";
 import type { Role } from "../types/role";
+import type { ManageableFormDetails } from "../types/manageableForm";
 
 interface QuestionTypeOption {
     value: QuestionType;
@@ -107,8 +114,71 @@ const questionTypeOptions: QuestionTypeOption[] = [
     },
 ];
 
+function mapManageableFormToDraft(
+    form: ManageableFormDetails,
+): FormDraft {
+    return {
+        title: form.title,
+        description: form.description ?? "",
+        accessType: form.accessType,
+        showRespondentIdentity:
+        form.showRespondentIdentity,
+        roleIds: form.roleIds,
+
+        questions: form.questions.map((question) => ({
+            clientId: crypto.randomUUID(),
+            title: question.title,
+            type: question.type,
+            isRequired: question.isRequired,
+            options: question.options
+                .sort(
+                    (first, second) =>
+                        first.displayOrder -
+                        second.displayOrder,
+                )
+                .map((option) => option.text),
+            matrixRows: question.matrixRows
+                .sort(
+                    (first, second) =>
+                        first.displayOrder -
+                        second.displayOrder,
+                )
+                .map((row) => row.text),
+            matrixColumns: question.matrixColumns
+                .sort(
+                    (first, second) =>
+                        first.displayOrder -
+                        second.displayOrder,
+                )
+                .map((column) => column.text),
+            validation: {
+                minLength:
+                    question.validation?.minLength ?? null,
+                maxLength:
+                    question.validation?.maxLength ?? null,
+                regexPattern:
+                    question.validation?.regexPattern ?? "",
+                minValue:
+                    question.validation?.minValue ?? null,
+                maxValue:
+                    question.validation?.maxValue ?? null,
+                minDate:
+                    question.validation?.minDate ?? null,
+                maxDate:
+                    question.validation?.maxDate ?? null,
+            },
+        })),
+    };
+}
+
 export default function FormBuilderPage() {
     const navigate = useNavigate();
+
+    const { publicId } = useParams<{
+        publicId?: string;
+    }>();
+
+    const isEditMode = Boolean(publicId);
 
     const [formDraft, setFormDraft] = useState<FormDraft>({
         title: "",
@@ -118,6 +188,9 @@ export default function FormBuilderPage() {
         roleIds: [],
         questions: [createEmptyQuestion()],
     });
+
+    const [isLoadingForm, setIsLoadingForm] =
+        useState(isEditMode);
 
     const [errorMessage, setErrorMessage] = useState("");
     const [isSaving, setIsSaving] = useState(false);
@@ -155,6 +228,43 @@ export default function FormBuilderPage() {
 
         void loadAvailableRoles();
     }, []);
+
+    useEffect(() => {
+        if (!publicId) {
+            return;
+        }
+
+        const formPublicId = publicId;
+
+        async function loadManageableForm() {
+            try {
+                const response = await getManageableForm(
+                    formPublicId,
+                );
+
+                if (!response.isSuccess || !response.data) {
+                    setErrorMessage(
+                        response.errors?.join(" ") ??
+                        response.message ??
+                        "Form detayları yüklenemedi.",
+                    );
+                    return;
+                }
+
+                setFormDraft(
+                    mapManageableFormToDraft(response.data),
+                );
+            } catch {
+                setErrorMessage(
+                    "Form detayları yüklenirken API bağlantısı kurulamadı.",
+                );
+            } finally {
+                setIsLoadingForm(false);
+            }
+        }
+
+        void loadManageableForm();
+    }, [publicId]);
 
     function updateQuestion(
         clientId: string,
@@ -247,17 +357,15 @@ export default function FormBuilderPage() {
             return;
         }
 
-        if (formDraft.roleIds.length === 0) {
-            setErrorMessage(
-                "Form için en az bir birim seçilmelidir.",
-            );
-            return;
-        }
-
         setIsSaving(true);
 
         try {
-            const result = await createForm(formDraft);
+            const result = publicId
+                ? await updateDraftForm(
+                    publicId,
+                    formDraft,
+                )
+                : await createForm(formDraft);
 
             if (!result.isSuccess) {
                 setErrorMessage(
@@ -312,6 +420,20 @@ export default function FormBuilderPage() {
         }
     }
 
+    if (isLoadingForm) {
+        return (
+            <Stack
+                sx={{
+                    minHeight: "100vh",
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+            >
+                <CircularProgress />
+            </Stack>
+        );
+    }
+
     return (
         <Box
             sx={{
@@ -330,7 +452,9 @@ export default function FormBuilderPage() {
                         }}
                     >
                         <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
-                            Yeni Anket Oluştur
+                            {isEditMode
+                                ? "Taslak Formu Düzenle"
+                                : "Yeni Anket Oluştur"}
                         </Typography>
 
                         <Button
@@ -396,11 +520,6 @@ export default function FormBuilderPage() {
 
                                 <FormControl
                                     fullWidth
-                                    required
-                                    error={
-                                        Boolean(rolesError) ||
-                                        formDraft.roleIds.length === 0
-                                    }
                                 >
                                     <InputLabel id="form-roles-label">
                                         Formun ait olduğu birimler
@@ -451,7 +570,7 @@ export default function FormBuilderPage() {
 
                                     <FormHelperText>
                                         {rolesError ||
-                                            "Formun bağlı olduğu bir veya daha fazla birim seçin."}
+                                            "Formu belirli bir birime bağlamak istemiyorsanız boş bırakabilirsiniz."}
                                     </FormHelperText>
                                 </FormControl>
 
@@ -678,7 +797,7 @@ export default function FormBuilderPage() {
                         variant="contained"
                         size="large"
                         onClick={handleSave}
-                        disabled={isSaving || Boolean(createdForm) || !formDraft.title.trim() || formDraft.roleIds.length === 0}
+                        disabled={isSaving || Boolean(createdForm) || !formDraft.title.trim()}
                     >
                         {isSaving ? "Kaydediliyor..." : "Formu Kaydet"}
                     </Button>
