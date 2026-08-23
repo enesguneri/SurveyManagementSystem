@@ -3,6 +3,7 @@ export type QuestionType =
     | "LongText"
     | "Date"
     | "SingleChoice"
+    | "Dropdown"
     | "MultipleChoice"
     | "Rating"
     | "MultipleChoiceGrid"
@@ -36,6 +37,10 @@ export interface FormDraft {
     description: string;
     accessType: FormAccessType;
     showRespondentIdentity: boolean;
+
+    // Formun bağlı olduğu birim rollerinin Id değerleri.
+    roleIds: number[];
+
     questions: QuestionDraft[];
 }
 

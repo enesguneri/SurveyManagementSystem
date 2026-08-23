@@ -18,6 +18,11 @@ public class CreateFormDto
 
     public FormAccessType AccessType { get; set; } = FormAccessType.Authenticated;
 
+    // Formun bağlı olduğu birim rollerinin Id değerleri.
+    // Bir form birden fazla birime ait olabilir.
+    [MinLength(1)]
+    public List<int> RoleIds { get; set; } = new();
+
     [MinLength(1)]
     public List<CreateQuestionDto> Questions { get; set; } = new();
 }

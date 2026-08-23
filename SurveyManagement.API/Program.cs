@@ -11,6 +11,8 @@ using SurveyManagement.Application.Interfaces.Responses;
 using SurveyManagement.Application.Services.Responses;
 using SurveyManagement.Application.Interfaces.Security;
 using SurveyManagement.Application.Interfaces.Forms;
+using SurveyManagement.Application.Interfaces.Roles;
+using SurveyManagement.Application.Services.Roles;
 using SurveyManagement.Application.Services.Forms;
 using SurveyManagement.Application.Services;
 using SurveyManagement.Persistence.Context;
@@ -36,6 +38,9 @@ builder.Services.AddScoped<IFormService, FormService>();
 // Form yanıtlarının doğrulama ve kayıt servisleri.
 builder.Services.AddScoped<IFormResponseValidator, FormResponseValidator>();
 builder.Services.AddScoped<IFormResponseService, FormResponseService>();
+
+// Birim rolü listeleme ve admin rol oluşturma servisleri.
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

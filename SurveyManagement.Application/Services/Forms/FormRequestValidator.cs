@@ -63,6 +63,7 @@ public class FormRequestValidator : IFormRequestValidator
 
             case QuestionType.SingleChoice:
             case QuestionType.MultipleChoice:
+            case QuestionType.Dropdown:
                 ValidateChoiceQuestion(question, prefix, errors);
                 break;
 

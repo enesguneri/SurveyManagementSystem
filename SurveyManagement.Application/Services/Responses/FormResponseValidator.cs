@@ -83,6 +83,7 @@ public class FormResponseValidator : IFormResponseValidator
                 break;
 
             case QuestionType.SingleChoice:
+            case QuestionType.Dropdown:
             case QuestionType.MultipleChoice:
                 ValidateChoiceAnswer(question, answer, prefix, errors);
                 break;
@@ -268,7 +269,8 @@ public class FormResponseValidator : IFormResponseValidator
             errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
         }
 
-        if (question.Type == QuestionType.SingleChoice &&
+        if ((question.Type == QuestionType.SingleChoice ||
+            question.Type == QuestionType.Dropdown) &&
             selectedIds.Count != 1)
         {
             errors.Add($"{prefix} yalnızca bir seçenek kabul eder.");

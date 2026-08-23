@@ -20,6 +20,10 @@ import {
     TableRow,
     TextField,
     Typography,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
 } from "@mui/material";
 import {
     getPublishedForm,
@@ -302,6 +306,14 @@ function PublishedFormPage() {
                     </CardContent>
                 </Card>
 
+                {form.accessType === "Authenticated" &&
+                    form.showRespondentIdentity && (
+                        <Alert severity="info">
+                            Bu formu doldurduğunuzda adınız, form sahibinin
+                            yanıt sonuçlarında gösterilecektir.
+                        </Alert>
+                    )}
+
                 {errorMessage && (
                     <Alert severity="error">
                         {errorMessage}
@@ -479,6 +491,38 @@ function QuestionInput({
                             />
                         ))}
                     </RadioGroup>
+                );
+            case "Dropdown":
+                return (
+                    <FormControl fullWidth>
+                        <InputLabel id={`dropdown-label-${question.id}`}>
+                            Seçim yapınız
+                        </InputLabel>
+
+                        <Select
+                            labelId={`dropdown-label-${question.id}`}
+                            label="Seçim yapınız"
+                            value={
+                                answer.selectedOptionIds[0]?.toString() ?? ""
+                            }
+                            onChange={(event) =>
+                                toggleOption(
+                                    question.id,
+                                    Number(event.target.value),
+                                    false,
+                                )
+                            }
+                        >
+                            {question.options.map((option) => (
+                                <MenuItem
+                                    key={option.id}
+                                    value={option.id}
+                                >
+                                    {option.text}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 );
 
             case "MultipleChoice":

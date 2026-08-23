@@ -9,6 +9,7 @@ export interface CreateFormRequest {
     description: string | null;
     accessType: FormAccessType;
     showRespondentIdentity: boolean;
+    roleIds: number[];
     questions: CreateQuestionRequest[];
 }
 
@@ -57,6 +58,7 @@ export function toCreateFormRequest(
         description: formDraft.description.trim() || null,
         accessType: formDraft.accessType,
         showRespondentIdentity: formDraft.showRespondentIdentity,
+        roleIds: formDraft.roleIds,
 
         questions: formDraft.questions.map((question) => ({
             title: question.title.trim(),

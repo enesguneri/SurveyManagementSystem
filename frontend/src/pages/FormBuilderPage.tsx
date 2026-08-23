@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Box,
     Button,
     Card,
     CardContent,
+    Checkbox,
     Container,
     FormControl,
     FormControlLabel,
+    FormHelperText,
     InputLabel,
     MenuItem,
     Select,
@@ -34,6 +36,7 @@ import {
 } from "../api/formApi";
 import type { ReactNode } from "react";
 import {
+    ArrowDropDown,
     CalendarToday,
     CheckBox,
     GridOn,
@@ -47,6 +50,8 @@ import {
     ListItemText,
 } from "@mui/material";
 import type { FormCreatedResponse } from "../types/formApi";
+import { getAvailableRoles } from "../api/roleApi";
+import type { Role } from "../types/role";
 
 interface QuestionTypeOption {
     value: QuestionType;
@@ -69,6 +74,11 @@ const questionTypeOptions: QuestionTypeOption[] = [
         value: "SingleChoice",
         label: "Çoktan seçmeli",
         icon: <RadioButtonChecked />,
+    },
+    {
+        value: "Dropdown",
+        label: "Açılır menü",
+        icon: <ArrowDropDown />,
     },
     {
         value: "MultipleChoice",
@@ -105,6 +115,7 @@ export default function FormBuilderPage() {
         description: "",
         accessType: "Authenticated",
         showRespondentIdentity: false,
+        roleIds: [],
         questions: [createEmptyQuestion()],
     });
 
@@ -115,6 +126,35 @@ export default function FormBuilderPage() {
         useState<FormCreatedResponse | null>(null);
 
     const [isPublishing, setIsPublishing] = useState(false);
+
+    const [availableRoles, setAvailableRoles] =
+        useState<Role[]>([]);
+
+    const [rolesError, setRolesError] = useState("");
+
+    useEffect(() => {
+        async function loadAvailableRoles() {
+            try {
+                const response = await getAvailableRoles();
+
+                if (!response.isSuccess || !response.data) {
+                    setRolesError(
+                        response.message ??
+                        "Birim rolleri yüklenemedi.",
+                    );
+                    return;
+                }
+
+                setAvailableRoles(response.data);
+            } catch {
+                setRolesError(
+                    "Birim rolleri alınırken API bağlantısı kurulamadı.",
+                );
+            }
+        }
+
+        void loadAvailableRoles();
+    }, []);
 
     function updateQuestion(
         clientId: string,
@@ -181,6 +221,12 @@ export default function FormBuilderPage() {
         setFormDraft((currentDraft) => ({
             ...currentDraft,
             accessType: value,
+
+            // Public formlarda yanıtlayan kimliği ayarı kullanılmaz.
+            showRespondentIdentity:
+                value === "Authenticated"
+                    ? currentDraft.showRespondentIdentity
+                    : false,
         }));
     }
 
@@ -198,6 +244,13 @@ export default function FormBuilderPage() {
             )
         ) {
             setErrorMessage("Tüm soruların başlığı doldurulmalıdır.");
+            return;
+        }
+
+        if (formDraft.roleIds.length === 0) {
+            setErrorMessage(
+                "Form için en az bir birim seçilmelidir.",
+            );
             return;
         }
 
@@ -341,20 +394,84 @@ export default function FormBuilderPage() {
                                     </Select>
                                 </FormControl>
 
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={formDraft.showRespondentIdentity}
-                                            onChange={(event) =>
-                                                setFormDraft((currentDraft) => ({
-                                                    ...currentDraft,
-                                                    showRespondentIdentity: event.target.checked,
-                                                }))
-                                            }
-                                        />
+                                <FormControl
+                                    fullWidth
+                                    required
+                                    error={
+                                        Boolean(rolesError) ||
+                                        formDraft.roleIds.length === 0
                                     }
-                                    label="Yanıtlayanların adı sonuçlarda gösterilsin"
-                                />
+                                >
+                                    <InputLabel id="form-roles-label">
+                                        Formun ait olduğu birimler
+                                    </InputLabel>
+
+                                    <Select
+                                        labelId="form-roles-label"
+                                        multiple
+                                        value={formDraft.roleIds}
+                                        label="Formun ait olduğu birimler"
+                                        renderValue={(selected) =>
+                                            availableRoles
+                                                .filter((role) =>
+                                                    (selected as number[]).includes(role.id),
+                                                )
+                                                .map((role) => role.name)
+                                                .join(", ")
+                                        }
+                                        onChange={(event) => {
+                                            const value = event.target.value;
+
+                                            const roleIds =
+                                                typeof value === "string"
+                                                    ? value.split(",").map(Number)
+                                                    : value.map(Number);
+
+                                            setFormDraft((currentDraft) => ({
+                                                ...currentDraft,
+                                                roleIds,
+                                            }));
+                                        }}
+                                    >
+                                        {availableRoles.map((role) => (
+                                            <MenuItem
+                                                key={role.id}
+                                                value={role.id}
+                                            >
+                                                <Checkbox
+                                                    checked={formDraft.roleIds.includes(
+                                                        role.id,
+                                                    )}
+                                                />
+
+                                                <ListItemText primary={role.name} />
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+
+                                    <FormHelperText>
+                                        {rolesError ||
+                                            "Formun bağlı olduğu bir veya daha fazla birim seçin."}
+                                    </FormHelperText>
+                                </FormControl>
+
+                                {formDraft.accessType === "Authenticated" && (
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={formDraft.showRespondentIdentity}
+                                                onChange={(event) =>
+                                                    setFormDraft((currentDraft) => ({
+                                                        ...currentDraft,
+                                                        showRespondentIdentity:
+                                                        event.target.checked,
+                                                    }))
+                                                }
+                                            />
+                                        }
+                                        label="Yanıtlayanların adı sonuçlarda gösterilsin"
+                                    />
+                                )}
 
                             </Stack>
                         </CardContent>
@@ -561,7 +678,7 @@ export default function FormBuilderPage() {
                         variant="contained"
                         size="large"
                         onClick={handleSave}
-                        disabled={isSaving || Boolean(createdForm) || !formDraft.title.trim()}
+                        disabled={isSaving || Boolean(createdForm) || !formDraft.title.trim() || formDraft.roleIds.length === 0}
                     >
                         {isSaving ? "Kaydediliyor..." : "Formu Kaydet"}
                     </Button>

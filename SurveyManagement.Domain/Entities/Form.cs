@@ -21,4 +21,8 @@ public class Form : BaseEntity
 
     public ICollection<Question> Questions { get; set; } = new List<Question>();
     public ICollection<FormResponse> Responses { get; set; } = new List<FormResponse>();
+
+    // Formun bağlı olduğu birim rolleri.
+    public ICollection<FormRole> FormRoles { get; set; } =
+        new List<FormRole>();
 }

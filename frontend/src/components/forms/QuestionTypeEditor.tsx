@@ -52,6 +52,7 @@ export default function QuestionTypeEditor({
 
     if (
         question.type === "SingleChoice" ||
+        question.type === "Dropdown" ||
         question.type === "MultipleChoice"
     ) {
         return (

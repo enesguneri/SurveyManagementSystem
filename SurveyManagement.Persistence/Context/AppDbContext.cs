@@ -13,7 +13,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
-
+    public DbSet<FormRole> FormRoles => Set<FormRole>();
     public DbSet<Form> Forms => Set<Form>();
     public DbSet<Question> Questions => Set<Question>();
     public DbSet<QuestionValidation> QuestionValidations => Set<QuestionValidation>();
@@ -42,6 +42,27 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasOne(userRole => userRole.Role)
             .WithMany(role => role.UserRoles)
             .HasForeignKey(userRole => userRole.RoleId);
+
+        // FormRole birleşik anahtarı:
+        // aynı form-birim ilişkisi iki kez eklenemez.
+        modelBuilder.Entity<FormRole>()
+            .HasKey(formRole => new
+            {
+                formRole.FormId,
+                formRole.RoleId
+            });
+
+        modelBuilder.Entity<FormRole>()
+            .HasOne(formRole => formRole.Form)
+            .WithMany(form => form.FormRoles)
+            .HasForeignKey(formRole => formRole.FormId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FormRole>()
+            .HasOne(formRole => formRole.Role)
+            .WithMany(role => role.FormRoles)
+            .HasForeignKey(formRole => formRole.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Form>()
             .HasIndex(form => form.PublicId)
@@ -258,15 +279,19 @@ public class AppDbContext : DbContext, IAppDbContext
             {
                 Id = 1,
                 Name = "Admin",
-                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                IsSystemRole = true,
+                CreatedAt = new DateTime(
+                2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true
             },
             new Role
             {
                 Id = 2,
-                Name = "User",
-                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                IsActive = true
+            Name = "User",
+            IsSystemRole = true,
+            CreatedAt = new DateTime(
+            2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            IsActive = true
             }
         );
     }
