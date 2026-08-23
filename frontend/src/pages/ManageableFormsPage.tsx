@@ -256,6 +256,20 @@ export default function ManageableFormsPage() {
                                                 Formu Görüntüle
                                             </Button>
                                         )}
+
+                                        {(form.status === "Published" ||
+                                            form.status === "Closed") && (
+                                            <Button
+                                                variant="contained"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/forms/${form.publicId}/responses`,
+                                                    )
+                                                }
+                                            >
+                                                Yanıtları Görüntüle
+                                            </Button>
+                                        )}
                                     </Stack>
                                 </CardContent>
                             </Card>

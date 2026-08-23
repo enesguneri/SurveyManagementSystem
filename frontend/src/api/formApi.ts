@@ -7,6 +7,7 @@ import {
 import type { FormDraft } from "../types/form";
 import type { PublishedForm } from "../types/publishedForm";
 import type {
+    FormResponses,
     ResponseSubmitted,
     SubmitFormResponseRequest,
 } from "../types/response";
@@ -93,6 +94,17 @@ export async function updateDraftForm(
     const response = await apiClient.put<
         ApiResponse<FormCreatedResponse>
     >(`/forms/${publicId}`, request);
+
+    return response.data;
+}
+
+// Yetkili kullanıcı için form yanıtlarını getirir.
+export async function getFormResponses(
+    publicId: string,
+): Promise<ApiResponse<FormResponses>> {
+    const response = await apiClient.get<
+        ApiResponse<FormResponses>
+    >(`/forms/${publicId}/responses`);
 
     return response.data;
 }
