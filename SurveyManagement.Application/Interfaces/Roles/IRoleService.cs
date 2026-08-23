@@ -21,4 +21,9 @@ public interface IRoleService
     Task<ApiResponse<string>> AssignToUserAsync(
         AssignRoleDto assignRoleDto,
         CancellationToken cancellationToken = default);
+
+    // Admin paneli için tüm aktif rolleri getirir.
+    // Sistem rolleri ve birim rolleri dahil edilir.
+    Task<ApiResponse<List<RoleDto>>> GetAllActiveAsync(
+        CancellationToken cancellationToken = default);
 }

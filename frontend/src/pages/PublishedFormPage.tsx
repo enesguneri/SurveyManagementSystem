@@ -40,6 +40,7 @@ import type {
 } from "../types/response";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import BrandHeader from "../components/layout/BrandHeader";
 
 function createEmptyAnswer(
     questionId: number,
@@ -123,7 +124,7 @@ function PublishedFormPage() {
         }
 
         void loadForm();
-    }, [publicId]);
+    }, [publicId, navigate]);
 
     function updateAnswer(
         questionId: number,
@@ -288,7 +289,9 @@ function PublishedFormPage() {
     );
 
     return (
-        <Container maxWidth="md" sx={{ py: 5 }}>
+        <>
+            <BrandHeader pageTitle="Anket" />
+            <Container maxWidth="md" sx={{ py: 5 }}>
             <Stack spacing={3}>
                 <Card>
                     <CardContent>
@@ -351,7 +354,8 @@ function PublishedFormPage() {
                         : "Yanıtları Gönder"}
                 </Button>
             </Stack>
-        </Container>
+            </Container>
+        </>
     );
 }
 

@@ -1,3 +1,5 @@
+import type { QuestionType } from "./form";
+
 // Form yanıtı gönderilirken backend'e gönderilen ana model.
 export interface SubmitFormResponseRequest {
     answers: SubmitAnswerRequest[];
@@ -24,4 +26,41 @@ export interface ResponseSubmitted {
     formResponseId: number;
     formPublicId: string;
     submittedAt: string;
+}
+
+export interface ResponseSelectedOption {
+    id: number;
+    text: string;
+}
+
+export interface ResponseMatrixSelection {
+    matrixRowId: number;
+    matrixRowText: string;
+    matrixColumnId: number;
+    matrixColumnText: string;
+}
+
+export interface ResponseAnswerDetails {
+    questionId: number;
+    questionTitle: string;
+    questionType: QuestionType;
+    textValue: string | null;
+    numericValue: number | null;
+    dateValue: string | null;
+    selectedOptions: ResponseSelectedOption[];
+    matrixSelections: ResponseMatrixSelection[];
+}
+
+export interface FormResponseItem {
+    id: number;
+    respondentName: string | null;
+    submittedAt: string;
+    answers: ResponseAnswerDetails[];
+}
+
+export interface FormResponses {
+    formPublicId: string;
+    title: string;
+    showRespondentIdentity: boolean;
+    responses: FormResponseItem[];
 }

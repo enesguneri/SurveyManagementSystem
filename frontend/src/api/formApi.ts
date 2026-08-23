@@ -7,9 +7,14 @@ import {
 import type { FormDraft } from "../types/form";
 import type { PublishedForm } from "../types/publishedForm";
 import type {
+    FormResponses,
     ResponseSubmitted,
     SubmitFormResponseRequest,
 } from "../types/response";
+import type {
+    ManageableForm,
+    ManageableFormDetails,
+} from "../types/manageableForm";
 
 export async function createForm(
     formDraft: FormDraft,
@@ -53,6 +58,64 @@ export async function publishForm(
     const response = await apiClient.post<
         ApiResponse<FormCreatedResponse>
     >(`/forms/${publicId}/publish`);
+
+    return response.data;
+}
+
+// Kullanıcının yönetebileceği formları getirir.
+export async function getManageableForms(): Promise<
+    ApiResponse<ManageableForm[]>
+> {
+    const response = await apiClient.get<
+        ApiResponse<ManageableForm[]>
+    >("/forms/manageable");
+
+    return response.data;
+}
+
+// Yetkili kullanıcının taslak form detayını getirir.
+export async function getManageableForm(
+    publicId: string,
+): Promise<ApiResponse<ManageableFormDetails>> {
+    const response = await apiClient.get<
+        ApiResponse<ManageableFormDetails>
+    >(`/forms/${publicId}/manage`);
+
+    return response.data;
+}
+
+// Taslak formu günceller.
+export async function updateDraftForm(
+    publicId: string,
+    formDraft: FormDraft,
+): Promise<ApiResponse<FormCreatedResponse>> {
+    const request = toCreateFormRequest(formDraft);
+
+    const response = await apiClient.put<
+        ApiResponse<FormCreatedResponse>
+    >(`/forms/${publicId}`, request);
+
+    return response.data;
+}
+
+// Yetkili kullanıcı için form yanıtlarını getirir.
+export async function getFormResponses(
+    publicId: string,
+): Promise<ApiResponse<FormResponses>> {
+    const response = await apiClient.get<
+        ApiResponse<FormResponses>
+    >(`/forms/${publicId}/responses`);
+
+    return response.data;
+}
+
+// Yayımlanmış formu kapatır.
+export async function closeForm(
+    publicId: string,
+): Promise<ApiResponse<FormCreatedResponse>> {
+    const response = await apiClient.post<
+        ApiResponse<FormCreatedResponse>
+    >(`/forms/${publicId}/close`);
 
     return response.data;
 }

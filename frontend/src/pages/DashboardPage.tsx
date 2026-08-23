@@ -1,17 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import {
-    AppBar,
     Box,
     Button,
     Card,
     CardContent,
-    Chip,
     Container,
     Stack,
-    Toolbar,
     Typography,
 } from "@mui/material";
-import { useAuth } from "../auth/AuthContext";
+import AddCircleOutlineRounded from "@mui/icons-material/AddCircleOutlineRounded";
+import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
+import FolderOpenRounded from "@mui/icons-material/FolderOpenRounded";
+import { useAuth } from "../auth/useAuth";
+import BrandHeader from "../components/layout/BrandHeader";
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -23,126 +24,124 @@ export default function DashboardPage() {
     }
 
     return (
-        <Box sx={{ minHeight: "100vh", backgroundColor: "background.default" }}>
-            <AppBar position="static" color="inherit" elevation={1}>
-                <Toolbar sx={{ justifyContent: "space-between" }}>
-                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                        <Box
-                            component="img"
-                            src="/assets/bakircay-logo.png"
-                            alt="İzmir Bakırçay Üniversitesi"
-                            sx={{
-                                width: 48,
-                                height: 48,
-                                objectFit: "contain",
-                            }}
-                        />
+        <Box sx={{ minHeight: "100vh" }}>
+            <BrandHeader pageTitle="Ana Sayfa" onLogout={handleLogout} />
 
-                        <Box>
-                            <Typography
-                                variant="subtitle1"
-                                sx={{ fontWeight: 700 }}
-                            >
-                                İzmir Bakırçay Üniversitesi
-                            </Typography>
-
-                            <Typography variant="caption" color="text.secondary">
-                                Anket Yönetim Sistemi
-                            </Typography>
-                        </Box>
-                    </Stack>
-
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleLogout}
+            <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
+                <Stack spacing={{ xs: 4, md: 6 }}>
+                    <Box
+                        sx={{
+                            p: { xs: 3, md: 5 },
+                            borderRadius: 5,
+                            color: "white",
+                            background:
+                                "linear-gradient(135deg, #005b61 0%, #007c83 58%, #57b9b5 100%)",
+                            boxShadow: "0 20px 50px rgba(0, 91, 97, 0.20)",
+                        }}
                     >
-                        Çıkış Yap
-                    </Button>
-                </Toolbar>
-            </AppBar>
-
-            <Container maxWidth="lg" sx={{ py: 5 }}>
-                <Stack spacing={4}>
-                    <Box>
-                        <Chip
-                            label="Survey Management System"
-                            color="primary"
-                            variant="outlined"
-                            sx={{ mb: 2 }}
-                        />
-
-                        <Typography variant="h3" component="h1" gutterBottom>
-                            Anket yönetim paneli
+                        <Typography
+                            variant="overline"
+                            sx={{ letterSpacing: 1.6, fontWeight: 700, opacity: 0.84 }}
+                        >
+                            Ana Sayfa
                         </Typography>
-
-                        <Typography variant="body1" color="text.secondary">
-                            Formlarınızı oluşturun, yayımlayın ve yanıtları yönetin.
+                        <Typography
+                            variant="h3"
+                            component="h1"
+                            sx={{
+                                mt: 1,
+                                maxWidth: 760,
+                                fontSize: { xs: "2rem", md: "3.2rem" },
+                                lineHeight: 1.1,
+                                fontWeight: 800,
+                            }}
+                        >
+                            İzmir Bakırçay Üniversitesi Anket Yönetim Sistemi
+                        </Typography>
+                        <Typography
+                            variant="h6"
+                            sx={{ mt: 2, maxWidth: 680, fontWeight: 400, opacity: 0.9 }}
+                        >
+                            Anketlerinizi oluşturun, yayınlayın ve yanıtları kolayca yönetin.
                         </Typography>
                     </Box>
 
                     <Box
                         sx={{
                             display: "grid",
-                            gridTemplateColumns: {
-                                xs: "1fr",
-                                md: "repeat(3, 1fr)",
-                            },
+                            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
                             gap: 3,
                         }}
                     >
-                        <Card>
-                            <CardContent>
-                                <Stack spacing={2}>
-                                    <Typography variant="h6">
-                                        Yeni anket oluştur
-                                    </Typography>
-
-                                    <Typography variant="body2" color="text.secondary">
-                                        Dinamik soru tipleri kullanarak yeni bir form hazırlayın.
-                                    </Typography>
-
+                        <Card sx={{ height: "100%" }}>
+                            <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                                <Stack spacing={2.5} sx={{ height: "100%" }}>
+                                    <Box
+                                        sx={{
+                                            width: 52,
+                                            height: 52,
+                                            display: "grid",
+                                            placeItems: "center",
+                                            borderRadius: 3,
+                                            color: "primary.main",
+                                            backgroundColor: "rgba(87, 185, 181, 0.18)",
+                                        }}
+                                    >
+                                        <AddCircleOutlineRounded fontSize="large" />
+                                    </Box>
+                                    <Box sx={{ flexGrow: 1 }}>
+                                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                                            Yeni anket oluştur
+                                        </Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                                            Kısa yanıt, seçenek, derecelendirme, tablo ve tarih
+                                            gibi soru tipleriyle yeni bir anket hazırlayın.
+                                        </Typography>
+                                    </Box>
                                     <Button
                                         variant="contained"
+                                        endIcon={<ArrowForwardRounded />}
                                         onClick={() => navigate("/forms/new")}
+                                        sx={{ alignSelf: "flex-start" }}
                                     >
-                                        Form Oluştur
+                                        Anket Oluştur
                                     </Button>
                                 </Stack>
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardContent>
-                                <Stack spacing={2}>
-                                    <Typography variant="h6">
-                                        Formlarım
-                                    </Typography>
-
-                                    <Typography variant="body2" color="text.secondary">
-                                        Taslak, yayımlanmış ve kapatılmış formlarınızı yönetin.
-                                    </Typography>
-
-                                    <Button variant="outlined">
+                        <Card sx={{ height: "100%" }}>
+                            <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                                <Stack spacing={2.5} sx={{ height: "100%" }}>
+                                    <Box
+                                        sx={{
+                                            width: 52,
+                                            height: 52,
+                                            display: "grid",
+                                            placeItems: "center",
+                                            borderRadius: 3,
+                                            color: "secondary.dark",
+                                            backgroundColor: "rgba(224, 138, 93, 0.16)",
+                                        }}
+                                    >
+                                        <FolderOpenRounded fontSize="large" />
+                                    </Box>
+                                    <Box sx={{ flexGrow: 1 }}>
+                                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                                            Formlarım
+                                        </Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                                            Taslak, yayımlanmış ve kapatılmış anketlerinizi
+                                            tek bir ekrandan yönetin.
+                                        </Typography>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        endIcon={<ArrowForwardRounded />}
+                                        onClick={() => navigate("/forms")}
+                                        sx={{ alignSelf: "flex-start" }}
+                                    >
                                         Formları Görüntüle
-                                    </Button>
-                                </Stack>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent>
-                                <Stack spacing={2}>
-                                    <Typography variant="h6">
-                                        Yanıtlar
-                                    </Typography>
-
-                                    <Typography variant="body2" color="text.secondary">
-                                        Form yanıtlarını ve katılımcı verilerini inceleyin.
-                                    </Typography>
-
-                                    <Button variant="outlined">
-                                        Yanıtları Görüntüle
                                     </Button>
                                 </Stack>
                             </CardContent>

@@ -30,4 +30,16 @@ public interface IFormService
     CreateFormDto updateFormDto,
     int requesterUserId,
     CancellationToken cancellationToken = default);
+
+    // Kullanıcının sahibi olduğu veya birim rolüyle erişebildiği
+    // formları listeler.
+    Task<ApiResponse<List<ManageableFormDto>>> GetManageableAsync(
+        int requesterUserId,
+        CancellationToken cancellationToken = default);
+
+    // Kullanıcının yönetme yetkisi olan formun taslak detayını getirir.
+    Task<ApiResponse<FormDetailsDto>> GetManageableByPublicIdAsync(
+        Guid publicId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default);
 }

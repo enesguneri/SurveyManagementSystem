@@ -5,6 +5,9 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import FormBuilderPage from "./pages/FormBuilderPage";
 import PublishedFormPage from "./pages/PublishedFormPage";
+import AdminPanelPage from "./pages/AdminPanelPage";
+import ManageableFormsPage from "./pages/ManageableFormsPage";
+import FormResponsesPage from "./pages/FormResponsesPage";
 
 function App() {
   return (
@@ -16,6 +19,11 @@ function App() {
               <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<DashboardPage />} />
                   <Route path="/forms/new" element={<FormBuilderPage />} />
+                  <Route path="/forms/:publicId/edit" element={<FormBuilderPage />}/>
+                  <Route path="/admin" element={<AdminPanelPage />} />
+                  <Route path="/forms/:publicId/responses" element={<FormResponsesPage />}/>
+                  <Route path="/forms" element={<ManageableFormsPage />}
+                  />
               </Route>
 
               <Route
