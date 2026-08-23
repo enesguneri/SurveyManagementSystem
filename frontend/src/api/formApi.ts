@@ -108,3 +108,14 @@ export async function getFormResponses(
 
     return response.data;
 }
+
+// Yayımlanmış formu kapatır.
+export async function closeForm(
+    publicId: string,
+): Promise<ApiResponse<FormCreatedResponse>> {
+    const response = await apiClient.post<
+        ApiResponse<FormCreatedResponse>
+    >(`/forms/${publicId}/close`);
+
+    return response.data;
+}

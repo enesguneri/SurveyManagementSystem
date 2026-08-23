@@ -86,7 +86,7 @@ export default function DashboardPage() {
                             display: "grid",
                             gridTemplateColumns: {
                                 xs: "1fr",
-                                md: "repeat(3, 1fr)",
+                                md: "repeat(2, 1fr)",
                             },
                             gap: 3,
                         }}
@@ -128,24 +128,6 @@ export default function DashboardPage() {
                                         onClick={() => navigate("/forms")}
                                     >
                                         Formları Görüntüle
-                                    </Button>
-                                </Stack>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent>
-                                <Stack spacing={2}>
-                                    <Typography variant="h6">
-                                        Yanıtlar
-                                    </Typography>
-
-                                    <Typography variant="body2" color="text.secondary">
-                                        Form yanıtlarını ve katılımcı verilerini inceleyin.
-                                    </Typography>
-
-                                    <Button variant="outlined">
-                                        Yanıtları Görüntüle
                                     </Button>
                                 </Stack>
                             </CardContent>

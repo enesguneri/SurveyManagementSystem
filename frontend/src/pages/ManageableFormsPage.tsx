@@ -14,7 +14,11 @@ import {
     Toolbar,
     Typography,
 } from "@mui/material";
-import { getManageableForms } from "../api/formApi";
+import {
+    closeForm,
+    getManageableForms,
+    publishForm,
+} from "../api/formApi";
 import type { ManageableForm } from "../types/manageableForm";
 
 function getStatusLabel(status: ManageableForm["status"]) {
@@ -52,6 +56,10 @@ export default function ManageableFormsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
 
+    // Aynı anda yalnızca işlem yapılan formun butonu pasifleşir.
+    const [actionFormId, setActionFormId] =
+        useState<number | null>(null);
+
     useEffect(() => {
         async function loadForms() {
             try {
@@ -87,6 +95,82 @@ export default function ManageableFormsPage() {
 
         void loadForms();
     }, []);
+
+    async function handlePublish(
+        formId: number,
+        publicId: string,
+    ) {
+        setActionFormId(formId);
+        setErrorMessage("");
+
+        try {
+            const response = await publishForm(publicId);
+
+            if (!response.isSuccess || !response.data) {
+                setErrorMessage(
+                    response.errors?.join(" ") ??
+                    response.message ??
+                    "Form yayımlanamadı.",
+                );
+                return;
+            }
+
+            setForms((currentForms) =>
+                currentForms.map((form) =>
+                    form.id === formId
+                        ? {
+                            ...form,
+                            status: "Published",
+                        }
+                        : form,
+                ),
+            );
+        } catch {
+            setErrorMessage(
+                "Form yayımlanırken API bağlantısı kurulamadı.",
+            );
+        } finally {
+            setActionFormId(null);
+        }
+    }
+
+    async function handleClose(
+        formId: number,
+        publicId: string,
+    ) {
+        setActionFormId(formId);
+        setErrorMessage("");
+
+        try {
+            const response = await closeForm(publicId);
+
+            if (!response.isSuccess || !response.data) {
+                setErrorMessage(
+                    response.errors?.join(" ") ??
+                    response.message ??
+                    "Form kapatılamadı.",
+                );
+                return;
+            }
+
+            setForms((currentForms) =>
+                currentForms.map((form) =>
+                    form.id === formId
+                        ? {
+                            ...form,
+                            status: "Closed",
+                        }
+                        : form,
+                ),
+            );
+        } catch {
+            setErrorMessage(
+                "Form kapatılırken API bağlantısı kurulamadı.",
+            );
+        } finally {
+            setActionFormId(null);
+        }
+    }
 
     if (isLoading) {
         return (
@@ -211,6 +295,13 @@ export default function ManageableFormsPage() {
                                             ).toLocaleString("tr-TR")}
                                         </Typography>
 
+                                        <Typography
+                                            variant="body2"
+                                            sx={{ fontWeight: 600 }}
+                                        >
+                                            Yanıt sayısı: {form.responseCount}
+                                        </Typography>
+
                                         <Stack
                                             direction="row"
                                             spacing={1}
@@ -230,6 +321,21 @@ export default function ManageableFormsPage() {
                                                 ),
                                             )}
                                         </Stack>
+
+                                        {form.status === "Draft" && (
+                                            <Button
+                                                variant="contained"
+                                                color="success"
+                                                onClick={() =>
+                                                    handlePublish(form.id, form.publicId)
+                                                }
+                                                disabled={actionFormId === form.id}
+                                            >
+                                                {actionFormId === form.id
+                                                    ? "Yayımlanıyor..."
+                                                    : "Formu Yayınla"}
+                                            </Button>
+                                        )}
 
                                         {form.status === "Draft" && (
                                             <Button
@@ -254,6 +360,21 @@ export default function ManageableFormsPage() {
                                                 }
                                             >
                                                 Formu Görüntüle
+                                            </Button>
+                                        )}
+
+                                        {form.status === "Published" && (
+                                            <Button
+                                                variant="outlined"
+                                                color="warning"
+                                                onClick={() =>
+                                                    handleClose(form.id, form.publicId)
+                                                }
+                                                disabled={actionFormId === form.id}
+                                            >
+                                                {actionFormId === form.id
+                                                    ? "Kapatılıyor..."
+                                                    : "Formu Kapat"}
                                             </Button>
                                         )}
 

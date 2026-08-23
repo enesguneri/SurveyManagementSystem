@@ -71,7 +71,8 @@ public class FormService : IFormService
                         .Where(formRole => formRole.Role.IsActive)
                         .OrderBy(formRole => formRole.Role.Name)
                         .Select(formRole => formRole.Role.Name)
-                        .ToList()
+                        .ToList(),
+                    ResponseCount = form.Responses.Count()
                 })
             .ToListAsync(cancellationToken);
 

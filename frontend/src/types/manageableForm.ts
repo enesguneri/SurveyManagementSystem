@@ -17,6 +17,8 @@ export interface ManageableForm {
     createdByUserId: number;
     createdByUserName: string;
     roleNames: string[];
+    // Forma gönderilen toplam yanıt sayısı.
+    responseCount: number;
 }
 
 // Taslak form düzenleme ekranında kullanılacak detay modeli.

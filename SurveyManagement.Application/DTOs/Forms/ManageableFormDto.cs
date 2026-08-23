@@ -24,4 +24,7 @@ public class ManageableFormDto
 
     // Formun bağlı olduğu birimlerin adları.
     public List<string> RoleNames { get; set; } = new();
+
+    // Forma gönderilen toplam yanıt sayısı.
+    public int ResponseCount { get; set; }
 }
