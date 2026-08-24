@@ -18,6 +18,9 @@ using SurveyManagement.Application.Services.Roles;
 using SurveyManagement.Application.Services.Forms;
 using SurveyManagement.Application.Services;
 using SurveyManagement.Persistence.Context;
+using SurveyManagement.Application.Interfaces.AI;
+using SurveyManagement.Application.Options;
+using SurveyManagement.Application.Services.AI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +54,26 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<
     IAdminUserService,
     AdminUserService>();
+
+// Gemini AI ayarları User Secrets veya ortam değişkenlerinden okunur.
+var geminiOptions = new GeminiOptions
+{
+    ApiKey = builder.Configuration["Gemini:ApiKey"]
+        ?? string.Empty,
+
+    Model = builder.Configuration["Gemini:Model"]
+        ?? "gemini-3.5-flash-lite",
+
+    BaseUrl = builder.Configuration["Gemini:BaseUrl"]
+        ?? "https://generativelanguage.googleapis.com"
+};
+
+builder.Services.AddSingleton(geminiOptions);
+
+// HttpClient, GeminiSurveyService'e dependency injection ile verilir.
+builder.Services.AddHttpClient<
+    IGeminiSurveyService,
+    GeminiSurveyService>();
 
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
