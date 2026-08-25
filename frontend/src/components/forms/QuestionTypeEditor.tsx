@@ -1,4 +1,5 @@
 import {
+    Alert,
     Button,
     IconButton,
     Stack,
@@ -11,6 +12,9 @@ import type {
     QuestionDraft,
     QuestionValidationDraft,
 } from "../../types/form";
+import { useRef, useState } from "react";
+import type { ChangeEvent } from "react";
+import { parseOptionFile } from "../../utils/optionImport";
 
 interface QuestionTypeEditorProps {
     question: QuestionDraft;
@@ -21,6 +25,43 @@ export default function QuestionTypeEditor({
                                                question,
                                                onChange,
                                            }: QuestionTypeEditorProps) {
+    const optionFileInputRef =
+        useRef<HTMLInputElement>(null);
+
+    const [importError, setImportError] = useState("");
+    const [isImporting, setIsImporting] = useState(false);
+
+    async function handleOptionFileImport(
+        event: ChangeEvent<HTMLInputElement>,
+    ) {
+        const file = event.target.files?.[0];
+
+        event.target.value = "";
+
+        if (!file) {
+            return;
+        }
+
+        setImportError("");
+        setIsImporting(true);
+
+        try {
+            const content = await file.text();
+            const result = parseOptionFile(file.name, content);
+
+            onChange({
+                options: result.options,
+            });
+        } catch (error) {
+            setImportError(
+                error instanceof Error
+                    ? error.message
+                    : "Seçenek dosyası okunamadı.",
+            );
+        } finally {
+            setIsImporting(false);
+        }
+    }
     function updateValidation(
         update: Partial<QuestionValidationDraft>,
     ) {
@@ -60,6 +101,37 @@ export default function QuestionTypeEditor({
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                     Seçenekler
                 </Typography>
+
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                >
+                    <Button
+                        variant="outlined"
+                        onClick={() =>
+                            optionFileInputRef.current?.click()
+                        }
+                        disabled={isImporting}
+                    >
+                        {isImporting
+                            ? "İçe aktarılıyor..."
+                            : "TXT / CSV / JSON'dan aktar"}
+                    </Button>
+
+                    <input
+                        ref={optionFileInputRef}
+                        type="file"
+                        accept=".txt,.csv,.json,text/plain,text/csv,application/json"
+                        hidden
+                        onChange={handleOptionFileImport}
+                    />
+                </Stack>
+
+                {importError && (
+                    <Alert severity="error">
+                        {importError}
+                    </Alert>
+                )}
 
                 {question.options.map((option, index) => (
                     <Stack
