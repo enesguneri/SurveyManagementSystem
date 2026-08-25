@@ -1,6 +1,7 @@
 import {
     Alert,
     Button,
+    Collapse,
     IconButton,
     Stack,
     TextField,
@@ -15,6 +16,7 @@ import type {
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { parseOptionFile } from "../../utils/optionImport";
+import { previewOptionsFromUrl } from "../../api/optionApi";
 
 interface QuestionTypeEditorProps {
     question: QuestionDraft;
@@ -25,11 +27,23 @@ export default function QuestionTypeEditor({
                                                question,
                                                onChange,
                                            }: QuestionTypeEditorProps) {
+    const [optionApiUrl, setOptionApiUrl] = useState("");
+    const [optionJsonPath, setOptionJsonPath] = useState("");
+    const [optionTextProperty, setOptionTextProperty] =
+        useState("text");
+
+    const [isUrlImporting, setIsUrlImporting] =
+        useState(false);
+    const [urlImportError, setUrlImportError] = useState("");
+    const [urlImportInfo, setUrlImportInfo] = useState("");
     const optionFileInputRef =
         useRef<HTMLInputElement>(null);
 
     const [importError, setImportError] = useState("");
     const [isImporting, setIsImporting] = useState(false);
+
+    const [isApiImportOpen, setIsApiImportOpen] =
+        useState(false);
 
     async function handleOptionFileImport(
         event: ChangeEvent<HTMLInputElement>,
@@ -62,6 +76,57 @@ export default function QuestionTypeEditor({
             setIsImporting(false);
         }
     }
+    async function handleOptionUrlImport() {
+        setUrlImportError("");
+        setUrlImportInfo("");
+
+        if (!optionApiUrl.trim()) {
+            setUrlImportError(
+                "Lütfen bir HTTPS API adresi girin.",
+            );
+            return;
+        }
+
+        setIsUrlImporting(true);
+
+        try {
+            const response = await previewOptionsFromUrl({
+                url: optionApiUrl.trim(),
+                jsonPath: optionJsonPath.trim(),
+                textProperty:
+                    optionTextProperty.trim() || "text",
+            });
+
+            if (!response.isSuccess || !response.data) {
+                setUrlImportError(
+                    response.errors?.join(" ") ??
+                    response.message ??
+                    "API seçenekleri alınamadı.",
+                );
+                return;
+            }
+
+            onChange({
+                options: response.data.options,
+            });
+
+            const skippedMessage =
+                response.data.skippedCount > 0
+                    ? ` ${response.data.skippedCount} kayıt atlandı.`
+                    : "";
+
+            setUrlImportInfo(
+                `${response.data.options.length} seçenek içe aktarıldı.${skippedMessage}`,
+            );
+        } catch {
+            setUrlImportError(
+                "API bağlantısı kurulamadı.",
+            );
+        } finally {
+            setIsUrlImporting(false);
+        }
+    }
+
     function updateValidation(
         update: Partial<QuestionValidationDraft>,
     ) {
@@ -118,6 +183,21 @@ export default function QuestionTypeEditor({
                             : "TXT / CSV / JSON'dan aktar"}
                     </Button>
 
+                    <Button
+                        variant="outlined"
+                        onClick={() => {
+                            setIsApiImportOpen(
+                                (currentValue) => !currentValue,
+                            );
+                            setUrlImportError("");
+                            setUrlImportInfo("");
+                        }}
+                    >
+                        {isApiImportOpen
+                            ? "API aktarımını kapat"
+                            : "API'den seçenek aktar"}
+                    </Button>
+
                     <input
                         ref={optionFileInputRef}
                         type="file"
@@ -132,6 +212,84 @@ export default function QuestionTypeEditor({
                         {importError}
                     </Alert>
                 )}
+
+                <Collapse
+                    in={isApiImportOpen}
+                    unmountOnExit
+                >
+                    <Stack
+                        spacing={2}
+                        sx={{
+                            mt: 1,
+                            p: 2,
+                            border: "1px solid",
+                            borderColor: "divider",
+                            borderRadius: 2,
+                            backgroundColor: "background.paper",
+                        }}
+                    >
+                        <Typography
+                            variant="subtitle2"
+                            sx={{ fontWeight: 700 }}
+                        >
+                            Harici API'den seçenek aktar
+                        </Typography>
+
+                        <TextField
+                            label="Seçenek API adresi"
+                            placeholder="https://example.com/options"
+                            value={optionApiUrl}
+                            onChange={(event) =>
+                                setOptionApiUrl(event.target.value)
+                            }
+                            helperText="Yalnızca HTTPS adresleri kabul edilir."
+                            fullWidth
+                        />
+
+                        <TextField
+                            label="JSON yolu"
+                            placeholder="Örneğin: data.items"
+                            value={optionJsonPath}
+                            onChange={(event) =>
+                                setOptionJsonPath(event.target.value)
+                            }
+                            helperText="Kök dizi için boş bırakabilirsiniz."
+                            fullWidth
+                        />
+
+                        <TextField
+                            label="Seçenek metin alanı"
+                            value={optionTextProperty}
+                            onChange={(event) =>
+                                setOptionTextProperty(event.target.value)
+                            }
+                            helperText="Nesne formatı için varsayılan alan: text"
+                            fullWidth
+                        />
+
+                        <Button
+                            variant="contained"
+                            onClick={handleOptionUrlImport}
+                            disabled={isUrlImporting}
+                        >
+                            {isUrlImporting
+                                ? "API okunuyor..."
+                                : "Seçenekleri getir"}
+                        </Button>
+
+                        {urlImportError && (
+                            <Alert severity="error">
+                                {urlImportError}
+                            </Alert>
+                        )}
+
+                        {urlImportInfo && (
+                            <Alert severity="success">
+                                {urlImportInfo}
+                            </Alert>
+                        )}
+                    </Stack>
+                </Collapse>
 
                 {question.options.map((option, index) => (
                     <Stack

@@ -21,6 +21,9 @@ using SurveyManagement.Persistence.Context;
 using SurveyManagement.Application.Interfaces.AI;
 using SurveyManagement.Application.Options;
 using SurveyManagement.Application.Services.AI;
+using SurveyManagement.Application.Interfaces.Options;
+using SurveyManagement.Application.Services.Options;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +77,14 @@ builder.Services.AddSingleton(geminiOptions);
 builder.Services.AddHttpClient<
     IGeminiSurveyService,
     GeminiSurveyService>();
+
+builder.Services.AddHttpClient<
+    IOptionImportService,
+    OptionImportService>(client =>
+    {
+        // Dış API yanıtı için maksimum bekleme süresi.
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
 
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
