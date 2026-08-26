@@ -13,6 +13,7 @@ import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
 import FolderOpenRounded from "@mui/icons-material/FolderOpenRounded";
 import { useAuth } from "../auth/useAuth";
 import BrandHeader from "../components/layout/BrandHeader";
+import AutoAwesomeRounded from "@mui/icons-material/AutoAwesomeRounded";
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -69,7 +70,7 @@ export default function DashboardPage() {
                     <Box
                         sx={{
                             display: "grid",
-                            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+                            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
                             gap: 3,
                         }}
                     >
@@ -142,6 +143,54 @@ export default function DashboardPage() {
                                         sx={{ alignSelf: "flex-start" }}
                                     >
                                         Formları Görüntüle
+                                    </Button>
+                                </Stack>
+                            </CardContent>
+                        </Card>
+
+                        <Card sx={{ height: "100%" }}>
+                            <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                                <Stack spacing={2.5} sx={{ height: "100%" }}>
+                                    <Box
+                                        sx={{
+                                            width: 52,
+                                            height: 52,
+                                            display: "grid",
+                                            placeItems: "center",
+                                            borderRadius: 3,
+                                            color: "secondary.dark",
+                                            backgroundColor:
+                                                "rgba(224, 138, 93, 0.16)",
+                                        }}
+                                    >
+                                        <AutoAwesomeRounded fontSize="large" />
+                                    </Box>
+
+                                    <Box sx={{ flexGrow: 1 }}>
+                                        <Typography
+                                            variant="h5"
+                                            sx={{ fontWeight: 800 }}
+                                        >
+                                            AI ile anket oluştur
+                                        </Typography>
+
+                                        <Typography
+                                            color="text.secondary"
+                                            sx={{ mt: 1 }}
+                                        >
+                                            Anket fikrinizi açıklayın, yapay zekâ
+                                            ile taslak sorular oluşturun.
+                                        </Typography>
+                                    </Box>
+
+                                    <Button
+                                        variant="contained"
+                                        onClick={() =>
+                                            navigate("/ai/survey")
+                                        }
+                                        sx={{ alignSelf: "flex-start" }}
+                                    >
+                                        AI Asistanını Aç
                                     </Button>
                                 </Stack>
                             </CardContent>

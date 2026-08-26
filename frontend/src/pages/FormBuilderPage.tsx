@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+    useLocation,
     useNavigate,
     useParams,
 } from "react-router-dom";
@@ -59,6 +60,7 @@ import type { FormCreatedResponse } from "../types/formApi";
 import { getAvailableRoles } from "../api/roleApi";
 import type { Role } from "../types/role";
 import type { ManageableFormDetails } from "../types/manageableForm";
+import type { CreateFormRequest } from "../types/formApi";
 
 import { useAuth } from "../auth/useAuth";
 import BrandHeader from "../components/layout/BrandHeader";
@@ -173,8 +175,64 @@ function mapManageableFormToDraft(
     };
 }
 
+function mapAiDraftToFormDraft(
+    aiDraft: CreateFormRequest,
+): FormDraft {
+    return {
+        title: aiDraft.title,
+        description: aiDraft.description ?? "",
+        accessType: aiDraft.accessType,
+        showRespondentIdentity:
+        aiDraft.showRespondentIdentity,
+        roleIds: aiDraft.roleIds,
+
+        questions: aiDraft.questions.map((question) => ({
+            clientId: crypto.randomUUID(),
+            title: question.title,
+            type: question.type,
+            isRequired: question.isRequired,
+
+            options: question.options.map(
+                (option) => option.text,
+            ),
+
+            matrixRows: question.matrixRows.map(
+                (row) => row.text,
+            ),
+
+            matrixColumns: question.matrixColumns.map(
+                (column) => column.text,
+            ),
+
+            validation: {
+                minLength:
+                    question.validation?.minLength ?? null,
+                maxLength:
+                    question.validation?.maxLength ?? null,
+                regexPattern:
+                    question.validation?.regexPattern ?? "",
+                minValue:
+                    question.validation?.minValue ?? null,
+                maxValue:
+                    question.validation?.maxValue ?? null,
+                minDate:
+                    question.validation?.minDate ?? null,
+                maxDate:
+                    question.validation?.maxDate ?? null,
+            },
+        })),
+    };
+}
+
 export default function FormBuilderPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const locationState = location.state as {
+        aiDraft?: CreateFormRequest;
+    } | null;
+
+    const initialAiDraft = locationState?.aiDraft;
     const { logout } = useAuth();
 
     function handleLogout() {
@@ -188,14 +246,19 @@ export default function FormBuilderPage() {
 
     const isEditMode = Boolean(publicId);
 
-    const [formDraft, setFormDraft] = useState<FormDraft>({
-        title: "",
-        description: "",
-        accessType: "Authenticated",
-        showRespondentIdentity: false,
-        roleIds: [],
-        questions: [createEmptyQuestion()],
-    });
+    const [formDraft, setFormDraft] =
+        useState<FormDraft>(() =>
+            initialAiDraft
+                ? mapAiDraftToFormDraft(initialAiDraft)
+                : {
+                    title: "",
+                    description: "",
+                    accessType: "Authenticated",
+                    showRespondentIdentity: false,
+                    roleIds: [],
+                    questions: [createEmptyQuestion()],
+                },
+        );
 
     const [isLoadingForm, setIsLoadingForm] =
         useState(isEditMode);
