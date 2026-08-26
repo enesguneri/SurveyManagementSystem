@@ -76,7 +76,11 @@ builder.Services.AddSingleton(geminiOptions);
 // HttpClient, GeminiSurveyService'e dependency injection ile verilir.
 builder.Services.AddHttpClient<
     IGeminiSurveyService,
-    GeminiSurveyService>();
+    GeminiSurveyService>(
+    client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(120);
+    });
 
 builder.Services.AddHttpClient<
     IOptionImportService,

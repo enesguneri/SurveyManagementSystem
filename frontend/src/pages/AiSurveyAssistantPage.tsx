@@ -91,8 +91,17 @@ export default function AiSurveyAssistantPage() {
 
             setResult(aiResult);
 
-            // Stateless backend kullandığımız için konuşma
-            // geçmişi frontend tarafından tekrar gönderilir.
+            // Stateless backend kullandığımız için konuşma geçmişi
+            // frontend tarafından tekrar gönderilir.
+            const assistantContent = [
+                aiResult.message,
+                ...aiResult.clarifyingQuestions.map(
+                    (question) => `Soru: ${question}`,
+                ),
+            ]
+                .filter(Boolean)
+                .join("\n");
+
             setConversation((currentConversation) => [
                 ...currentConversation,
                 {
@@ -101,7 +110,7 @@ export default function AiSurveyAssistantPage() {
                 },
                 {
                     role: "assistant",
-                    content: aiResult.message,
+                    content: assistantContent,
                 },
             ]);
 

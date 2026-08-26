@@ -171,6 +171,15 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
             return result;
         }
         catch (OperationCanceledException)
+            when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                "Gemini isteği zaman aşımına uğradı.");
+
+            return FailedResponse(
+                "Gemini isteği zaman aşımına uğradı.");
+        }
+        catch (OperationCanceledException)
         {
             throw;
         }
