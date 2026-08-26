@@ -88,6 +88,11 @@ builder.Services.AddHttpClient<
     {
         // Dış API yanıtı için maksimum bekleme süresi.
         client.Timeout = TimeSpan.FromSeconds(10);
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        // Redirect sonrası özel/yerel adrese kaçış riskini önler.
+        AllowAutoRedirect = false,
     });
 
 builder.Services.AddScoped<
