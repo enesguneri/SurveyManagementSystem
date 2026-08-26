@@ -12,10 +12,12 @@ namespace SurveyManagement.API.Controllers;
 public class ResponsesController : ControllerBase
 {
     private readonly IFormResponseService _formResponseService;
+    private readonly IFormResponseExportService _formResponseExportService;
 
-    public ResponsesController(IFormResponseService formResponseService)
+    public ResponsesController(IFormResponseService formResponseService, IFormResponseExportService formResponseExportService)
     {
         _formResponseService = formResponseService;
+        _formResponseExportService = formResponseExportService;
     }
 
     [HttpPost]
@@ -85,5 +87,43 @@ public class ResponsesController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpGet("export")]
+    [Authorize]
+    public async Task<IActionResult> Export(
+    Guid publicId,
+    [FromQuery] string format = "csv",
+    CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(
+                ApiResponse<string>.FailureResult(
+                    "Kimliği doğrulanmış kullanıcı bilgisi alınamadı."));
+        }
+
+        var result =
+            await _formResponseExportService.ExportAsync(
+                publicId,
+                userId,
+                format,
+                cancellationToken);
+
+        if (!result.IsSuccess ||
+            result.Data is null)
+        {
+            return StatusCode(
+                result.HttpStatusCode,
+                result);
+        }
+
+        return File(
+            result.Data.Content,
+            result.Data.ContentType,
+            result.Data.FileName);
     }
 }

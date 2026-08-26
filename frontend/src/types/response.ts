@@ -54,6 +54,8 @@ export interface ResponseAnswerDetails {
 export interface FormResponseItem {
     id: number;
     respondentName: string | null;
+    respondentEmail: string | null;
+    respondentIpAddress: string | null;
     submittedAt: string;
     answers: ResponseAnswerDetails[];
 }

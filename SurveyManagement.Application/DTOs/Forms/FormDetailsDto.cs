@@ -12,6 +12,7 @@ public class FormDetailsDto
     public bool ShowRespondentIdentity { get; set; }
     public FormStatus Status { get; set; }
     public FormAccessType AccessType { get; set; }
+    public bool HasCurrentUserResponded { get; set; }
 
     // Formun bağlı olduğu birim rollerinin Id değerleri.
     public List<int> RoleIds { get; set; } = new();

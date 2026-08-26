@@ -119,3 +119,19 @@ export async function closeForm(
 
     return response.data;
 }
+
+// Form yanıtlarını CSV veya Excel dosyası olarak indirir.
+export async function downloadFormResponses(
+    publicId: string,
+    format: "csv" | "xlsx",
+): Promise<Blob> {
+    const response = await apiClient.get(
+        `/forms/${publicId}/responses/export`,
+        {
+            params: { format },
+            responseType: "blob",
+        },
+    );
+
+    return response.data;
+}

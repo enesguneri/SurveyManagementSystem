@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
     Alert,
     Box,
+    Button,
     Card,
     CardContent,
     CircularProgress,
@@ -12,7 +13,10 @@ import {
     Stack,
     Typography,
 } from "@mui/material";
-import { getFormResponses } from "../api/formApi";
+import {
+    downloadFormResponses,
+    getFormResponses,
+} from "../api/formApi";
 import type {
     FormResponseItem,
     FormResponses,
@@ -103,6 +107,25 @@ function ResponseCard({
                             color="text.secondary"
                         >
                             Gönderilme zamanı:{" "}
+                            {showRespondentIdentity &&
+                                response.respondentEmail && (
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                    >
+                                        E-posta: {response.respondentEmail}
+                                    </Typography>
+                                )}
+
+                            {showRespondentIdentity &&
+                                response.respondentIpAddress && (
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                    >
+                                        IP adresi: {response.respondentIpAddress}
+                                    </Typography>
+                                )}
                             {new Date(
                                 response.submittedAt,
                             ).toLocaleString("tr-TR")}
@@ -126,6 +149,8 @@ function ResponseCard({
 export default function FormResponsesPage() {
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportError, setExportError] = useState("");
 
     function handleLogout() {
         logout();
@@ -139,6 +164,58 @@ export default function FormResponsesPage() {
         useState<FormResponses | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
+
+    async function handleExport(
+        format: "csv" | "xlsx",
+    ) {
+        if (!publicId) {
+            return;
+        }
+
+        setIsExporting(true);
+        setExportError("");
+
+        try {
+            const file = await downloadFormResponses(
+                publicId,
+                format,
+            );
+
+            // Blob verisi tarayıcıda indirilebilir geçici URL'ye dönüştürülür.
+            const downloadUrl =
+                URL.createObjectURL(file);
+
+            const link = document.createElement("a");
+            const safeTitle = sanitizeFileName(
+                formResponses?.title ?? "anket",
+            );
+            link.href = downloadUrl;
+            link.download =
+                `${safeTitle} Yanıtları.${format}`;
+
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(downloadUrl);
+        } catch (error) {
+            if (
+                axios.isAxiosError(error) &&
+                error.response?.status === 403
+            ) {
+                setExportError(
+                    "Bu formun yanıtlarını dışa aktarma yetkiniz yok.",
+                );
+            } else {
+                setExportError(
+                    "Yanıt dosyası oluşturulamadı.",
+                );
+            }
+        } finally {
+            setIsExporting(false);
+        }
+    }
 
     useEffect(() => {
         if (!publicId) return;
@@ -206,6 +283,14 @@ export default function FormResponsesPage() {
         );
     }
 
+    function sanitizeFileName(value: string) {
+        return (
+            value
+                .replace(/[<>:"/\\|?*]/g, "_")
+                .trim() || "anket"
+        );
+    }
+
     return (
         <Box
             sx={{
@@ -240,6 +325,37 @@ export default function FormResponsesPage() {
                                     Toplam yanıt:{" "}
                                     {formResponses.responses.length}
                                 </Typography>
+
+                                <Stack
+                                    direction={{ xs: "column", sm: "row" }}
+                                    spacing={1}
+                                    sx={{ mt: 2 }}
+                                >
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => handleExport("csv")}
+                                        disabled={isExporting}
+                                    >
+                                        {isExporting
+                                            ? "Hazırlanıyor..."
+                                            : "CSV indir"}
+                                    </Button>
+
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => handleExport("xlsx")}
+                                        disabled={isExporting}
+                                    >
+                                        {isExporting
+                                            ? "Hazırlanıyor..."
+                                            : "Excel indir"}
+                                    </Button>
+                                </Stack>
+                                {exportError && (
+                                    <Alert severity="error">
+                                        {exportError}
+                                    </Alert>
+                                )}
                             </Box>
 
                             {formResponses.responses.length === 0 && (

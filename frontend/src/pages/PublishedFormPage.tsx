@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
     Alert,
+    Autocomplete,
     Button,
     Card,
     CardContent,
@@ -20,10 +21,6 @@ import {
     TableRow,
     TextField,
     Typography,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
 } from "@mui/material";
 import {
     getPublishedForm,
@@ -68,6 +65,12 @@ function PublishedFormPage() {
     const navigate = useNavigate();
     const { publicId } = useParams<{ publicId: string }>();
 
+    const [hasSubmitted, setHasSubmitted] =
+        useState(false);
+
+    const [isSubmissionCompleted, setIsSubmissionCompleted] =
+        useState(false);
+
     useEffect(() => {
         async function loadForm() {
             if (!publicId) {
@@ -87,6 +90,7 @@ function PublishedFormPage() {
                 }
 
                 setForm(response.data);
+                setHasSubmitted(response.data.hasCurrentUserResponded,);
 
                 const initialAnswers =
                     response.data.questions.reduce<
@@ -243,10 +247,24 @@ function PublishedFormPage() {
                 return;
             }
 
+            setHasSubmitted(true);
+            setIsSubmissionCompleted(true);
+
             setSuccessMessage(
                 "Form yanıtınız başarıyla gönderildi.",
             );
-        } catch {
+        } catch (error) {
+            if (
+                axios.isAxiosError(error) &&
+                error.response?.status === 409
+            ) {
+                setHasSubmitted(true);
+                setErrorMessage(
+                    "Bu forma daha önce yanıt verdiniz.",
+                );
+                return;
+            }
+
             setErrorMessage(
                 "Yanıt gönderilirken sunucuya bağlanılamadı.",
             );
@@ -343,16 +361,25 @@ function PublishedFormPage() {
                     />
                 ))}
 
-                <Button
-                    variant="contained"
-                    size="large"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting
-                        ? "Gönderiliyor..."
-                        : "Yanıtları Gönder"}
-                </Button>
+                {!hasSubmitted && (
+                    <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting
+                            ? "Gönderiliyor..."
+                            : "Yanıtları Gönder"}
+                    </Button>
+                )}
+
+                {hasSubmitted && !isSubmissionCompleted && (
+                    <Alert severity="info">
+                        Bu forma daha önce yanıt verdiniz.
+                    </Alert>
+                )}
+
             </Stack>
             </Container>
         </>
@@ -496,38 +523,41 @@ function QuestionInput({
                         ))}
                     </RadioGroup>
                 );
-            case "Dropdown":
-                return (
-                    <FormControl fullWidth>
-                        <InputLabel id={`dropdown-label-${question.id}`}>
-                            Seçim yapınız
-                        </InputLabel>
+            case "Dropdown": {
+                const selectedOption =
+                    question.options.find(
+                        (option) =>
+                            option.id ===
+                            answer.selectedOptionIds[0],
+                    ) ?? null;
 
-                        <Select
-                            labelId={`dropdown-label-${question.id}`}
-                            label="Seçim yapınız"
-                            value={
-                                answer.selectedOptionIds[0]?.toString() ?? ""
-                            }
-                            onChange={(event) =>
-                                toggleOption(
-                                    question.id,
-                                    Number(event.target.value),
-                                    false,
-                                )
-                            }
-                        >
-                            {question.options.map((option) => (
-                                <MenuItem
-                                    key={option.id}
-                                    value={option.id}
-                                >
-                                    {option.text}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                return (
+                    <Autocomplete
+                        fullWidth
+                        options={question.options}
+                        value={selectedOption}
+                        getOptionLabel={(option) => option.text}
+                        isOptionEqualToValue={(option, value) =>
+                            option.id === value.id
+                        }
+                        noOptionsText="Eşleşen seçenek bulunamadı"
+                        onChange={(_, selectedValue) => {
+                            updateAnswer(question.id, {
+                                selectedOptionIds: selectedValue
+                                    ? [selectedValue.id]
+                                    : [],
+                            });
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Seçim yapınız"
+                                placeholder="Aramak için yazın..."
+                            />
+                        )}
+                    />
                 );
+            }
 
             case "MultipleChoice":
                 return (

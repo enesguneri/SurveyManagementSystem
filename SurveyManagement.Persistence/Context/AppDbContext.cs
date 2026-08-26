@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace SurveyManagement.Persistence.Context;
 
@@ -29,6 +30,21 @@ public class AppDbContext : DbContext, IAppDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // MySQL DATE değerini DateOnly ile güvenli biçimde eşleştirir.
+        var dateOnlyConverter =
+            new ValueConverter<DateOnly?, DateTime?>(
+                dateValue =>
+                    dateValue.HasValue
+                        ? dateValue.Value.ToDateTime(
+                            TimeOnly.MinValue)
+                        : null,
+
+                dateTimeValue =>
+                    dateTimeValue.HasValue
+                        ? DateOnly.FromDateTime(
+                            dateTimeValue.Value)
+                        : null);
 
         modelBuilder.Entity<UserRole>()
             .HasKey(userRole => new { userRole.UserId, userRole.RoleId });
@@ -137,10 +153,12 @@ public class AppDbContext : DbContext, IAppDbContext
 
         modelBuilder.Entity<QuestionValidation>()
             .Property(validation => validation.MinDate)
+            .HasConversion(dateOnlyConverter)
             .HasColumnType("date");
 
         modelBuilder.Entity<QuestionValidation>()
             .Property(validation => validation.MaxDate)
+            .HasConversion(dateOnlyConverter)
             .HasColumnType("date");
 
         modelBuilder.Entity<QuestionOption>()
@@ -205,8 +223,20 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasMaxLength(200);
 
         modelBuilder.Entity<FormResponse>()
+            .Property(response => response.RespondentEmailSnapshot)
+            .HasMaxLength(320);
+
+        modelBuilder.Entity<FormResponse>()
             .Property(response => response.RespondentIpAddress)
             .HasMaxLength(45);
+
+        modelBuilder.Entity<FormResponse>()
+            .HasIndex(response => new
+            {
+                response.FormId,
+                response.RespondentUserId
+            })
+            .IsUnique();
 
         modelBuilder.Entity<ResponseAnswer>()
             .HasIndex(answer => new { answer.FormResponseId, answer.QuestionId })
@@ -226,6 +256,7 @@ public class AppDbContext : DbContext, IAppDbContext
 
         modelBuilder.Entity<ResponseAnswer>()
             .Property(answer => answer.DateValue)
+            .HasConversion(dateOnlyConverter)
             .HasColumnType("date");
 
         modelBuilder.Entity<ResponseAnswerOption>()
