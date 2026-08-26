@@ -1,56 +1,116 @@
-# İzmir Bakırçay University Survey Management System
+# 🎓 İzmir Bakırçay University Survey Management System
 
-A full-stack survey management platform developed for İzmir Bakırçay University.
+> İzmir Bakırçay Üniversitesi için geliştirilen modern, güvenli ve dinamik anket yönetim platformu.
 
-The system allows authorized users to create, publish, manage, and analyze dynamic surveys. It is built with .NET 10 Web API, PostgreSQL, Entity Framework Core, React, TypeScript, and Material UI.
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
+[![React](https://img.shields.io/badge/React-TypeScript-61DAFB)](https://react.dev/)
+[![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1)](https://www.mysql.com/)
+[![Material UI](https://img.shields.io/badge/UI-Material%20UI-007FFF)](https://mui.com/)
 
-## Features
+## 📌 About the Project
 
-- JWT-based authentication
+The Survey Management System is a full-stack web application that enables authorized users to create, publish, manage, and analyze dynamic surveys.
+
+The platform supports:
+
+- 🔐 Secure authentication and authorization
+- 📝 Dynamic survey creation
+- 🏢 Unit-based access control
+- 📊 Response management and export
+- 🤖 Gemini AI-assisted survey generation
+- 📥 External option import
+- 🎨 Modern and responsive user interface
+
+## ✨ Features
+
+### 🔐 Authentication and Authorization
+
 - User registration and login
+- JWT-based authentication
+- Password hashing and salting
 - Role-based authorization
+- Unit-based form authorization
 - Admin panel
-- Unit-based role management
-- Assigning multiple units to a survey
+- Swagger JWT Bearer authentication
+
+### 📝 Survey Management
+
 - Dynamic survey creation
 - Draft, published, and closed survey statuses
-- Short text and paragraph questions
-- Single-choice and multiple-choice questions
-- Dropdown questions
-- Rating questions
-- Date questions
-- Multiple-choice matrix questions
-- Checkbox matrix questions
-- Question validation rules
+- Multiple organizational units per survey
 - Anonymous or authenticated survey access
-- Respondent name, IP address, and submission date tracking
-- Survey response viewing
-- Swagger/OpenAPI documentation
-- Global exception handling
-- Standardized API response model
+- One-response-per-user rule for authenticated surveys
+- Draft survey editing
+- Survey publishing and closing
 
-## Technology Stack
+### 🧩 Supported Question Types
 
-### Backend
+- Short text
+- Long text
+- Date
+- Single choice
+- Multiple choice
+- Dropdown
+- Rating
+- Multiple-choice matrix
+- Checkbox matrix
 
-- .NET 10 Web API
-- Entity Framework Core
-- PostgreSQL
-- JWT Bearer Authentication
-- Swagger / OpenAPI
-- Fluent API
-- Git and GitHub
+### ✅ Validation
 
-### Frontend
+- Required question validation
+- Minimum and maximum text length
+- Regular expression validation
+- Numeric range validation
+- Minimum and maximum date validation
 
-- React
-- TypeScript
-- Vite
-- Material UI
-- Axios
-- React Router
+### 📊 Response Management
 
-## Project Architecture
+- Response submission
+- Response viewing
+- Respondent name snapshot
+- Respondent email snapshot
+- Respondent IP address tracking
+- Submission date and time tracking
+- Matrix and checkbox matrix responses
+- Duplicate submission protection
+
+### 📤 Import and Export
+
+- TXT option import
+- CSV option import
+- JSON option import
+- External HTTPS API option import
+- Searchable dropdown options
+- CSV response export
+- Excel response export
+- Separate rows for multiple-choice selections
+
+### 🤖 Gemini AI Assistant
+
+- AI-assisted survey draft generation
+- Clarification questions for incomplete prompts
+- Visual draft preview
+- Manual review before database registration
+- No automatic database save without user confirmation
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| Backend | .NET 10 Web API, C# |
+| ORM | Entity Framework Core |
+| Database | MySQL |
+| Authentication | JWT Bearer |
+| API Documentation | Swagger / OpenAPI |
+| Frontend | React, TypeScript, Vite |
+| UI | Material UI |
+| HTTP Client | Axios |
+| AI | Gemini API |
+| Version Control | Git and GitHub |
+
+## 🏗️ Project Architecture
+
+The backend follows a layered architecture approach.
 
 ```text
 SurveyManagementSystem/
@@ -59,6 +119,7 @@ SurveyManagementSystem/
 │   └── Enums/
 │
 ├── SurveyManagement.Application/
+│   ├── Common/
 │   ├── DTOs/
 │   ├── Interfaces/
 │   └── Services/
@@ -73,14 +134,24 @@ SurveyManagementSystem/
 │   └── Program.cs
 │
 └── frontend/
-    ├── src/
     ├── public/
+    ├── src/
     └── package.json
 ```
 
-## Database Structure
+### 🧱 Layer Responsibilities
 
-The main database tables are:
+| Layer | Responsibility |
+|---|---|
+| Domain | Entities, enums, and core business models |
+| Application | DTOs, interfaces, business logic, and services |
+| Persistence | Database context, migrations, and EF Core configuration |
+| API | Controllers, middleware, Swagger, and HTTP pipeline |
+| Frontend | User interface, routing, forms, and API communication |
+
+## 🗄️ Database Structure
+
+Main tables:
 
 - `Users`
 - `Roles`
@@ -97,30 +168,70 @@ The main database tables are:
 - `ResponseAnswerOptions`
 - `ResponseMatrixAnswers`
 
-A survey can belong to multiple organizational units through the `FormRoles` junction table:
+### 🔗 Main Relationships
 
 ```text
+Users N ──── N Roles
+      UserRoles
+
 Forms N ──── N Roles
-       FormRoles
+      FormRoles
+
+Forms 1 ──── N Questions
+Questions 1 ──── N QuestionOptions
+Questions 1 ──── 1 QuestionValidations
+
+Forms 1 ──── N FormResponses
+FormResponses 1 ──── N ResponseAnswers
+ResponseAnswers 1 ──── N ResponseAnswerOptions
+ResponseAnswers 1 ──── N ResponseMatrixAnswers
 ```
 
-## Backend Setup
+A form can belong to multiple organizational units through the `FormRoles` junction table.
 
-### Prerequisites
+## 🚀 Backend Setup
+
+### 📋 Prerequisites
 
 - .NET 10 SDK
-- PostgreSQL
+- MySQL Server 8+
 - Git
 - Entity Framework Core CLI
 
-### Restore and Build
+Install Entity Framework CLI:
+
+```powershell
+dotnet tool install --global dotnet-ef
+```
+
+### 📦 Restore and Build
 
 ```powershell
 dotnet restore .\SurveyManagementSystem.slnx
 dotnet build .\SurveyManagementSystem.slnx
 ```
 
-### Apply Database Migrations
+### 🗃️ Database Configuration
+
+Update the connection string in:
+
+```text
+SurveyManagement.API/appsettings.json
+```
+
+Example:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Port=3306;Database=SurveyManagementDb;User=root;Password=YOUR_MYSQL_PASSWORD"
+  }
+}
+```
+
+> ⚠️ Never commit real passwords, JWT secrets, or API keys to GitHub.
+
+### 🔄 Apply Migrations
 
 ```powershell
 dotnet ef database update `
@@ -128,7 +239,15 @@ dotnet ef database update `
   --startup-project .\SurveyManagement.API
 ```
 
-### Run the API
+### ➕ Create a Migration
+
+```powershell
+dotnet ef migrations add MigrationName `
+  --project .\SurveyManagement.Persistence `
+  --startup-project .\SurveyManagement.API
+```
+
+### ▶️ Run the API
 
 ```powershell
 dotnet run --project .\SurveyManagement.API
@@ -140,7 +259,35 @@ Swagger UI:
 https://localhost:7143/swagger
 ```
 
-## Frontend Setup
+## 🤖 Gemini Configuration
+
+Gemini settings should be stored using User Secrets or environment variables.
+
+```powershell
+dotnet user-secrets init `
+  --project .\SurveyManagement.API
+```
+
+```powershell
+dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" `
+  --project .\SurveyManagement.API
+```
+
+```powershell
+dotnet user-secrets set "Gemini:Model" "gemini-3.5-flash-lite" `
+  --project .\SurveyManagement.API
+```
+
+The AI workflow:
+
+1. The user enters a survey description.
+2. Gemini generates a draft.
+3. Gemini asks clarification questions if necessary.
+4. The frontend displays a visual preview.
+5. The user reviews and edits the draft.
+6. The user manually saves the survey.
+
+## 💻 Frontend Setup
 
 ```powershell
 cd frontend
@@ -148,21 +295,87 @@ npm install
 npm run dev
 ```
 
-The API base URL is configured in `frontend/.env.development`:
+The API URL is configured in:
+
+```text
+frontend/.env.development
+```
+
+Example:
 
 ```env
 VITE_API_BASE_URL=https://localhost:7143/api
 ```
 
-## Frontend Build and Lint
+### 🏗️ Frontend Build
 
 ```powershell
 cd frontend
 npm run build
+```
+
+### 🧹 Frontend Lint
+
+```powershell
+cd frontend
 npm run lint
 ```
 
-## Git Workflow
+## 📥 Option Import
+
+The system supports importing choice options from:
+
+- TXT files
+- CSV files
+- JSON files
+- External HTTPS APIs
+
+External API imports include:
+
+- JSON path selection
+- Text property selection
+- Searchable preview
+- Duplicate removal
+- Response size limits
+- Maximum option count
+- Maximum option length
+- Local and private network protection
+
+## 📤 Response Export
+
+Authorized users can export responses in:
+
+- CSV format
+- Excel format (`.xlsx`)
+
+The export files may contain:
+
+- Response ID
+- Submission timestamp
+- Respondent name
+- Respondent email
+- Respondent IP address
+- Answer details
+- Selected options
+- Matrix selections
+
+Export permissions are checked according to the user's access to the related form.
+
+## 🔒 Security
+
+- JWT Bearer authentication
+- Role-based authorization
+- Unit-based form authorization
+- Password hashing and salting
+- Global exception middleware
+- Secure error responses
+- HTTPS-only external option imports
+- Local and private IP blocking
+- Disabled automatic external redirects
+- Unique authenticated response constraint
+- Sensitive configuration stored outside source control
+
+## 🌿 Git Workflow
 
 The project follows the Git Flow strategy.
 
@@ -176,87 +389,112 @@ Feature branch example:
 ```powershell
 git switch develop
 git pull --ff-only origin develop
-git switch -c feature/admin-panel
+git switch -c feature/new-feature
 ```
 
-Commit messages follow the Conventional Commits standard:
+### 📝 Conventional Commits
 
 ```text
-feat(frontend): modernize survey management interface
-fix(auth): resolve authentication context conflict
-refactor(forms): improve form builder layout
+feat(forms): add survey publishing workflow
+fix(auth): resolve token validation issue
+refactor(responses): simplify response processing
 docs: update project documentation
+chore: update dependencies
 ```
 
-## Sprint Roadmap
+## 🗺️ Sprint Roadmap
 
 ### Sprint 1 — Architecture and Database Infrastructure
 
-Status: Completed
+**Status: Completed ✅**
 
-- Layered architecture setup
+- Layered architecture
 - Entity modeling
-- PostgreSQL integration
+- MySQL integration
 - Fluent API relationships
 - Data seeding
-- EF Core migration structure
+- EF Core migrations
+- PostgreSQL-to-MySQL data migration
 
 ### Sprint 2 — Authentication and Authorization
 
-Status: Completed
+**Status: Completed ✅**
 
-- User registration and login
-- Password hashing and salting
+- Registration and login
+- Password hashing
 - JWT token generation
 - Swagger Bearer authentication
 - Global exception middleware
-- Standard API response model
+- Role-based authorization
 
 ### Sprint 3 — Survey Domain and Form Management
 
-Status: Completed
+**Status: Completed ✅**
 
-- Survey creation
-- Dynamic question types
+- Dynamic survey creation
+- Question types
 - Question options
-- Question validation rules
-- Draft update workflow
-- Survey publishing and closing
-- Survey detail endpoint
+- Dropdown support
+- Matrix questions
+- Validation rules
+- Draft editing
+- Publishing and closing
+- Unit-based form ownership
 
 ### Sprint 4 — Survey Responses
 
-Status: Completed
+**Status: Completed ✅**
 
 - Response submission
-- Date responses
-- Rating responses
-- Matrix and checkbox matrix responses
-- Respondent identity tracking
-- IP address and submission time tracking
-- Response viewing endpoint
+- Date and rating responses
+- Matrix responses
+- Respondent metadata
+- IP address tracking
+- Response viewing
+- One response per authenticated user
+- Duplicate race-condition handling
 
 ### Sprint 5 — Frontend and Administration
 
-Status: Core features completed
+**Status: Completed ✅**
 
 - React frontend
 - Survey builder
 - Survey listing
-- Draft survey editing
 - Response viewer
 - Admin panel
 - Unit-based role management
-- Turkish and responsive user interface
+- Responsive Turkish interface
+- İzmir Bakırçay University branding
 
-### Sprint 6 — AI Assistance and Deployment
+### Sprint 6 — AI, Import, Export, and Deployment
 
-Status: Planned
+**Status: AI, import, and export completed; deployment planned 🚧**
 
-- Gemini API integration
-- AI-assisted survey draft generation
-- Clarifying questions for incomplete survey descriptions
+- Gemini AI assistant
+- Clarification questions
+- Visual AI draft preview
+- TXT, CSV, JSON, and API option import
+- Searchable dropdowns
+- CSV response export
+- Excel response export
+- Secure external API handling
 - Docker configuration
 - Automated tests
 - CI/CD pipeline
-- Production deployment configuration
+- Production deployment
+
+Docker, automated tests, CI/CD, and production deployment are planned for a later stage.
+
+## 📌 Development Principles
+
+The project follows:
+
+- SOLID principles
+- Clean Code practices
+- Layered architecture
+- Separation of concerns
+- Secure configuration management
+- Conventional Commits
+- Git Flow
+- Code-first database migrations
