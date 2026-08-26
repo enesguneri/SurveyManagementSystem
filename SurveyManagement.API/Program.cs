@@ -86,6 +86,10 @@ builder.Services.AddHttpClient<
         client.Timeout = TimeSpan.FromSeconds(10);
     });
 
+builder.Services.AddScoped<
+    IFormResponseExportService,
+    FormResponseExportService>();
+
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"]

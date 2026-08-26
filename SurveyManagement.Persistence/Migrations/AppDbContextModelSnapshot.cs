@@ -81,6 +81,10 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Property<int>("FormId")
                         .HasColumnType("int");
 
+                    b.Property<string>("RespondentEmailSnapshot")
+                        .HasMaxLength(320)
+                        .HasColumnType("varchar(320)");
+
                     b.Property<string>("RespondentIpAddress")
                         .HasMaxLength(45)
                         .HasColumnType("varchar(45)");
@@ -97,9 +101,10 @@ namespace SurveyManagement.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FormId");
-
                     b.HasIndex("RespondentUserId");
+
+                    b.HasIndex("FormId", "RespondentUserId")
+                        .IsUnique();
 
                     b.ToTable("FormResponses");
                 });
@@ -264,7 +269,7 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly?>("MaxDate")
+                    b.Property<DateTime?>("MaxDate")
                         .HasColumnType("date");
 
                     b.Property<int?>("MaxLength")
@@ -274,7 +279,7 @@ namespace SurveyManagement.Persistence.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<DateOnly?>("MinDate")
+                    b.Property<DateTime?>("MinDate")
                         .HasColumnType("date");
 
                     b.Property<int?>("MinLength")
@@ -299,7 +304,7 @@ namespace SurveyManagement.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<DateOnly?>("DateValue")
+                    b.Property<DateTime?>("DateValue")
                         .HasColumnType("date");
 
                     b.Property<int>("FormResponseId")

@@ -66,6 +66,27 @@ public class FormResponseService : IFormResponseService
                 401);
         }
 
+        if (respondentUserId.HasValue)
+        {
+            var hasAlreadyResponded =
+                await _context.FormResponses
+                    .AsNoTracking()
+                    .AnyAsync(
+                        response =>
+                            response.FormId == form.Id &&
+                            response.RespondentUserId ==
+                                respondentUserId.Value,
+                        cancellationToken);
+
+            if (hasAlreadyResponded)
+            {
+                return ApiResponse<ResponseSubmittedDto>
+                    .FailureResult(
+                        "Bu forma daha önce yanıt verdiniz.",
+                        409);
+            }
+        }
+
         // Formdaki tüm cevaplar soru kurallarına göre doğrulanır.
         var validationErrors = _validator.Validate(form, submitDto);
 
@@ -77,6 +98,7 @@ public class FormResponseService : IFormResponseService
         }
 
         string? respondentName = null;
+        string? respondentEmail = null;
 
         if (respondentUserId.HasValue)
         {
@@ -88,7 +110,8 @@ public class FormResponseService : IFormResponseService
                     user.IsActive)
                 .Select(user => new
                 {
-                    user.Name
+                    user.Name,
+                    user.Email
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -100,6 +123,7 @@ public class FormResponseService : IFormResponseService
             }
 
             respondentName = respondentUser.Name.Trim();
+            respondentEmail = respondentUser.Email.Trim();
         }
 
         var normalizedIpAddress = string.IsNullOrWhiteSpace(respondentIpAddress)
@@ -120,6 +144,7 @@ public class FormResponseService : IFormResponseService
             FormId = form.Id,
             RespondentUserId = respondentUserId,
             RespondentNameSnapshot = respondentName,
+            RespondentEmailSnapshot = respondentEmail,
             RespondentIpAddress = normalizedIpAddress,
             SubmittedAt = submittedAt
         };
@@ -259,6 +284,14 @@ public class FormResponseService : IFormResponseService
                     // veriyorsa frontend'e aktarılır.
                     RespondentName = form.ShowRespondentIdentity
                         ? response.RespondentNameSnapshot
+                        : null,
+
+                    RespondentEmail = form.ShowRespondentIdentity
+                        ? response.RespondentEmailSnapshot
+                        : null,
+
+                    RespondentIpAddress = form.ShowRespondentIdentity
+                        ? response.RespondentIpAddress
                         : null,
 
                     SubmittedAt = response.SubmittedAt,

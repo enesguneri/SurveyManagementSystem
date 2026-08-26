@@ -347,6 +347,14 @@ public class FormService : IFormService
                 401);
         }
 
+        var hasCurrentUserResponded = requesterUserId.HasValue && await _context.FormResponses
+            .AsNoTracking()
+            .AnyAsync(
+                response =>
+                    response.FormId == form.Id &&
+                    response.RespondentUserId == requesterUserId.Value,
+            cancellationToken);
+
         var responseDto = new FormDetailsDto
         {
             PublicId = form.PublicId,
@@ -358,7 +366,8 @@ public class FormService : IFormService
                 .OrderBy(question => question.DisplayOrder)
                 .Select(MapQuestionDetails)
                 .ToList(),
-            ShowRespondentIdentity = form.ShowRespondentIdentity
+            ShowRespondentIdentity = form.ShowRespondentIdentity,
+            HasCurrentUserResponded = hasCurrentUserResponded
         };
 
         return ApiResponse<FormDetailsDto>.SuccessResult(responseDto);

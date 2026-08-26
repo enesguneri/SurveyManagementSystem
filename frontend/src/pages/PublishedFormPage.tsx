@@ -65,6 +65,12 @@ function PublishedFormPage() {
     const navigate = useNavigate();
     const { publicId } = useParams<{ publicId: string }>();
 
+    const [hasSubmitted, setHasSubmitted] =
+        useState(false);
+
+    const [isSubmissionCompleted, setIsSubmissionCompleted] =
+        useState(false);
+
     useEffect(() => {
         async function loadForm() {
             if (!publicId) {
@@ -84,6 +90,7 @@ function PublishedFormPage() {
                 }
 
                 setForm(response.data);
+                setHasSubmitted(response.data.hasCurrentUserResponded,);
 
                 const initialAnswers =
                     response.data.questions.reduce<
@@ -240,10 +247,24 @@ function PublishedFormPage() {
                 return;
             }
 
+            setHasSubmitted(true);
+            setIsSubmissionCompleted(true);
+
             setSuccessMessage(
                 "Form yanıtınız başarıyla gönderildi.",
             );
-        } catch {
+        } catch (error) {
+            if (
+                axios.isAxiosError(error) &&
+                error.response?.status === 409
+            ) {
+                setHasSubmitted(true);
+                setErrorMessage(
+                    "Bu forma daha önce yanıt verdiniz.",
+                );
+                return;
+            }
+
             setErrorMessage(
                 "Yanıt gönderilirken sunucuya bağlanılamadı.",
             );
@@ -340,16 +361,25 @@ function PublishedFormPage() {
                     />
                 ))}
 
-                <Button
-                    variant="contained"
-                    size="large"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting
-                        ? "Gönderiliyor..."
-                        : "Yanıtları Gönder"}
-                </Button>
+                {!hasSubmitted && (
+                    <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting
+                            ? "Gönderiliyor..."
+                            : "Yanıtları Gönder"}
+                    </Button>
+                )}
+
+                {hasSubmitted && !isSubmissionCompleted && (
+                    <Alert severity="info">
+                        Bu forma daha önce yanıt verdiniz.
+                    </Alert>
+                )}
+
             </Stack>
             </Container>
         </>

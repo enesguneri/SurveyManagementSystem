@@ -13,6 +13,8 @@ public class FormResponse
     public string? RespondentNameSnapshot { get; set; }
     // Anonim yanıtlar dahil olmak üzere istemci IP adresini saklar.
     public string? RespondentIpAddress { get; set; }
+    // Yanıt gönderildiği andaki e-posta adresini saklar.
+    public string? RespondentEmailSnapshot { get; set; }
 
     public User? RespondentUser { get; set; }
     public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;

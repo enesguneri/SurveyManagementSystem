@@ -9,6 +9,7 @@ export interface PublishedForm {
     status: string;
     accessType: FormAccessType;
     questions: PublishedQuestion[];
+    hasCurrentUserResponded: boolean;
 }
 
 // Form içindeki tek bir sorunun detay modeli.
