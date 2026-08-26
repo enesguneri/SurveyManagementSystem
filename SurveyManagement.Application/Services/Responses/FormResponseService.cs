@@ -449,15 +449,20 @@ public class FormResponseService : IFormResponseService
         // Birim rolüne sahip kullanıcılar ise
         // kendi birimlerine bağlı formların yanıtlarını görebilir.
         return await _context.UserRoles.AnyAsync(
-            userRole =>
-                userRole.UserId == requesterUserId &&
-                (
-                    userRole.Role.Name == "Admin" ||
-                    _context.FormRoles.Any(
-                        formRole =>
-                            formRole.FormId == form.Id &&
-                            formRole.RoleId == userRole.RoleId)
-                ),
-            cancellationToken);
+        userRole =>
+        userRole.UserId == requesterUserId &&
+        userRole.Role.IsActive &&
+        (
+            (
+                userRole.Role.IsSystemRole &&
+                userRole.Role.Name == "Admin"
+            ) ||
+            _context.FormRoles.Any(
+                formRole =>
+                    formRole.FormId == form.Id &&
+                    formRole.RoleId == userRole.RoleId &&
+                    formRole.Role.IsActive)
+        ),
+        cancellationToken);
     }
 }

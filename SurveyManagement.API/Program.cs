@@ -102,7 +102,20 @@ builder.Services.AddScoped<
 // 3. JWT Authentication (Kimlik Doğrulama) Ayarları
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"]
-    ?? throw new InvalidOperationException("JwtSettings:SecretKey bulunamadı.");
+    ?? throw new InvalidOperationException(
+        "JwtSettings:SecretKey bulunamadı.");
+
+const string placeholderSecret =
+    "YOUR_SUPER_SECRET_KEY_PLACEHOLDER_THAT_IS_AT_LEAST_64_BYTES_LONG";
+
+if (string.IsNullOrWhiteSpace(secretKey) ||
+    secretKey == placeholderSecret ||
+    Encoding.UTF8.GetByteCount(secretKey) < 64)
+{
+    throw new InvalidOperationException(
+        "JwtSettings:SecretKey User Secrets veya ortam değişkeni üzerinden " +
+        "en az 64 byte uzunluğunda gerçek bir değer olmalıdır.");
+}
 
 builder.Services.AddAuthentication(options =>
 {

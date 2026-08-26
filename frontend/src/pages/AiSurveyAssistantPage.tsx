@@ -72,7 +72,7 @@ export default function AiSurveyAssistantPage() {
         try {
             const response = await generateSurveyDraft({
                 prompt: trimmedPrompt,
-                conversation,
+                conversation: conversation.slice(-20),
             });
 
             if (
@@ -102,17 +102,19 @@ export default function AiSurveyAssistantPage() {
                 .filter(Boolean)
                 .join("\n");
 
-            setConversation((currentConversation) => [
-                ...currentConversation,
-                {
-                    role: "user",
-                    content: trimmedPrompt,
-                },
-                {
-                    role: "assistant",
-                    content: assistantContent,
-                },
-            ]);
+            setConversation((currentConversation) =>
+                [
+                    ...currentConversation,
+                    {
+                        role: "user" as const,
+                        content: trimmedPrompt,
+                    },
+                    {
+                        role: "assistant" as const,
+                        content: assistantContent,
+                    },
+                ].slice(-20),
+            );
 
             setPrompt("");
         } catch (error) {

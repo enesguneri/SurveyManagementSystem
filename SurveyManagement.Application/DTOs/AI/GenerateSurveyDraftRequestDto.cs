@@ -10,5 +10,6 @@ public class GenerateSurveyDraftRequestDto
     public string Prompt { get; set; } = string.Empty;
 
     // Stateless akış için önceki konuşma mesajları frontend tarafından gönderilir.
+    [MaxLength(20)]
     public List<AiConversationMessageDto> Conversation { get; set; } = new();
 }

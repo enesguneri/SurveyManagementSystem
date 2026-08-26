@@ -11,9 +11,11 @@ public sealed class ImportOptionsFromUrlRequestDto
 
     // Örneğin: data.items veya options.
     // Boş bırakılırsa JSON kökü kullanılır.
+    [StringLength(500)]
     public string? JsonPath { get; set; }
 
     // API nesne döndürüyorsa seçenek metninin okunacağı alan.
     // Örneğin: name, title veya text.
+    [StringLength(100)]
     public string TextProperty { get; set; } = "text";
 }
