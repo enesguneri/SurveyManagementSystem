@@ -8,6 +8,7 @@ import PublishedFormPage from "./pages/PublishedFormPage";
 import AdminPanelPage from "./pages/AdminPanelPage";
 import ManageableFormsPage from "./pages/ManageableFormsPage";
 import FormResponsesPage from "./pages/FormResponsesPage";
+import AiSurveyAssistantPage from "./pages/AiSurveyAssistantPage";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
                   <Route path="/forms/:publicId/edit" element={<FormBuilderPage />}/>
                   <Route path="/admin" element={<AdminPanelPage />} />
                   <Route path="/forms/:publicId/responses" element={<FormResponsesPage />}/>
+                  <Route path="/ai/survey" element={<AiSurveyAssistantPage />}/>
                   <Route path="/forms" element={<ManageableFormsPage />}
                   />
               </Route>

@@ -261,7 +261,7 @@ export default function FormResponsesPage() {
     if (!publicId) {
         return (
             <Box sx={{ minHeight: "100vh" }}>
-                <BrandHeader pageTitle="Yanıtlar" onHome={() => navigate("/forms")} />
+                <BrandHeader pageTitle="Yanıtlar" onHome={() => navigate("/")} />
                 <Container maxWidth="md" sx={{ py: 5 }}>
                     <Alert severity="error">Form kimliği bulunamadı.</Alert>
                 </Container>
@@ -298,7 +298,7 @@ export default function FormResponsesPage() {
                 backgroundColor: "background.default",
             }}
         >
-            <BrandHeader pageTitle="Yanıtlar" onHome={() => navigate("/forms")} onLogout={handleLogout} />
+            <BrandHeader pageTitle="Yanıtlar" onHome={() => navigate("/")} onLogout={handleLogout} />
 
             <Container maxWidth="md" sx={{ py: 5 }}>
                 <Stack spacing={3}>
