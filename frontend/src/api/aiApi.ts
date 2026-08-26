@@ -12,7 +12,13 @@ export async function generateSurveyDraft(
 ): Promise<ApiResponse<GenerateSurveyDraftResponse>> {
     const response = await apiClient.post<
         ApiResponse<GenerateSurveyDraftResponse>
-    >("/ai/survey-draft", request);
+    >(
+        "/ai/survey-draft",
+        request,
+        {
+            timeout: 120_000,
+        },
+    );
 
     return response.data;
 }

@@ -39,9 +39,8 @@ public class GlobalExceptionMiddleware
 
         // ApiResponse<T> formatında hata yanıtı oluşturma
         var response = ApiResponse<string>.FailureResult(
-            errors: new List<string> { exception.Message },
-            message: "Sunucu tarafında beklenmeyen bir hata oluştu."
-        );
+            "Sunucu tarafında beklenmeyen bir hata oluştu.",
+            StatusCodes.Status500InternalServerError);
 
         // JSON çıktısının camelCase formatında olması için konfigürasyon
         var options = new JsonSerializerOptions
