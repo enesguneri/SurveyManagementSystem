@@ -206,7 +206,36 @@ public class FormResponseService : IFormResponseService
         }
 
         _context.FormResponses.Add(formResponse);
-        await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+            when (respondentUserId.HasValue)
+        {
+            // Ön kontrol ile kayıt arasında yarış durumu oluşmuş olabilir.
+            // Unique index ikinci kaydı engellediyse bunu 409 olarak bildiririz.
+            var duplicateExists = await _context.FormResponses
+                .AsNoTracking()
+                .AnyAsync(
+                    response =>
+                        response.FormId == form.Id &&
+                        response.RespondentUserId ==
+                            respondentUserId.Value,
+                    cancellationToken);
+
+            if (duplicateExists)
+            {
+                return ApiResponse<ResponseSubmittedDto>
+                    .FailureResult(
+                        "Bu forma daha önce yanıt verdiniz.",
+                        409);
+            }
+
+            // Başka bir veritabanı hatasını gizlemeyip global middleware'e bırakırız.
+            throw;
+        }
 
         var responseDto = new ResponseSubmittedDto
         {
