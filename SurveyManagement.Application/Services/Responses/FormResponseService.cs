@@ -66,6 +66,27 @@ public class FormResponseService : IFormResponseService
                 401);
         }
 
+        if (respondentUserId.HasValue)
+        {
+            var hasAlreadyResponded =
+                await _context.FormResponses
+                    .AsNoTracking()
+                    .AnyAsync(
+                        response =>
+                            response.FormId == form.Id &&
+                            response.RespondentUserId ==
+                                respondentUserId.Value,
+                        cancellationToken);
+
+            if (hasAlreadyResponded)
+            {
+                return ApiResponse<ResponseSubmittedDto>
+                    .FailureResult(
+                        "Bu forma daha önce yanıt verdiniz.",
+                        409);
+            }
+        }
+
         // Formdaki tüm cevaplar soru kurallarına göre doğrulanır.
         var validationErrors = _validator.Validate(form, submitDto);
 
@@ -77,6 +98,7 @@ public class FormResponseService : IFormResponseService
         }
 
         string? respondentName = null;
+        string? respondentEmail = null;
 
         if (respondentUserId.HasValue)
         {
@@ -88,7 +110,8 @@ public class FormResponseService : IFormResponseService
                     user.IsActive)
                 .Select(user => new
                 {
-                    user.Name
+                    user.Name,
+                    user.Email
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -100,6 +123,7 @@ public class FormResponseService : IFormResponseService
             }
 
             respondentName = respondentUser.Name.Trim();
+            respondentEmail = respondentUser.Email.Trim();
         }
 
         var normalizedIpAddress = string.IsNullOrWhiteSpace(respondentIpAddress)
@@ -120,6 +144,7 @@ public class FormResponseService : IFormResponseService
             FormId = form.Id,
             RespondentUserId = respondentUserId,
             RespondentNameSnapshot = respondentName,
+            RespondentEmailSnapshot = respondentEmail,
             RespondentIpAddress = normalizedIpAddress,
             SubmittedAt = submittedAt
         };
@@ -161,6 +186,7 @@ public class FormResponseService : IFormResponseService
                     break;
 
                 case QuestionType.SingleChoice:
+                case QuestionType.Dropdown:
                 case QuestionType.MultipleChoice:
                     AddSelectedOptions(
                         responseAnswer,
@@ -180,7 +206,36 @@ public class FormResponseService : IFormResponseService
         }
 
         _context.FormResponses.Add(formResponse);
-        await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+            when (respondentUserId.HasValue)
+        {
+            // Ön kontrol ile kayıt arasında yarış durumu oluşmuş olabilir.
+            // Unique index ikinci kaydı engellediyse bunu 409 olarak bildiririz.
+            var duplicateExists = await _context.FormResponses
+                .AsNoTracking()
+                .AnyAsync(
+                    response =>
+                        response.FormId == form.Id &&
+                        response.RespondentUserId ==
+                            respondentUserId.Value,
+                    cancellationToken);
+
+            if (duplicateExists)
+            {
+                return ApiResponse<ResponseSubmittedDto>
+                    .FailureResult(
+                        "Bu forma daha önce yanıt verdiniz.",
+                        409);
+            }
+
+            // Başka bir veritabanı hatasını gizlemeyip global middleware'e bırakırız.
+            throw;
+        }
 
         var responseDto = new ResponseSubmittedDto
         {
@@ -260,6 +315,14 @@ public class FormResponseService : IFormResponseService
                         ? response.RespondentNameSnapshot
                         : null,
 
+                    RespondentEmail = form.ShowRespondentIdentity
+                        ? response.RespondentEmailSnapshot
+                        : null,
+
+                    RespondentIpAddress = form.ShowRespondentIdentity
+                        ? response.RespondentIpAddress
+                        : null,
+
                     SubmittedAt = response.SubmittedAt,
                     Answers = response.Answers
                         .OrderBy(answer => answer.Question.DisplayOrder)
@@ -316,7 +379,7 @@ public class FormResponseService : IFormResponseService
             QuestionType.Rating =>
                 answer.NumericValue.HasValue,
 
-            QuestionType.SingleChoice or QuestionType.MultipleChoice =>
+            QuestionType.SingleChoice or QuestionType.Dropdown or QuestionType.MultipleChoice =>
                 answer.SelectedOptionIds.Count > 0,
 
             QuestionType.MultipleChoiceGrid or QuestionType.CheckboxGrid =>
@@ -383,10 +446,23 @@ public class FormResponseService : IFormResponseService
         }
 
         // Admin tüm formların yanıtlarını görebilir.
+        // Birim rolüne sahip kullanıcılar ise
+        // kendi birimlerine bağlı formların yanıtlarını görebilir.
         return await _context.UserRoles.AnyAsync(
-            userRole =>
-                userRole.UserId == requesterUserId &&
-                userRole.Role.Name == "Admin",
-            cancellationToken);
+        userRole =>
+        userRole.UserId == requesterUserId &&
+        userRole.Role.IsActive &&
+        (
+            (
+                userRole.Role.IsSystemRole &&
+                userRole.Role.Name == "Admin"
+            ) ||
+            _context.FormRoles.Any(
+                formRole =>
+                    formRole.FormId == form.Id &&
+                    formRole.RoleId == userRole.RoleId &&
+                    formRole.Role.IsActive)
+        ),
+        cancellationToken);
     }
 }

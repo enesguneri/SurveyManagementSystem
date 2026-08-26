@@ -1,130 +1,500 @@
-# 🚀 User Management System API
+# 🎓 İzmir Bakırçay University Survey Management System
 
-A production-ready RESTful API built with **.NET 10** and **PostgreSQL**, adhering to **Clean Architecture** principles. Features secure JWT authentication, role-based access control (RBAC), global exception handling, and performant **Server-Side DataTables** support.
+> İzmir Bakırçay Üniversitesi için geliştirilen modern, güvenli ve dinamik anket yönetim platformu.
 
----
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
+[![React](https://img.shields.io/badge/React-TypeScript-61DAFB)](https://react.dev/)
+[![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1)](https://www.mysql.com/)
+[![Material UI](https://img.shields.io/badge/UI-Material%20UI-007FFF)](https://mui.com/)
 
-## 📋 Table of Contents
+## 📌 About the Project
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Architecture](#-project-architecture)
-- [Database Schema](#-database-schema)
-- [Development Roadmap (Sprint Plan)](#-development-roadmap-sprint-plan)
-- [Getting Started](#-getting-started)
-- [Security Configuration](#-security-configuration)
+The Survey Management System is a full-stack web application that enables authorized users to create, publish, manage, and analyze dynamic surveys.
 
----
+The platform supports:
+
+- 🔐 Secure authentication and authorization
+- 📝 Dynamic survey creation
+- 🏢 Unit-based access control
+- 📊 Response management and export
+- 🤖 Gemini AI-assisted survey generation
+- 📥 External option import
+- 🎨 Modern and responsive user interface
 
 ## ✨ Features
 
-- 🏗 **Clean Architecture:** Strict separation of concerns across Domain, Application, Persistence, and API layers for high maintainability and testability.
-- 🔐 **Authentication & Authorization:** Password hashing & salting using HMACSHA512 combined with JWT (JSON Web Token) bearer authentication.
-- 👥 **Role-Based Access Control (RBAC):** Flexible Many-to-Many relationship model between Users and Roles.
-- 📊 **Server-Side DataTables Support:** Optimized server-side pagination, multi-column sorting, and dynamic filtering via `IQueryable` LINQ queries.
-- 🛡 **Security & Privacy:** Environment-isolated credential management using .NET User Secrets to prevent sensitive data leaks.
-- 🌐 **Global Exception Handling:** Standardized error response model (`ApiResponse<T>`) across all API endpoints via custom middleware.
+### 🔐 Authentication and Authorization
 
----
+- User registration and login
+- JWT-based authentication
+- Password hashing and salting
+- Role-based authorization
+- Unit-based form authorization
+- Admin panel
+- Swagger JWT Bearer authentication
 
-## 🛠 Tech Stack
+### 📝 Survey Management
 
-- **Framework:** .NET 10 Web API
-- **Database:** PostgreSQL
-- **ORM:** Entity Framework Core (Npgsql)
-- **Security & Tokens:** System.IdentityModel.Tokens.Jwt, System.Security.Cryptography
-- **Documentation:** OpenAPI / Swagger UI
-- **Version Control:** Git & GitHub (Git Flow)
+- Dynamic survey creation
+- Draft, published, and closed survey statuses
+- Multiple organizational units per survey
+- Anonymous or authenticated survey access
+- One-response-per-user rule for authenticated surveys
+- Draft survey editing
+- Survey publishing and closing
 
----
+### 🧩 Supported Question Types
 
-## 🏛 Project Architecture
+- Short text
+- Long text
+- Date
+- Single choice
+- Multiple choice
+- Dropdown
+- Rating
+- Multiple-choice matrix
+- Checkbox matrix
+
+### ✅ Validation
+
+- Required question validation
+- Minimum and maximum text length
+- Regular expression validation
+- Numeric range validation
+- Minimum and maximum date validation
+
+### 📊 Response Management
+
+- Response submission
+- Response viewing
+- Respondent name snapshot
+- Respondent email snapshot
+- Respondent IP address tracking
+- Submission date and time tracking
+- Matrix and checkbox matrix responses
+- Duplicate submission protection
+
+### 📤 Import and Export
+
+- TXT option import
+- CSV option import
+- JSON option import
+- External HTTPS API option import
+- Searchable dropdown options
+- CSV response export
+- Excel response export
+- Separate rows for multiple-choice selections
+
+### 🤖 Gemini AI Assistant
+
+- AI-assisted survey draft generation
+- Clarification questions for incomplete prompts
+- Visual draft preview
+- Manual review before database registration
+- No automatic database save without user confirmation
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| Backend | .NET 10 Web API, C# |
+| ORM | Entity Framework Core |
+| Database | MySQL |
+| Authentication | JWT Bearer |
+| API Documentation | Swagger / OpenAPI |
+| Frontend | React, TypeScript, Vite |
+| UI | Material UI |
+| HTTP Client | Axios |
+| AI | Gemini API |
+| Version Control | Git and GitHub |
+
+## 🏗️ Project Architecture
+
+The backend follows a layered architecture approach.
 
 ```text
 SurveyManagementSystem/
-├── src/
-│   ├── SurveyManagement.Domain/        # Entities, Value Objects, Core Models
-│   ├── SurveyManagement.Application/   # DTOs, Interfaces, Service Logic
-│   ├── SurveyManagement.Persistence/   # AppDbContext, Fluent API Mappings, Migrations
-│   └── SurveyManagement.API/           # Controllers, Middlewares, Dependency Injection
+├── SurveyManagement.Domain/
+│   ├── Entities/
+│   └── Enums/
+│
+├── SurveyManagement.Application/
+│   ├── Common/
+│   ├── DTOs/
+│   ├── Interfaces/
+│   └── Services/
+│
+├── SurveyManagement.Persistence/
+│   ├── Context/
+│   └── Migrations/
+│
+├── SurveyManagement.API/
+│   ├── Controllers/
+│   ├── Middlewares/
+│   └── Program.cs
+│
+└── frontend/
+    ├── public/
+    ├── src/
+    └── package.json
 ```
 
----
+### 🧱 Layer Responsibilities
 
-## 🗄 Database Schema
+| Layer | Responsibility |
+|---|---|
+| Domain | Entities, enums, and core business models |
+| Application | DTOs, interfaces, business logic, and services |
+| Persistence | Database context, migrations, and EF Core configuration |
+| API | Controllers, middleware, Swagger, and HTTP pipeline |
+| Frontend | User interface, routing, forms, and API communication |
 
-Configured using Entity Framework Core Fluent API:
+## 🗄️ Database Structure
 
-- **Users:** `Id`, `Name`, `Username`, `Email`, `PasswordHash`, `PasswordSalt`, `CreatedAt`, `IsActive`
-- **Roles:** `Id`, `Name`, `CreatedAt`, `IsActive`
-- **UserRoles:** `UserId`, `RoleId` *(Composite Primary Key)*
+Main tables:
+
+- `Users`
+- `Roles`
+- `UserRoles`
+- `Forms`
+- `FormRoles`
+- `Questions`
+- `QuestionOptions`
+- `QuestionValidations`
+- `MatrixRows`
+- `MatrixColumns`
+- `FormResponses`
+- `ResponseAnswers`
+- `ResponseAnswerOptions`
+- `ResponseMatrixAnswers`
+
+### 🔗 Main Relationships
 
 ```text
-[ Users ] 1 <---> N [ UserRoles ] N <---> 1 [ Roles ]
+Users N ──── N Roles
+      UserRoles
+
+Forms N ──── N Roles
+      FormRoles
+
+Forms 1 ──── N Questions
+Questions 1 ──── N QuestionOptions
+Questions 1 ──── 1 QuestionValidations
+
+Forms 1 ──── N FormResponses
+FormResponses 1 ──── N ResponseAnswers
+ResponseAnswers 1 ──── N ResponseAnswerOptions
+ResponseAnswers 1 ──── N ResponseMatrixAnswers
 ```
 
----
+A form can belong to multiple organizational units through the `FormRoles` junction table.
 
-## 🗺 Development Roadmap (Sprint Plan)
+## 🚀 Backend Setup
 
-### 📌 Sprint 1: Architecture Setup & Database Infrastructure (✅ Completed)
-- [x] Solution & Clean Architecture setup (`Domain`, `Application`, `Persistence`, `API`)
-- [x] Entity modeling and PostgreSQL integration
-- [x] Fluent API mapping and Data Seeding configuration
-- [x] EF Core Migrations setup and initial database deployment
+### 📋 Prerequisites
 
-### 📌 Sprint 2: Security, Authentication & Swagger UI (✅ Completed)
-- [x] Standardized API response model (`ApiResponse<T>`) implementation
-- [x] Global Exception Handling Middleware integration
-- [x] DTO design (`RegisterDto`, `LoginDto`, `UserDto`, `TokenResponseDto`)
-- [x] Password Hashing/Salting and JWT Token generation service
-- [x] `Login` and `Register` endpoint integration
-- [x] Swagger UI JWT Bearer Authorization setup & OpenAPI v2 architecture integration
-
-### 📌 Sprint 3: Server-Side DataTables & User Service (⏳ Planned)
-- [ ] Server-Side DataTables request & response DTO modeling
-- [ ] Server-side pagination, sorting, and filtering logic via `IQueryable`
-- [ ] `UsersController` implementation returning DataTable-compliant JSON
-
-### 📌 Sprint 4: Testing & Documentation (⏳ Planned)
-- [ ] Endpoint validation against HTTP status codes (200, 201, 400, 401, 403, 404, 500)
-- [ ] Code refactoring and technical documentation completion
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [PostgreSQL](https://www.postgresql.org/download/) & pgAdmin
+- .NET 10 SDK
+- MySQL Server 8+
 - Git
+- Entity Framework Core CLI
 
-### Installation Steps
+Install Entity Framework CLI:
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/enesguneri/SurveyManagementSystem.git
-   cd SurveyManagementSystem
-   ```
+```powershell
+dotnet tool install --global dotnet-ef
+```
 
-2. **Configure Database Connection (User Secrets):**
-   Set your local PostgreSQL connection string securely without exposing credentials to Git:
-   ```bash
-   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=SurveyManagementDb;Username=postgres;Password=YOUR_POSTGRES_PASSWORD" --project src/SurveyManagement.API
-   ```
+### 📦 Restore and Build
 
-3. **Apply Database Migrations:**
-   ```bash
-   dotnet ef database update --project src/SurveyManagement.Persistence --startup-project src/SurveyManagement.API
-   ```
+```powershell
+dotnet restore .\SurveyManagementSystem.slnx
+dotnet build .\SurveyManagementSystem.slnx
+```
 
-4. **Run the Application:**
-   ```bash
-   dotnet run --project src/SurveyManagement.API
-   ```
+### 🗃️ Database Configuration
 
----
+Update the connection string in:
 
-## 🔒 Security Configuration
+```text
+SurveyManagement.API/appsettings.json
+```
 
-This project enforces strict security practices. Database connection strings, API keys, and JWT Secret Keys are **never** hardcoded in repository files or `appsettings.json`. The `.NET User Secrets` manager is utilized in local development, ensuring sensitive credentials remain isolated from public source control.
+Example:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Port=3306;Database=SurveyManagementDb;User=root;Password=YOUR_MYSQL_PASSWORD"
+  }
+}
+```
+
+> ⚠️ Never commit real passwords, JWT secrets, or API keys to GitHub.
+
+### 🔄 Apply Migrations
+
+```powershell
+dotnet ef database update `
+  --project .\SurveyManagement.Persistence `
+  --startup-project .\SurveyManagement.API
+```
+
+### ➕ Create a Migration
+
+```powershell
+dotnet ef migrations add MigrationName `
+  --project .\SurveyManagement.Persistence `
+  --startup-project .\SurveyManagement.API
+```
+
+### ▶️ Run the API
+
+```powershell
+dotnet run --project .\SurveyManagement.API
+```
+
+Swagger UI:
+
+```text
+https://localhost:7143/swagger
+```
+
+## 🤖 Gemini Configuration
+
+Gemini settings should be stored using User Secrets or environment variables.
+
+```powershell
+dotnet user-secrets init `
+  --project .\SurveyManagement.API
+```
+
+```powershell
+dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" `
+  --project .\SurveyManagement.API
+```
+
+```powershell
+dotnet user-secrets set "Gemini:Model" "gemini-3.5-flash-lite" `
+  --project .\SurveyManagement.API
+```
+
+The AI workflow:
+
+1. The user enters a survey description.
+2. Gemini generates a draft.
+3. Gemini asks clarification questions if necessary.
+4. The frontend displays a visual preview.
+5. The user reviews and edits the draft.
+6. The user manually saves the survey.
+
+## 💻 Frontend Setup
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+The API URL is configured in:
+
+```text
+frontend/.env.development
+```
+
+Example:
+
+```env
+VITE_API_BASE_URL=https://localhost:7143/api
+```
+
+### 🏗️ Frontend Build
+
+```powershell
+cd frontend
+npm run build
+```
+
+### 🧹 Frontend Lint
+
+```powershell
+cd frontend
+npm run lint
+```
+
+## 📥 Option Import
+
+The system supports importing choice options from:
+
+- TXT files
+- CSV files
+- JSON files
+- External HTTPS APIs
+
+External API imports include:
+
+- JSON path selection
+- Text property selection
+- Searchable preview
+- Duplicate removal
+- Response size limits
+- Maximum option count
+- Maximum option length
+- Local and private network protection
+
+## 📤 Response Export
+
+Authorized users can export responses in:
+
+- CSV format
+- Excel format (`.xlsx`)
+
+The export files may contain:
+
+- Response ID
+- Submission timestamp
+- Respondent name
+- Respondent email
+- Respondent IP address
+- Answer details
+- Selected options
+- Matrix selections
+
+Export permissions are checked according to the user's access to the related form.
+
+## 🔒 Security
+
+- JWT Bearer authentication
+- Role-based authorization
+- Unit-based form authorization
+- Password hashing and salting
+- Global exception middleware
+- Secure error responses
+- HTTPS-only external option imports
+- Local and private IP blocking
+- Disabled automatic external redirects
+- Unique authenticated response constraint
+- Sensitive configuration stored outside source control
+
+## 🌿 Git Workflow
+
+The project follows the Git Flow strategy.
+
+Main branches:
+
+- `main`
+- `develop`
+
+Feature branch example:
+
+```powershell
+git switch develop
+git pull --ff-only origin develop
+git switch -c feature/new-feature
+```
+
+### 📝 Conventional Commits
+
+```text
+feat(forms): add survey publishing workflow
+fix(auth): resolve token validation issue
+refactor(responses): simplify response processing
+docs: update project documentation
+chore: update dependencies
+```
+
+## 🗺️ Sprint Roadmap
+
+### Sprint 1 — Architecture and Database Infrastructure
+
+**Status: Completed ✅**
+
+- Layered architecture
+- Entity modeling
+- MySQL integration
+- Fluent API relationships
+- Data seeding
+- EF Core migrations
+- PostgreSQL-to-MySQL data migration
+
+### Sprint 2 — Authentication and Authorization
+
+**Status: Completed ✅**
+
+- Registration and login
+- Password hashing
+- JWT token generation
+- Swagger Bearer authentication
+- Global exception middleware
+- Role-based authorization
+
+### Sprint 3 — Survey Domain and Form Management
+
+**Status: Completed ✅**
+
+- Dynamic survey creation
+- Question types
+- Question options
+- Dropdown support
+- Matrix questions
+- Validation rules
+- Draft editing
+- Publishing and closing
+- Unit-based form ownership
+
+### Sprint 4 — Survey Responses
+
+**Status: Completed ✅**
+
+- Response submission
+- Date and rating responses
+- Matrix responses
+- Respondent metadata
+- IP address tracking
+- Response viewing
+- One response per authenticated user
+- Duplicate race-condition handling
+
+### Sprint 5 — Frontend and Administration
+
+**Status: Completed ✅**
+
+- React frontend
+- Survey builder
+- Survey listing
+- Response viewer
+- Admin panel
+- Unit-based role management
+- Responsive Turkish interface
+- İzmir Bakırçay University branding
+
+### Sprint 6 — AI, Import, Export, and Deployment
+
+**Status: AI, import, and export completed; deployment planned 🚧**
+
+- Gemini AI assistant
+- Clarification questions
+- Visual AI draft preview
+- TXT, CSV, JSON, and API option import
+- Searchable dropdowns
+- CSV response export
+- Excel response export
+- Secure external API handling
+- Docker configuration
+- Automated tests
+- CI/CD pipeline
+- Production deployment
+
+Docker, automated tests, CI/CD, and production deployment are planned for a later stage.
+
+## 📌 Development Principles
+
+The project follows:
+
+- SOLID principles
+- Clean Code practices
+- Layered architecture
+- Separation of concerns
+- Secure configuration management
+- Conventional Commits
+- Git Flow
+- Code-first database migrations

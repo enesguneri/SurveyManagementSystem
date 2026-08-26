@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace SurveyManagement.Persistence.Context;
 
@@ -13,7 +14,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
-
+    public DbSet<FormRole> FormRoles => Set<FormRole>();
     public DbSet<Form> Forms => Set<Form>();
     public DbSet<Question> Questions => Set<Question>();
     public DbSet<QuestionValidation> QuestionValidations => Set<QuestionValidation>();
@@ -30,6 +31,21 @@ public class AppDbContext : DbContext, IAppDbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // MySQL DATE değerini DateOnly ile güvenli biçimde eşleştirir.
+        var dateOnlyConverter =
+            new ValueConverter<DateOnly?, DateTime?>(
+                dateValue =>
+                    dateValue.HasValue
+                        ? dateValue.Value.ToDateTime(
+                            TimeOnly.MinValue)
+                        : null,
+
+                dateTimeValue =>
+                    dateTimeValue.HasValue
+                        ? DateOnly.FromDateTime(
+                            dateTimeValue.Value)
+                        : null);
+
         modelBuilder.Entity<UserRole>()
             .HasKey(userRole => new { userRole.UserId, userRole.RoleId });
 
@@ -42,6 +58,27 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasOne(userRole => userRole.Role)
             .WithMany(role => role.UserRoles)
             .HasForeignKey(userRole => userRole.RoleId);
+
+        // FormRole birleşik anahtarı:
+        // aynı form-birim ilişkisi iki kez eklenemez.
+        modelBuilder.Entity<FormRole>()
+            .HasKey(formRole => new
+            {
+                formRole.FormId,
+                formRole.RoleId
+            });
+
+        modelBuilder.Entity<FormRole>()
+            .HasOne(formRole => formRole.Form)
+            .WithMany(form => form.FormRoles)
+            .HasForeignKey(formRole => formRole.FormId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FormRole>()
+            .HasOne(formRole => formRole.Role)
+            .WithMany(role => role.FormRoles)
+            .HasForeignKey(formRole => formRole.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Form>()
             .HasIndex(form => form.PublicId)
@@ -116,10 +153,12 @@ public class AppDbContext : DbContext, IAppDbContext
 
         modelBuilder.Entity<QuestionValidation>()
             .Property(validation => validation.MinDate)
+            .HasConversion(dateOnlyConverter)
             .HasColumnType("date");
 
         modelBuilder.Entity<QuestionValidation>()
             .Property(validation => validation.MaxDate)
+            .HasConversion(dateOnlyConverter)
             .HasColumnType("date");
 
         modelBuilder.Entity<QuestionOption>()
@@ -184,8 +223,20 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasMaxLength(200);
 
         modelBuilder.Entity<FormResponse>()
+            .Property(response => response.RespondentEmailSnapshot)
+            .HasMaxLength(320);
+
+        modelBuilder.Entity<FormResponse>()
             .Property(response => response.RespondentIpAddress)
             .HasMaxLength(45);
+
+        modelBuilder.Entity<FormResponse>()
+            .HasIndex(response => new
+            {
+                response.FormId,
+                response.RespondentUserId
+            })
+            .IsUnique();
 
         modelBuilder.Entity<ResponseAnswer>()
             .HasIndex(answer => new { answer.FormResponseId, answer.QuestionId })
@@ -205,6 +256,7 @@ public class AppDbContext : DbContext, IAppDbContext
 
         modelBuilder.Entity<ResponseAnswer>()
             .Property(answer => answer.DateValue)
+            .HasConversion(dateOnlyConverter)
             .HasColumnType("date");
 
         modelBuilder.Entity<ResponseAnswerOption>()
@@ -258,15 +310,19 @@ public class AppDbContext : DbContext, IAppDbContext
             {
                 Id = 1,
                 Name = "Admin",
-                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                IsSystemRole = true,
+                CreatedAt = new DateTime(
+                2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true
             },
             new Role
             {
                 Id = 2,
-                Name = "User",
-                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                IsActive = true
+            Name = "User",
+            IsSystemRole = true,
+            CreatedAt = new DateTime(
+            2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            IsActive = true
             }
         );
     }

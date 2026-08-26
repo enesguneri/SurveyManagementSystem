@@ -21,6 +21,65 @@ public class FormService : IFormService
         _formRequestValidator = formRequestValidator;
     }
 
+    public async Task<ApiResponse<List<ManageableFormDto>>> GetManageableAsync(
+    int requesterUserId,
+    CancellationToken cancellationToken = default)
+    {
+        // Kullanıcının Admin rolüne sahip olup olmadığı kontrol edilir.
+        var isAdmin = await _context.UserRoles
+            .AnyAsync(
+                userRole =>
+                    userRole.UserId == requesterUserId &&
+                    userRole.Role.Name == "Admin" &&
+                    userRole.Role.IsActive,
+                cancellationToken);
+
+        // Kullanıcının aktif birim rolleri alınır.
+        var assignedRoleIds = await _context.UserRoles
+            .Where(
+                userRole =>
+                    userRole.UserId == requesterUserId &&
+                    userRole.Role.IsActive)
+            .Select(userRole => userRole.RoleId)
+            .ToListAsync(cancellationToken);
+
+        // Filtreleme veritabanı seviyesinde yapılır.
+        var forms = await _context.Forms
+            .AsNoTracking()
+            .Where(
+                form =>
+                    isAdmin ||
+                    form.CreatedByUserId == requesterUserId ||
+                    form.FormRoles.Any(
+                        formRole =>
+                            formRole.Role.IsActive &&
+                            assignedRoleIds.Contains(formRole.RoleId)))
+            .OrderByDescending(form => form.CreatedAt)
+            .Select(
+                form => new ManageableFormDto
+                {
+                    Id = form.Id,
+                    PublicId = form.PublicId,
+                    Title = form.Title,
+                    Description = form.Description,
+                    Status = form.Status,
+                    AccessType = form.AccessType,
+                    CreatedAt = form.CreatedAt,
+                    CreatedByUserId = form.CreatedByUserId,
+                    CreatedByUserName = form.CreatedByUser.Name,
+                    RoleNames = form.FormRoles
+                        .Where(formRole => formRole.Role.IsActive)
+                        .OrderBy(formRole => formRole.Role.Name)
+                        .Select(formRole => formRole.Role.Name)
+                        .ToList(),
+                    ResponseCount = form.Responses.Count()
+                })
+            .ToListAsync(cancellationToken);
+
+        return ApiResponse<List<ManageableFormDto>>.SuccessResult(
+            forms);
+    }
+
     public async Task<ApiResponse<FormCreatedDto>> CreateAsync(
         CreateFormDto createFormDto,
         int createdByUserId,
@@ -41,11 +100,26 @@ public class FormService : IFormService
             user => user.Id == createdByUserId && user.IsActive,
             cancellationToken);
 
+
         if (!isActiveUser)
         {
             return ApiResponse<FormCreatedDto>.FailureResult(
                 "Form oluşturacak aktif kullanıcı bulunamadı.");
         }
+
+        var roleScopeResult = await ValidateRoleScopeAsync(
+            createFormDto.RoleIds,
+            createdByUserId,
+            cancellationToken);
+
+        if (!roleScopeResult.IsValid)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                roleScopeResult.ErrorMessage!,
+                roleScopeResult.StatusCode);
+        }
+
+        var roleIds = roleScopeResult.RoleIds;
 
         // İstemciden gelen DTO, veritabanı entity'lerine dönüştürülür.
         var form = new Form
@@ -64,6 +138,15 @@ public class FormService : IFormService
             CreatedAt = DateTime.UtcNow,
             ShowRespondentIdentity = createFormDto.ShowRespondentIdentity
         };
+
+        // Formun seçilen birimlerle ilişkisi oluşturulur.
+        foreach (var roleId in roleIds)
+        {
+            form.FormRoles.Add(new FormRole
+            {
+                RoleId = roleId
+            });
+        }
 
         // Sorular ve soru alt öğeleri ortak mapper metodu ile oluşturulur.
         AddQuestionsToForm(form, createFormDto.Questions);
@@ -87,6 +170,82 @@ public class FormService : IFormService
         return ApiResponse<FormCreatedDto>.SuccessResult(
             responseDto,
             "Form taslak olarak başarıyla oluşturuldu.");
+    }
+
+    public async Task<ApiResponse<FormDetailsDto>>
+    GetManageableByPublicIdAsync(
+        Guid publicId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default)
+    {
+        // Form, soruları ve birim ilişkileriyle birlikte yüklenir.
+        var form = await _context.Forms
+            .AsNoTracking()
+            .Include(currentForm => currentForm.Questions)
+                .ThenInclude(question => question.Validation)
+            .Include(currentForm => currentForm.Questions)
+                .ThenInclude(question => question.Options)
+            .Include(currentForm => currentForm.Questions)
+                .ThenInclude(question => question.MatrixRows)
+            .Include(currentForm => currentForm.Questions)
+                .ThenInclude(question => question.MatrixColumns)
+            .Include(currentForm => currentForm.FormRoles)
+                .ThenInclude(formRole => formRole.Role)
+            .FirstOrDefaultAsync(
+                currentForm => currentForm.PublicId == publicId,
+                cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<FormDetailsDto>.FailureResult(
+                "Form bulunamadı.",
+                404);
+        }
+
+        // Form sahibi, Admin veya ilgili birim kullanıcısı kontrol edilir.
+        var canManageForm = await CanManageFormAsync(
+            form,
+            requesterUserId,
+            cancellationToken);
+
+        if (!canManageForm)
+        {
+            return ApiResponse<FormDetailsDto>.FailureResult(
+                "Bu formu görüntüleme yetkiniz yok.",
+                403);
+        }
+
+        // Bu endpoint yalnızca taslak düzenleme ekranı içindir.
+        if (form.Status != FormStatus.Draft)
+        {
+            return ApiResponse<FormDetailsDto>.FailureResult(
+                "Yalnızca taslak formlar düzenleme amacıyla açılabilir.",
+                400);
+        }
+
+        var responseDto = new FormDetailsDto
+        {
+            PublicId = form.PublicId,
+            Title = form.Title,
+            Description = form.Description,
+            Status = form.Status,
+            AccessType = form.AccessType,
+            ShowRespondentIdentity = form.ShowRespondentIdentity,
+
+            // Formun bağlı olduğu aktif birim rollerinin Id değerleri.
+            RoleIds = form.FormRoles
+                .Where(formRole => formRole.Role.IsActive)
+                .Select(formRole => formRole.RoleId)
+                .ToList(),
+
+            Questions = form.Questions
+                .OrderBy(question => question.DisplayOrder)
+                .Select(MapQuestionDetails)
+                .ToList()
+        };
+
+        return ApiResponse<FormDetailsDto>.SuccessResult(
+            responseDto);
     }
 
     public async Task<ApiResponse<FormCreatedDto>> PublishAsync(
@@ -188,6 +347,14 @@ public class FormService : IFormService
                 401);
         }
 
+        var hasCurrentUserResponded = requesterUserId.HasValue && await _context.FormResponses
+            .AsNoTracking()
+            .AnyAsync(
+                response =>
+                    response.FormId == form.Id &&
+                    response.RespondentUserId == requesterUserId.Value,
+            cancellationToken);
+
         var responseDto = new FormDetailsDto
         {
             PublicId = form.PublicId,
@@ -199,7 +366,8 @@ public class FormService : IFormService
                 .OrderBy(question => question.DisplayOrder)
                 .Select(MapQuestionDetails)
                 .ToList(),
-            ShowRespondentIdentity = form.ShowRespondentIdentity
+            ShowRespondentIdentity = form.ShowRespondentIdentity,
+            HasCurrentUserResponded = hasCurrentUserResponded
         };
 
         return ApiResponse<FormDetailsDto>.SuccessResult(responseDto);
@@ -338,12 +506,12 @@ public class FormService : IFormService
                 "Form güncelleme doğrulaması başarısız.");
         }
 
-        // Eski soruların silinebilmesi için form ve soruları yüklenir.
         var form = await _context.Forms
             .Include(currentForm => currentForm.Questions)
+            .Include(currentForm => currentForm.FormRoles)
             .FirstOrDefaultAsync(
-                currentForm => currentForm.PublicId == publicId,
-                cancellationToken);
+        currentForm => currentForm.PublicId == publicId,
+        cancellationToken);
 
         if (form is null)
         {
@@ -363,6 +531,18 @@ public class FormService : IFormService
             return ApiResponse<FormCreatedDto>.FailureResult(
                 "Bu formu güncelleme yetkiniz yok.",
                 403);
+        }
+
+        var roleScopeResult = await ValidateRoleScopeAsync(
+            updateFormDto.RoleIds,
+            requesterUserId,
+            cancellationToken);
+
+        if (!roleScopeResult.IsValid)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                roleScopeResult.ErrorMessage!,
+                roleScopeResult.StatusCode);
         }
 
         // Yayınlanmış veya kapatılmış formlar bu endpoint ile değiştirilemez.
@@ -386,6 +566,19 @@ public class FormService : IFormService
         form.Description = NormalizeOptionalText(updateFormDto.Description);
         form.AccessType = updateFormDto.AccessType;
         form.ShowRespondentIdentity = updateFormDto.ShowRespondentIdentity;
+
+        // Eski form-birim ilişkileri temizlenir.
+        form.FormRoles.Clear();
+
+        // Yeni birim ilişkileri eklenir.
+        foreach (var roleId in roleScopeResult.RoleIds)
+        {
+            form.FormRoles.Add(new FormRole
+            {
+                FormId = form.Id,
+                RoleId = roleId
+            });
+        }
 
         // Yeni soru ağacı oluşturulur.
         AddQuestionsToForm(form, updateFormDto.Questions);
@@ -413,6 +606,93 @@ public class FormService : IFormService
         // Boş veya yalnızca boşluk içeren değerleri veritabanında null saklar.
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
+    private async Task<(
+    bool IsValid,
+    List<int> RoleIds,
+    string? ErrorMessage,
+    int StatusCode)> ValidateRoleScopeAsync(
+    List<int> requestedRoleIds,
+    int userId,
+    CancellationToken cancellationToken)
+    {
+        // Aynı rol Id'sinin iki kez gönderilmesini engeller.
+        var roleIds = requestedRoleIds
+            .Distinct()
+            .ToList();
+
+        // Birim seçimi isteğe bağlıdır.
+        // Boş liste, formun belirli bir birime bağlanmadığı anlamına gelir.
+        if (roleIds.Count == 0)
+        {
+            return (
+                true,
+                roleIds,
+                null,
+                200);
+        }
+
+        // Yalnızca aktif roller kabul edilir.
+        var activeRoleIds = await _context.Roles
+            .Where(role =>
+                role.IsActive &&
+                !role.IsSystemRole &&
+                roleIds.Contains(role.Id))
+            .Select(role => role.Id)
+            .ToListAsync(cancellationToken);
+
+        if (activeRoleIds.Count != roleIds.Count)
+        {
+            return (
+                false,
+                roleIds,
+                "Form için geçersiz veya pasif birim rolü seçildi.",
+                400);
+        }
+
+        // Admin tüm birimlere form atayabilir.
+        var isAdmin = await _context.UserRoles
+            .AnyAsync(
+                userRole =>
+                    userRole.UserId == userId &&
+                    userRole.Role.Name == "Admin",
+                cancellationToken);
+
+        if (isAdmin)
+        {
+            return (
+                true,
+                roleIds,
+                null,
+                200);
+        }
+
+        // Normal kullanıcı yalnızca sahip olduğu rolleri seçebilir.
+        var assignedRoleIds = await _context.UserRoles
+            .Where(userRole =>
+                userRole.UserId == userId &&
+                roleIds.Contains(userRole.RoleId))
+            .Select(userRole => userRole.RoleId)
+            .ToListAsync(cancellationToken);
+
+        var unauthorizedRoleIds = roleIds
+            .Except(assignedRoleIds)
+            .ToList();
+
+        if (unauthorizedRoleIds.Count > 0)
+        {
+            return (
+                false,
+                roleIds,
+                "Form için yetkiniz olmayan birim rolü seçildi.",
+                403);
+        }
+
+        return (
+            true,
+            roleIds,
+            null,
+            200);
+    }
 
     private async Task<bool> CanManageFormAsync(
     Form form,
@@ -426,11 +706,24 @@ public class FormService : IFormService
         }
 
         // Admin tüm formları yönetebilir.
+        // Diğer kullanıcılar, sahip oldukları rollerden biri forma atanmışsa
+        // formu yönetebilir.
         return await _context.UserRoles.AnyAsync(
-            userRole =>
-                userRole.UserId == requesterUserId &&
-                userRole.Role.Name == "Admin",
-            cancellationToken);
+        userRole =>
+        userRole.UserId == requesterUserId &&
+        userRole.Role.IsActive &&
+        (
+            (
+                userRole.Role.IsSystemRole &&
+                userRole.Role.Name == "Admin"
+            ) ||
+            _context.FormRoles.Any(
+                formRole =>
+                    formRole.FormId == form.Id &&
+                    formRole.RoleId == userRole.RoleId &&
+                    formRole.Role.IsActive)
+        ),
+        cancellationToken);
     }
 
     private static void AddQuestionsToForm(

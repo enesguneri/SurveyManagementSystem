@@ -10,6 +10,7 @@ public interface IAppDbContext
     DbSet<UserRole> UserRoles { get; }
 
     DbSet<Form> Forms { get; }
+    DbSet<FormRole> FormRoles { get; }
     DbSet<Question> Questions { get; }
     DbSet<QuestionValidation> QuestionValidations { get; }
     DbSet<QuestionOption> QuestionOptions { get; }

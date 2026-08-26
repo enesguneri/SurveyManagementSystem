@@ -1,9 +1,13 @@
-﻿namespace SurveyManagement.Application.DTOs.Forms;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SurveyManagement.Application.DTOs.Forms;
 
 public class CreateQuestionValidationDto
 {
     public int? MinLength { get; set; }
     public int? MaxLength { get; set; }
+
+    [StringLength(500)]
     public string? RegexPattern { get; set; }
 
     public decimal? MinValue { get; set; }

@@ -1,0 +1,19 @@
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  color: #173042;
+  font-family: Inter, Roboto, Arial, sans-serif;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(87, 185, 181, 0.14), transparent 28rem),
+    linear-gradient(180deg, #f7fbfb 0%, #f3f7f8 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
