@@ -208,33 +208,31 @@ A form can belong to multiple organizational units through the `FormRoles` junct
 
 ### 📋 Prerequisites
 
-- .NET 10 SDK
-- MySQL Server 8+
-- Git
+- [.NET 10 SDK](https://dotnet.microsoft.com/)
+- [Node.js 20+ and npm](https://nodejs.org/)
+- [MySQL Server 8+](https://www.mysql.com/)
+- [Git](https://git-scm.com/)
 - Entity Framework Core CLI
 
-Install Entity Framework CLI:
+Install Entity Framework CLI globally:
 
 ```powershell
 dotnet tool install --global dotnet-ef
 ```
 
-### 📦 Restore and Build
+### 📦 1. Clone & Restore Dependencies
 
 ```powershell
+git clone https://github.com/enesguneri/SurveyManagementSystem.git
+cd SurveyManagementSystem
+
 dotnet restore .\SurveyManagementSystem.slnx
-dotnet build .\SurveyManagementSystem.slnx
 ```
 
-### 🗃️ Database Configuration
+### 🗃️ 2. Database & User Secrets Configuration
 
-Update the connection string in:
-
-```text
-SurveyManagement.API/appsettings.json
-```
-
-Example:
+#### A. Database Connection String
+Update the MySQL connection string in `SurveyManagement.API/appsettings.json`:
 
 ```json
 {
@@ -244,9 +242,26 @@ Example:
 }
 ```
 
-> ⚠️ Never commit real passwords, JWT secrets, or API keys to GitHub.
+#### B. Secret Keys Configuration (User Secrets)
+For security, `JwtSettings:SecretKey` (minimum 64 bytes) and `Gemini:ApiKey` are managed outside source control via .NET User Secrets:
 
-### 🔄 Apply Migrations
+```powershell
+# Initialize User Secrets
+dotnet user-secrets init --project .\SurveyManagement.API
+
+# Set JWT Secret Key (required - at least 64 bytes)
+dotnet user-secrets set "JwtSettings:SecretKey" "YOUR_SUPER_SECRET_KEY_THAT_IS_AT_LEAST_64_BYTES_LONG_1234567890_SECURE" --project .\SurveyManagement.API
+
+# Set Gemini AI API Key (optional - required only for AI assistant)
+dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" --project .\SurveyManagement.API
+dotnet user-secrets set "Gemini:Model" "gemini-3.5-flash-lite" --project .\SurveyManagement.API
+```
+
+> ⚠️ Never commit real database passwords, JWT secrets, or Gemini API keys to GitHub.
+
+### 🔄 3. Apply Database Migrations
+
+Create the database schema and seed initial system roles (`Admin`, `User`):
 
 ```powershell
 dotnet ef database update `
@@ -254,73 +269,46 @@ dotnet ef database update `
   --startup-project .\SurveyManagement.API
 ```
 
-### ➕ Create a Migration
-
-```powershell
-dotnet ef migrations add MigrationName `
-  --project .\SurveyManagement.Persistence `
-  --startup-project .\SurveyManagement.API
-```
-
-### ▶️ Run the API
+### ▶️ 4. Run the API
 
 ```powershell
 dotnet run --project .\SurveyManagement.API
 ```
 
-Swagger UI:
+API will start and Swagger UI will be available at:
+- **Swagger UI:** `https://localhost:7143/swagger`
 
-```text
-https://localhost:7143/swagger
-```
-
-## 🤖 Gemini Configuration
-
-Gemini settings should be stored using User Secrets or environment variables.
-
-```powershell
-dotnet user-secrets init `
-  --project .\SurveyManagement.API
-```
-
-```powershell
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" `
-  --project .\SurveyManagement.API
-```
-
-```powershell
-dotnet user-secrets set "Gemini:Model" "gemini-3.5-flash-lite" `
-  --project .\SurveyManagement.API
-```
-
-The AI workflow:
-
-1. The user enters a survey description.
-2. Gemini generates a draft.
-3. Gemini asks clarification questions if necessary.
-4. The frontend displays a visual preview.
-5. The user reviews and edits the draft.
-6. The user manually saves the survey.
+---
 
 ## 💻 Frontend Setup
+
+### 📦 1. Install Dependencies
 
 ```powershell
 cd frontend
 npm install
-npm run dev
 ```
 
-The API URL is configured in:
+### ⚙️ 2. Environment Configuration
 
-```text
-frontend/.env.development
-```
-
-Example:
+Verify API endpoint in `frontend/.env.development`:
 
 ```env
 VITE_API_BASE_URL=https://localhost:7143/api
 ```
+
+### ▶️ 3. Run Frontend Development Server
+
+```powershell
+npm run dev
+```
+
+The application will be accessible at:
+- **Web UI:** `http://localhost:5173`
+
+---
+
+## 🤖 Gemini AI Workflow
 
 ### 🏗️ Frontend Build
 
