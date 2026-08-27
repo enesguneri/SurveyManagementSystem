@@ -212,6 +212,16 @@ The generated survey is not automatically saved to the database.
 - Respondent identity visibility warning
 - Required question validation
 
+### 📈 Visual Charts and Summary Analytics
+
+The response viewer includes a Google Forms-style analytics dashboard:
+
+- **Two View Modes (Tabs):** **"Özet ve Grafikler"** (Summary & Charts) and **"Bireysel Yanıtlar"** (Individual Responses).
+- **SVG Pie Charts:** Rendered for Single Choice and Dropdown questions with slice percentage labels (`66.7%`, `33.3%`), Google color palette, and interactive hover animations.
+- **Bar Charts:** Visualizing multiple choice question frequency and ratings with prominent average score indicators.
+- **Matrix Summaries:** Breakdown of row and column selections.
+- **Copy Chart Feature:** One-click copy of question analytics and summary statistics directly to the clipboard.
+
 ## 🎨 UI and Design System
 
 The application uses Material UI and follows a shared design system.
