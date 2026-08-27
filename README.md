@@ -77,6 +77,17 @@ The platform supports:
 - Matrix and checkbox matrix responses
 - Duplicate submission protection
 
+### 📈 Visual Charts and Analytics
+
+- Google Forms-style interactive response analytics
+- SVG Pie Charts for single choice and dropdown questions with slice percentage labels and legend
+- Horizontal Bar Charts for multiple choice question distributions
+- Rating score distributions with prominent average score indicators
+- Matrix question row and column summary breakdowns
+- Text response summary lists with clean scrolling view
+- Two-tab response dashboard: **"Özet ve Grafikler"** (Summary & Charts) and **"Bireysel Yanıtlar"** (Individual Responses)
+- One-click **"Grafiği kopyala"** (Copy Chart and summary statistics to clipboard) feature
+
 ### 📤 Import and Export
 
 - TXT option import
