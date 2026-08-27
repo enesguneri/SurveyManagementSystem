@@ -17,7 +17,7 @@ public class FormServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "creator", "creator@test.com", "Creator User");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var request = new CreateFormDto
         {
@@ -68,7 +68,7 @@ public class FormServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -104,7 +104,7 @@ public class FormServiceTests
         using var context = TestDbContextFactory.Create();
         var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
         var unauthorizedUser = TestDbContextFactory.CreateUser(context, "stranger", "stranger@test.com");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -131,7 +131,7 @@ public class FormServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -159,7 +159,7 @@ public class FormServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -189,7 +189,7 @@ public class FormServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -227,7 +227,7 @@ public class FormServiceTests
         using var context = TestDbContextFactory.Create();
         var admin = TestDbContextFactory.CreateUser(context, "admin", "admin@test.com", "Admin User", true, "Admin");
         var otherUser = TestDbContextFactory.CreateUser(context, "other", "other@test.com");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         context.Forms.AddRange(
             new Form { PublicId = Guid.NewGuid(), Title = "Form 1", CreatedByUserId = admin.Id, CreatedAt = DateTime.UtcNow },
@@ -249,7 +249,7 @@ public class FormServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
-        var sut = new FormService(context, _validator);
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {

@@ -2,8 +2,11 @@
 
 > İzmir Bakırçay Üniversitesi için geliştirilen modern, güvenli ve dinamik anket yönetim platformu.
 
+[![CI Pipeline](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml/badge.svg)](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-83%20passed-brightgreen)](https://github.com/enesguneri/SurveyManagementSystem)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![React](https://img.shields.io/badge/React-TypeScript-61DAFB)](https://react.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-Passing-729B1B)](https://vitest.dev/)
 [![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1)](https://www.mysql.com/)
 [![Material UI](https://img.shields.io/badge/UI-Material%20UI-007FFF)](https://mui.com/)
 
