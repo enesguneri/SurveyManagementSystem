@@ -32,6 +32,8 @@ jobs:
 
       - name: 🧪 Run Unit & Integration Tests
         run: dotnet test SurveyManagementSystem.slnx --no-build --configuration Release --verbosity normal
+        env:
+          JwtSettings__SecretKey: 'A_VERY_LONG_AND_SECURE_TEST_SECRET_KEY_FOR_INTEGRATION_TESTS_1234567890_ABCDEFGHIJ'
 
   frontend-ci:
     name: 🌐 Frontend Lint, Test & Build (React/TypeScript)
