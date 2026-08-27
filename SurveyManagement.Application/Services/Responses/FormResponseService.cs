@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.Common.Models;
 using SurveyManagement.Application.DTOs.Responses;
 using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Application.Interfaces.Responses;
+using SurveyManagement.Application.Interfaces.Services;
 using SurveyManagement.Domain.Entities;
 using SurveyManagement.Domain.Enums;
 
@@ -12,13 +13,16 @@ public class FormResponseService : IFormResponseService
 {
     private readonly IAppDbContext _context;
     private readonly IFormResponseValidator _validator;
+    private readonly IFormAuthorizationService _formAuthorizationService;
 
     public FormResponseService(
         IAppDbContext context,
-        IFormResponseValidator validator)
+        IFormResponseValidator validator,
+        IFormAuthorizationService formAuthorizationService)
     {
         _context = context;
         _validator = validator;
+        _formAuthorizationService = formAuthorizationService;
     }
 
     public async Task<ApiResponse<ResponseSubmittedDto>> SubmitAsync(
@@ -269,7 +273,7 @@ public class FormResponseService : IFormResponseService
         }
 
         // Yalnızca form sahibi veya Admin sonuçları görebilir.
-        var canViewResponses = await CanManageFormAsync(
+        var canViewResponses = await _formAuthorizationService.CanManageFormAsync(
             form,
             requesterUserId,
             cancellationToken);
@@ -432,37 +436,5 @@ public class FormResponseService : IFormResponseService
                     MatrixColumnId = selection.MatrixColumnId
                 });
         }
-    }
-
-    private async Task<bool> CanManageFormAsync(
-    Form form,
-    int requesterUserId,
-    CancellationToken cancellationToken)
-    {
-        // Form sahibi kendi formunun yanıtlarını görebilir.
-        if (form.CreatedByUserId == requesterUserId)
-        {
-            return true;
-        }
-
-        // Admin tüm formların yanıtlarını görebilir.
-        // Birim rolüne sahip kullanıcılar ise
-        // kendi birimlerine bağlı formların yanıtlarını görebilir.
-        return await _context.UserRoles.AnyAsync(
-        userRole =>
-        userRole.UserId == requesterUserId &&
-        userRole.Role.IsActive &&
-        (
-            (
-                userRole.Role.IsSystemRole &&
-                userRole.Role.Name == "Admin"
-            ) ||
-            _context.FormRoles.Any(
-                formRole =>
-                    formRole.FormId == form.Id &&
-                    formRole.RoleId == userRole.RoleId &&
-                    formRole.Role.IsActive)
-        ),
-        cancellationToken);
     }
 }

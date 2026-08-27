@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.DTOs.Responses;
+using SurveyManagement.Application.Services.Forms;
 using SurveyManagement.Application.Services.Responses;
 using SurveyManagement.Domain.Entities;
 using SurveyManagement.Domain.Enums;
@@ -17,7 +18,7 @@ public class FormResponseServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "respondent", "resp@test.com", "Respondent User");
-        var sut = new FormResponseService(context, _validator);
+        var sut = new FormResponseService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -78,7 +79,7 @@ public class FormResponseServiceTests
         // Arrange
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "respondent", "resp@test.com");
-        var sut = new FormResponseService(context, _validator);
+        var sut = new FormResponseService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -126,7 +127,7 @@ public class FormResponseServiceTests
     {
         // Arrange
         using var context = TestDbContextFactory.Create();
-        var sut = new FormResponseService(context, _validator);
+        var sut = new FormResponseService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
@@ -156,7 +157,7 @@ public class FormResponseServiceTests
         using var context = TestDbContextFactory.Create();
         var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
         var respondent = TestDbContextFactory.CreateUser(context, "respondent", "resp@test.com", "Secret Name");
-        var sut = new FormResponseService(context, _validator);
+        var sut = new FormResponseService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {

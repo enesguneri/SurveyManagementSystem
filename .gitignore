@@ -42,9 +42,6 @@ bld/
 # Local project context and private internship notes
 docs/
 
-# Local GitHub metadata
-.github/
-
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 

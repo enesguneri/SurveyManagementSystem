@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.Common.Models;
 using SurveyManagement.Application.DTOs.Forms;
 using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Application.Interfaces.Forms;
+using SurveyManagement.Application.Interfaces.Services;
 using SurveyManagement.Domain.Entities;
 using SurveyManagement.Domain.Enums;
 
@@ -12,13 +13,16 @@ public class FormService : IFormService
 {
     private readonly IAppDbContext _context;
     private readonly IFormRequestValidator _formRequestValidator;
+    private readonly IFormAuthorizationService _formAuthorizationService;
 
     public FormService(
         IAppDbContext context,
-        IFormRequestValidator formRequestValidator)
+        IFormRequestValidator formRequestValidator,
+        IFormAuthorizationService formAuthorizationService)
     {
         _context = context;
         _formRequestValidator = formRequestValidator;
+        _formAuthorizationService = formAuthorizationService;
     }
 
     public async Task<ApiResponse<List<ManageableFormDto>>> GetManageableAsync(
@@ -203,7 +207,7 @@ public class FormService : IFormService
         }
 
         // Form sahibi, Admin veya ilgili birim kullanıcısı kontrol edilir.
-        var canManageForm = await CanManageFormAsync(
+        var canManageForm = await _formAuthorizationService.CanManageFormAsync(
             form,
             requesterUserId,
             cancellationToken);
@@ -266,8 +270,11 @@ public class FormService : IFormService
                 404);
         }
 
-        //Yetki kontrolü
-        var canManageForm = await CanManageFormAsync(form,requesterUserId,cancellationToken);
+        // Yetki kontrolü
+        var canManageForm = await _formAuthorizationService.CanManageFormAsync(
+            form,
+            requesterUserId,
+            cancellationToken);
 
         if (!canManageForm)
         {
@@ -450,7 +457,7 @@ public class FormService : IFormService
         }
 
         // Form sahibi veya Admin kapatma yetkisine sahiptir.
-        var canManageForm = await CanManageFormAsync(
+        var canManageForm = await _formAuthorizationService.CanManageFormAsync(
             form,
             requesterUserId,
             cancellationToken);
@@ -521,7 +528,7 @@ public class FormService : IFormService
         }
 
         // Form sahibi veya Admin güncelleme yapabilir.
-        var canManageForm = await CanManageFormAsync(
+        var canManageForm = await _formAuthorizationService.CanManageFormAsync(
             form,
             requesterUserId,
             cancellationToken);
@@ -692,38 +699,6 @@ public class FormService : IFormService
             roleIds,
             null,
             200);
-    }
-
-    private async Task<bool> CanManageFormAsync(
-    Form form,
-    int requesterUserId,
-    CancellationToken cancellationToken)
-    {
-        // Form sahibi kendi formunu yönetebilir.
-        if (form.CreatedByUserId == requesterUserId)
-        {
-            return true;
-        }
-
-        // Admin tüm formları yönetebilir.
-        // Diğer kullanıcılar, sahip oldukları rollerden biri forma atanmışsa
-        // formu yönetebilir.
-        return await _context.UserRoles.AnyAsync(
-        userRole =>
-        userRole.UserId == requesterUserId &&
-        userRole.Role.IsActive &&
-        (
-            (
-                userRole.Role.IsSystemRole &&
-                userRole.Role.Name == "Admin"
-            ) ||
-            _context.FormRoles.Any(
-                formRole =>
-                    formRole.FormId == form.Id &&
-                    formRole.RoleId == userRole.RoleId &&
-                    formRole.Role.IsActive)
-        ),
-        cancellationToken);
     }
 
     private static void AddQuestionsToForm(
