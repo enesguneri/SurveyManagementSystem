@@ -75,7 +75,7 @@ export default function ManageableFormsPage() {
                 if (!response.isSuccess || !response.data) {
                     setErrorMessage(
                         response.message ??
-                        "Formlar yüklenemedi.",
+                        "Anketler yüklenemedi.",
                     );
                     return;
                 }
@@ -87,13 +87,13 @@ export default function ManageableFormsPage() {
                     error.response?.status === 401
                 ) {
                     setErrorMessage(
-                        "Formları görmek için giriş yapmalısınız.",
+                        "Anketleri görmek için giriş yapmalısınız.",
                     );
                     return;
                 }
 
                 setErrorMessage(
-                    "Formlar yüklenirken API bağlantısı kurulamadı.",
+                    "Anketler yüklenirken API bağlantısı kurulamadı.",
                 );
             } finally {
                 setIsLoading(false);
@@ -117,7 +117,7 @@ export default function ManageableFormsPage() {
                 setErrorMessage(
                     response.errors?.join(" ") ??
                     response.message ??
-                    "Form yayımlanamadı.",
+                    "Anket yayımlanamadı.",
                 );
                 return;
             }
@@ -134,7 +134,7 @@ export default function ManageableFormsPage() {
             );
         } catch {
             setErrorMessage(
-                "Form yayımlanırken API bağlantısı kurulamadı.",
+                "Anket yayımlanırken API bağlantısı kurulamadı.",
             );
         } finally {
             setActionFormId(null);
@@ -155,7 +155,7 @@ export default function ManageableFormsPage() {
                 setErrorMessage(
                     response.errors?.join(" ") ??
                     response.message ??
-                    "Form kapatılamadı.",
+                    "Anket kapatılamadı.",
                 );
                 return;
             }
@@ -172,7 +172,7 @@ export default function ManageableFormsPage() {
             );
         } catch {
             setErrorMessage(
-                "Form kapatılırken API bağlantısı kurulamadı.",
+                "Anket kapatılırken API bağlantısı kurulamadı.",
             );
         } finally {
             setActionFormId(null);
@@ -200,13 +200,13 @@ export default function ManageableFormsPage() {
                 backgroundColor: "background.default",
             }}
         >
-            <BrandHeader pageTitle="Formlarım" onHome={() => navigate("/")} onLogout={handleLogout} />
+            <BrandHeader pageTitle="Anketlerim" onHome={() => navigate("/")} onLogout={handleLogout} />
 
             <Container maxWidth="lg" sx={{ py: 5 }}>
                 <Stack spacing={3}>
                     <Box>
                         <Typography variant="h4" component="h1">
-                            Formlarım
+                            Anketlerim
                         </Typography>
 
                         <Typography
@@ -226,7 +226,7 @@ export default function ManageableFormsPage() {
 
                     {!errorMessage && forms.length === 0 && (
                         <Alert severity="info">
-                            Görüntüleyebileceğiniz form bulunmuyor.
+                            Görüntüleyebileceğiniz anket bulunmuyor.
                         </Alert>
                     )}
 
@@ -324,7 +324,7 @@ export default function ManageableFormsPage() {
                                             >
                                                 {actionFormId === form.id
                                                     ? "Yayımlanıyor..."
-                                                    : "Formu Yayınla"}
+                                                    : "Anketi Yayınla"}
                                             </Button>
                                         )}
 
@@ -350,7 +350,7 @@ export default function ManageableFormsPage() {
                                                     )
                                                 }
                                             >
-                                                Formu Görüntüle
+                                                Anketi Görüntüle
                                             </Button>
                                         )}
 
@@ -365,7 +365,7 @@ export default function ManageableFormsPage() {
                                             >
                                                 {actionFormId === form.id
                                                     ? "Kapatılıyor..."
-                                                    : "Formu Kapat"}
+                                                    : "Anketi Kapat"}
                                             </Button>
                                         )}
 

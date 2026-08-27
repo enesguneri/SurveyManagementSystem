@@ -74,7 +74,7 @@ function PublishedFormPage() {
     useEffect(() => {
         async function loadForm() {
             if (!publicId) {
-                setErrorMessage("Form bağlantısı geçersiz.");
+                setErrorMessage("Anket bağlantısı geçersiz.");
                 setIsLoading(false);
                 return;
             }
@@ -84,7 +84,7 @@ function PublishedFormPage() {
 
                 if (!response.isSuccess || !response.data) {
                     setErrorMessage(
-                        response.message ?? "Form yüklenemedi.",
+                        response.message ?? "Anket yüklenemedi.",
                     );
                     return;
                 }
@@ -120,7 +120,7 @@ function PublishedFormPage() {
                 }
 
                 setErrorMessage(
-                    "Form yüklenirken sunucuya bağlanılamadı.",
+                    "Anket yüklenirken sunucuya bağlanılamadı.",
                 );
             } finally {
                 setIsLoading(false);
@@ -242,7 +242,7 @@ function PublishedFormPage() {
                 setErrorMessage(
                     response.errors?.join(" ") ??
                     response.message ??
-                    "Form gönderilemedi.",
+                    "Anket yanıtı gönderilemedi.",
                 );
                 return;
             }
@@ -251,7 +251,7 @@ function PublishedFormPage() {
             setIsSubmissionCompleted(true);
 
             setSuccessMessage(
-                "Form yanıtınız başarıyla gönderildi.",
+                "Anket yanıtınız başarıyla gönderildi.",
             );
         } catch (error) {
             if (
@@ -260,7 +260,7 @@ function PublishedFormPage() {
             ) {
                 setHasSubmitted(true);
                 setErrorMessage(
-                    "Bu forma daha önce yanıt verdiniz.",
+                    "Bu ankete daha önce yanıt verdiniz.",
                 );
                 return;
             }
@@ -330,7 +330,7 @@ function PublishedFormPage() {
                 {form.accessType === "Authenticated" &&
                     form.showRespondentIdentity && (
                         <Alert severity="info">
-                            Bu formu doldurduğunuzda adınız, form sahibinin
+                            Bu anketi doldurduğunuzda adınız, anket sahibinin
                             yanıt sonuçlarında gösterilecektir.
                         </Alert>
                     )}
@@ -376,7 +376,7 @@ function PublishedFormPage() {
 
                 {hasSubmitted && !isSubmissionCompleted && (
                     <Alert severity="info">
-                        Bu forma daha önce yanıt verdiniz.
+                        Bu ankete daha önce yanıt verdiniz.
                     </Alert>
                 )}
 

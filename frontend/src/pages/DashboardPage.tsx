@@ -129,7 +129,7 @@ export default function DashboardPage() {
                                     </Box>
                                     <Box sx={{ flexGrow: 1 }}>
                                         <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                                            Formlarım
+                                            Anketlerim
                                         </Typography>
                                         <Typography color="text.secondary" sx={{ mt: 1 }}>
                                             Taslak, yayımlanmış ve kapatılmış anketlerinizi
@@ -137,12 +137,12 @@ export default function DashboardPage() {
                                         </Typography>
                                     </Box>
                                     <Button
-                                        variant="outlined"
+                                        variant="contained"
                                         endIcon={<ArrowForwardRounded />}
                                         onClick={() => navigate("/forms")}
                                         sx={{ alignSelf: "flex-start" }}
                                     >
-                                        Formları Görüntüle
+                                        Anketleri Görüntüle
                                     </Button>
                                 </Stack>
                             </CardContent>

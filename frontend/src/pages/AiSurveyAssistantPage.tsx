@@ -457,7 +457,7 @@ export default function AiSurveyAssistantPage() {
                                             onClick={handleUseDraft}
                                             sx={{ mt: 3 }}
                                         >
-                                            Taslağı Form Oluşturma Ekranına Aktar
+                                            Taslağı Anket Oluşturma Ekranına Aktar
                                         </Button>
                                     </Box>
                                 </Stack>

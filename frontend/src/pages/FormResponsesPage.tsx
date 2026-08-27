@@ -205,7 +205,7 @@ export default function FormResponsesPage() {
                 error.response?.status === 403
             ) {
                 setExportError(
-                    "Bu formun yanıtlarını dışa aktarma yetkiniz yok.",
+                    "Bu anketin yanıtlarını dışa aktarma yetkiniz yok.",
                 );
             } else {
                 setExportError(
@@ -242,7 +242,7 @@ export default function FormResponsesPage() {
                     error.response?.status === 403
                 ) {
                     setErrorMessage(
-                        "Bu formun yanıtlarını görüntüleme yetkiniz yok.",
+                        "Bu anketin yanıtlarını görüntüleme yetkiniz yok.",
                     );
                     return;
                 }
@@ -263,7 +263,7 @@ export default function FormResponsesPage() {
             <Box sx={{ minHeight: "100vh" }}>
                 <BrandHeader pageTitle="Yanıtlar" onHome={() => navigate("/")} />
                 <Container maxWidth="md" sx={{ py: 5 }}>
-                    <Alert severity="error">Form kimliği bulunamadı.</Alert>
+                    <Alert severity="error">Anket kimliği bulunamadı.</Alert>
                 </Container>
             </Box>
         );
@@ -360,7 +360,7 @@ export default function FormResponsesPage() {
 
                             {formResponses.responses.length === 0 && (
                                 <Alert severity="info">
-                                    Bu forma henüz yanıt gönderilmemiş.
+                                    Bu ankete henüz yanıt gönderilmemiş.
                                 </Alert>
                             )}
 
