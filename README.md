@@ -3,7 +3,7 @@
 > İzmir Bakırçay Üniversitesi için geliştirilen modern, güvenli ve dinamik anket yönetim platformu.
 
 [![CI Pipeline](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-97%20passed-brightgreen)](https://github.com/enesguneri/SurveyManagementSystem)
+[![Tests](https://img.shields.io/badge/tests-100%20passed-brightgreen)](https://github.com/enesguneri/SurveyManagementSystem)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![React](https://img.shields.io/badge/React-TypeScript-61DAFB)](https://react.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-Passing-729B1B)](https://vitest.dev/)
@@ -472,7 +472,7 @@ chore: update dependencies
 
 ## 🧪 Testing and CI/CD Pipeline
 
-The project includes an automated test suite comprising **97 tests (100% passing)** across both backend and frontend.
+The project includes an automated test suite comprising **100 tests (100% passing)** across both backend and frontend.
 
 ### 🛡️ Backend Tests (83 tests)
 - **Unit Tests (76):** Security, 9 question types request validation, response validation, SSRF protection, form lifecycle, response identity masking, unit role authorization, CSV and Excel export.
@@ -483,8 +483,8 @@ Run backend tests:
 dotnet test SurveyManagementSystem.slnx
 ```
 
-### ⚡ Frontend Tests (14 tests)
-- **Vitest Suite:** TXT, CSV, JSON parsing, BOM cleanup, 500 option limit, token expiration and storage management.
+### ⚡ Frontend Tests (17 tests)
+- **Vitest Suite:** TXT, CSV, JSON parsing, BOM cleanup, 500 option limit, token expiration, and question analytics frequency/percentage calculations.
 
 Run frontend tests:
 ```powershell
