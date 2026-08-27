@@ -22,6 +22,7 @@ This application provides a modern and responsive interface for:
 - Axios
 - React Router
 - Papa Parse
+- Vitest
 - ESLint
 
 ## 📦 Installation
@@ -76,6 +77,18 @@ The generated files are placed in:
 dist/
 ```
 
+## 🧪 Testing
+
+Run Vitest unit tests:
+
+```powershell
+npm test
+```
+
+The test suite covers:
+- `optionImport.test.ts`: TXT, CSV (PapaParse), JSON array/object parsing, UTF-8 BOM stripping, and 500 options limit.
+- `authStorage.test.ts`: LocalStorage token persistence, expiration checking (`isExpired`), and secure session clearing.
+
 ## 🧹 Linting
 
 Run ESLint:
@@ -88,6 +101,7 @@ Recommended checks before committing:
 
 ```powershell
 npm run lint
+npm test
 npm run build
 ```
 
@@ -378,6 +392,7 @@ Frontend features currently completed:
 - Dropdown option importing
 - CSV and Excel export actions
 - Gemini AI survey assistant
+- Vitest automated unit tests
 - Responsive university-themed design
 
-Automated frontend tests and production deployment configuration are planned for a later stage.
+Production deployment configuration is planned for a later stage.

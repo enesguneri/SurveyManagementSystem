@@ -109,6 +109,8 @@ The platform supports:
 | UI | Material UI |
 | HTTP Client | Axios |
 | AI | Gemini API |
+| Testing | xUnit, FluentAssertions, Moq, Vitest, WebApplicationFactory |
+| CI/CD | GitHub Actions |
 | Version Control | Git and GitHub |
 
 ## 🏗️ Project Architecture
@@ -117,6 +119,9 @@ The backend follows a layered architecture approach.
 
 ```text
 SurveyManagementSystem/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── SurveyManagement.Domain/
 │   ├── Entities/
 │   └── Enums/
@@ -135,6 +140,13 @@ SurveyManagementSystem/
 │   ├── Controllers/
 │   ├── Middlewares/
 │   └── Program.cs
+│
+├── SurveyManagement.Tests/
+│   ├── Common/
+│   ├── Integration/
+│   ├── Security/
+│   ├── Services/
+│   └── Validation/
 │
 └── frontend/
     ├── public/
@@ -470,9 +482,101 @@ chore: update dependencies
 - Responsive Turkish interface
 - İzmir Bakırçay University branding
 
-### Sprint 6 — AI, Import, Export, and Deployment
+## 🧪 Testing and CI/CD Pipeline
 
-**Status: AI, import, and export completed; deployment planned 🚧**
+The project includes an automated test suite comprising **97 tests (100% passing)** across both backend and frontend.
+
+### 🛡️ Backend Tests (83 tests)
+- **Unit Tests (76):** Security, 9 question types request validation, response validation, SSRF protection, form lifecycle, response identity masking, unit role authorization, CSV and Excel export.
+- **Integration Tests (7):** `WebApplicationFactory<Program>` testing end-to-end HTTP pipeline, authentication, and admin authorization filters.
+
+Run backend tests:
+```powershell
+dotnet test SurveyManagementSystem.slnx
+```
+
+### ⚡ Frontend Tests (14 tests)
+- **Vitest Suite:** TXT, CSV, JSON parsing, BOM cleanup, 500 option limit, token expiration and storage management.
+
+Run frontend tests:
+```powershell
+cd frontend
+npm test
+```
+
+### 🤖 GitHub Actions CI/CD Pipeline
+Every push and pull request to `main` or `develop` triggers `.github/workflows/ci.yml`:
+1. **Backend CI:** Restores, builds, and runs all 83 backend tests on Ubuntu with .NET 10.
+2. **Frontend CI:** Installs dependencies, runs ESLint, executes 14 Vitest tests, and generates the production bundle.
+
+## 🗺️ Sprint Roadmap
+
+### Sprint 1 — Architecture and Database Infrastructure
+
+**Status: Completed ✅**
+
+- Layered architecture
+- Entity modeling
+- MySQL integration
+- Fluent API relationships
+- Data seeding
+- EF Core migrations
+- PostgreSQL-to-MySQL data migration
+
+### Sprint 2 — Authentication and Authorization
+
+**Status: Completed ✅**
+
+- Registration and login
+- Password hashing
+- JWT token generation
+- Swagger Bearer authentication
+- Global exception middleware
+- Role-based authorization
+
+### Sprint 3 — Survey Domain and Form Management
+
+**Status: Completed ✅**
+
+- Dynamic survey creation
+- Question types
+- Question options
+- Dropdown support
+- Matrix questions
+- Validation rules
+- Draft editing
+- Publishing and closing
+- Unit-based form ownership
+
+### Sprint 4 — Survey Responses
+
+**Status: Completed ✅**
+
+- Response submission
+- Date and rating responses
+- Matrix responses
+- Respondent metadata
+- IP address tracking
+- Response viewing
+- One response per authenticated user
+- Duplicate race-condition handling
+
+### Sprint 5 — Frontend and Administration
+
+**Status: Completed ✅**
+
+- React frontend
+- Survey builder
+- Survey listing
+- Response viewer
+- Admin panel
+- Unit-based role management
+- Responsive Turkish interface
+- İzmir Bakırçay University branding
+
+### Sprint 6 — AI, Import, Export, Testing, and CI/CD
+
+**Status: Completed ✅**
 
 - Gemini AI assistant
 - Clarification questions
@@ -482,12 +586,9 @@ chore: update dependencies
 - CSV response export
 - Excel response export
 - Secure external API handling
-- Docker configuration
-- Automated tests
-- CI/CD pipeline
-- Production deployment
-
-Docker, automated tests, CI/CD, and production deployment are planned for a later stage.
+- 83 Backend Unit & Integration Tests (`xUnit`, `Moq`, `WebApplicationFactory`)
+- 14 Frontend Unit Tests (`Vitest`)
+- GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`)
 
 ## 📌 Development Principles
 
