@@ -22,6 +22,7 @@ using SurveyManagement.Application.Interfaces.AI;
 using SurveyManagement.Application.Options;
 using SurveyManagement.Application.Services.AI;
 using SurveyManagement.Application.Interfaces.Options;
+using SurveyManagement.Application.Interfaces.Services;
 using SurveyManagement.Application.Services.Options;
 
 
@@ -44,6 +45,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Form oluşturma ve soru türü doğrulama servisleri her HTTP isteği için oluşturulur.
 builder.Services.AddScoped<IFormRequestValidator, FormRequestValidator>();
+builder.Services.AddScoped<IFormAuthorizationService, FormAuthorizationService>();
 builder.Services.AddScoped<IFormService, FormService>();
 
 // Form yanıtlarının doğrulama ve kayıt servisleri.
@@ -219,3 +221,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
