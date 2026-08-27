@@ -19,6 +19,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("JwtSettings:SecretKey", "A_VERY_LONG_AND_SECURE_TEST_SECRET_KEY_FOR_INTEGRATION_TESTS_1234567890_ABCDEFGHIJ");
+        builder.UseSetting("JwtSettings:Issuer", "SurveyManagementAPI");
+        builder.UseSetting("JwtSettings:Audience", "SurveyManagementClient");
+
         builder.ConfigureServices(services =>
         {
             var descriptorsToRemove = services.Where(d =>
