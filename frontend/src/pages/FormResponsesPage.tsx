@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -11,8 +11,12 @@ import {
     Container,
     Divider,
     Stack,
+    Tab,
+    Tabs,
     Typography,
 } from "@mui/material";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 import {
     downloadFormResponses,
     getFormResponses,
@@ -22,12 +26,14 @@ import type {
     FormResponses,
     ResponseAnswerDetails,
 } from "../types/response";
-
 import { useAuth } from "../auth/useAuth";
 import BrandHeader from "../components/layout/BrandHeader";
+import { aggregateQuestionAnalytics } from "../utils/chartAnalytics";
+import QuestionSummaryCard from "../components/charts/QuestionSummaryCard";
+
 function ResponseAnswer({
-                            answer,
-                        }: {
+    answer,
+}: {
     answer: ResponseAnswerDetails;
 }) {
     return (
@@ -81,14 +87,14 @@ function ResponseAnswer({
 }
 
 function ResponseCard({
-                          response,
-                          showRespondentIdentity,
-                      }: {
+    response,
+    showRespondentIdentity,
+}: {
     response: FormResponseItem;
     showRespondentIdentity: boolean;
 }) {
     return (
-        <Card>
+        <Card elevation={0} sx={{ borderRadius: 2.5, border: "1px solid", borderColor: "divider" }}>
             <CardContent>
                 <Stack spacing={2}>
                     <Box>
@@ -107,29 +113,30 @@ function ResponseCard({
                             color="text.secondary"
                         >
                             Gönderilme zamanı:{" "}
-                            {showRespondentIdentity &&
-                                response.respondentEmail && (
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                    >
-                                        E-posta: {response.respondentEmail}
-                                    </Typography>
-                                )}
-
-                            {showRespondentIdentity &&
-                                response.respondentIpAddress && (
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                    >
-                                        IP adresi: {response.respondentIpAddress}
-                                    </Typography>
-                                )}
                             {new Date(
                                 response.submittedAt,
                             ).toLocaleString("tr-TR")}
                         </Typography>
+
+                        {showRespondentIdentity &&
+                            response.respondentEmail && (
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                >
+                                    E-posta: {response.respondentEmail}
+                                </Typography>
+                            )}
+
+                        {showRespondentIdentity &&
+                            response.respondentIpAddress && (
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                >
+                                    IP adresi: {response.respondentIpAddress}
+                                </Typography>
+                            )}
                     </Box>
 
                     <Divider />
@@ -151,6 +158,7 @@ export default function FormResponsesPage() {
     const { logout } = useAuth();
     const [isExporting, setIsExporting] = useState(false);
     const [exportError, setExportError] = useState("");
+    const [activeTab, setActiveTab] = useState(0);
 
     function handleLogout() {
         logout();
@@ -164,6 +172,10 @@ export default function FormResponsesPage() {
         useState<FormResponses | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
+
+    const questionAnalytics = useMemo(() => {
+        return aggregateQuestionAnalytics(formResponses?.responses ?? []);
+    }, [formResponses]);
 
     async function handleExport(
         format: "csv" | "xlsx",
@@ -192,7 +204,6 @@ export default function FormResponsesPage() {
             link.href = downloadUrl;
             link.download =
                 `${safeTitle} Yanıtları.${format}`;
-
 
             document.body.appendChild(link);
             link.click();
@@ -310,69 +321,113 @@ export default function FormResponsesPage() {
 
                     {formResponses && (
                         <>
-                            <Box>
+                            {/* 📌 Üst Bilgi ve Dışa Aktarma Butonları */}
+                            <Box sx={{ p: { xs: 2.5, sm: 3 }, backgroundColor: "#ffffff", borderRadius: 2.5, border: "1px solid", borderColor: "divider" }}>
                                 <Typography
                                     variant="h4"
                                     component="h1"
+                                    sx={{ fontWeight: 800 }}
                                 >
                                     {formResponses.title}
                                 </Typography>
 
                                 <Typography
                                     color="text.secondary"
-                                    sx={{ mt: 1 }}
+                                    sx={{ mt: 1, fontWeight: 500 }}
                                 >
-                                    Toplam yanıt:{" "}
-                                    {formResponses.responses.length}
+                                    Toplam yanıt sayısı:{" "}
+                                    <strong>{formResponses.responses.length}</strong>
                                 </Typography>
 
                                 <Stack
                                     direction={{ xs: "column", sm: "row" }}
-                                    spacing={1}
-                                    sx={{ mt: 2 }}
+                                    spacing={1.5}
+                                    sx={{ mt: 2.5 }}
                                 >
                                     <Button
                                         variant="outlined"
                                         onClick={() => handleExport("csv")}
-                                        disabled={isExporting}
+                                        disabled={isExporting || formResponses.responses.length === 0}
                                     >
                                         {isExporting
                                             ? "Hazırlanıyor..."
-                                            : "CSV indir"}
+                                            : "CSV İndir"}
                                     </Button>
 
                                     <Button
                                         variant="outlined"
                                         onClick={() => handleExport("xlsx")}
-                                        disabled={isExporting}
+                                        disabled={isExporting || formResponses.responses.length === 0}
                                     >
                                         {isExporting
                                             ? "Hazırlanıyor..."
-                                            : "Excel indir"}
+                                            : "Excel İndir"}
                                     </Button>
                                 </Stack>
                                 {exportError && (
-                                    <Alert severity="error">
+                                    <Alert severity="error" sx={{ mt: 2 }}>
                                         {exportError}
                                     </Alert>
                                 )}
                             </Box>
 
-                            {formResponses.responses.length === 0 && (
-                                <Alert severity="info">
+                            {formResponses.responses.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>
                                     Bu ankete henüz yanıt gönderilmemiş.
                                 </Alert>
-                            )}
+                            ) : (
+                                <>
+                                    {/* 📑 Sekme Başlıkları: Özet Grafikler & Bireysel Yanıtlar */}
+                                    <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                                        <Tabs
+                                            value={activeTab}
+                                            onChange={(_, val: number) => setActiveTab(val)}
+                                            aria-label="Yanıt Görünümü Sekmeleri"
+                                        >
+                                            <Tab
+                                                icon={<BarChartIcon />}
+                                                iconPosition="start"
+                                                label="Özet ve Grafikler"
+                                                sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.95rem" }}
+                                            />
+                                            <Tab
+                                                icon={<ListAltIcon />}
+                                                iconPosition="start"
+                                                label={`Bireysel Yanıtlar (${formResponses.responses.length})`}
+                                                sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.95rem" }}
+                                            />
+                                        </Tabs>
+                                    </Box>
 
-                            {formResponses.responses.map((response) => (
-                                <ResponseCard
-                                    key={response.id}
-                                    response={response}
-                                    showRespondentIdentity={
-                                        formResponses.showRespondentIdentity
-                                    }
-                                />
-                            ))}
+                                    {/* 📊 Sekme 1: Özet Grafikler (Google Forms Tasarımı) */}
+                                    {activeTab === 0 && (
+                                        <Stack spacing={3}>
+                                            {questionAnalytics.map((analytics) => (
+                                                <QuestionSummaryCard
+                                                    key={analytics.questionId}
+                                                    analytics={analytics}
+                                                    totalFormResponses={formResponses.responses.length}
+                                                />
+                                            ))}
+                                        </Stack>
+                                    )}
+
+                                    {/* 📋 Sekme 2: Bireysel Yanıtlar */}
+                                    {activeTab === 1 && (
+                                        <Stack spacing={3}>
+                                            {formResponses.responses.map((response) => (
+                                                <ResponseCard
+                                                    key={response.id}
+                                                    response={response}
+                                                    showRespondentIdentity={
+                                                        formResponses.showRespondentIdentity
+                                                    }
+                                                />
+                                            ))}
+                                        </Stack>
+                                    )}
+                                </>
+                            )}
                         </>
                     )}
                 </Stack>
