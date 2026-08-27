@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using SurveyManagement.Application.Interfaces.Security;
 
@@ -28,15 +28,7 @@ public class PasswordHashService : IPasswordHashService
         // Kullanıcının giriş yaparken girdiği şifrenin hash'ini hesaplıyoruz
         var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
 
-        // Hesaplanan hash ile veritabanında saklanan hash'in her bir baytını karşılaştırıyoruz
-        for (int i = 0; i < computedHash.Length; i++)
-        {
-            if (computedHash[i] != storedHash[i])
-            {
-                return false; // Şifre yanlış
-            }
-        }
-
-        return true; // Şifre doğru
+        // Sabit zamanlı (constant-time) karşılaştırma ile zamanlama saldırılarına (timing attacks) karşı korunuyoruz
+        return CryptographicOperations.FixedTimeEquals(computedHash, storedHash);
     }
 }
