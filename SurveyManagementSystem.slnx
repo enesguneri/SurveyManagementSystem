@@ -3,4 +3,5 @@
   <Project Path="SurveyManagement.Application/SurveyManagement.Application.csproj" />
   <Project Path="SurveyManagement.Domain/SurveyManagement.Domain.csproj" />
   <Project Path="SurveyManagement.Persistence/SurveyManagement.Persistence.csproj" />
+  <Project Path="SurveyManagement.Tests/SurveyManagement.Tests.csproj" />
 </Solution>
