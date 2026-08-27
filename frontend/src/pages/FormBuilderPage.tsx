@@ -317,7 +317,7 @@ export default function FormBuilderPage() {
                     setErrorMessage(
                         response.errors?.join(" ") ??
                         response.message ??
-                        "Form detayları yüklenemedi.",
+                        "Anket detayları yüklenemedi.",
                     );
                     return;
                 }
@@ -327,7 +327,7 @@ export default function FormBuilderPage() {
                 );
             } catch {
                 setErrorMessage(
-                    "Form detayları yüklenirken API bağlantısı kurulamadı.",
+                    "Anket detayları yüklenirken API bağlantısı kurulamadı.",
                 );
             } finally {
                 setIsLoadingForm(false);
@@ -415,7 +415,7 @@ export default function FormBuilderPage() {
         setErrorMessage("");
 
         if (!formDraft.title.trim()) {
-            setErrorMessage("Form başlığı zorunludur.");
+            setErrorMessage("Anket başlığı zorunludur.");
             return;
         }
 
@@ -442,7 +442,7 @@ export default function FormBuilderPage() {
                 setErrorMessage(
                     result.errors?.join(" ") ||
                     result.message ||
-                    "Form oluşturulamadı.",
+                    "Anket oluşturulamadı.",
                 );
                 return;
             }
@@ -452,7 +452,7 @@ export default function FormBuilderPage() {
             }
         } catch {
             setErrorMessage(
-                "Form oluşturulurken API bağlantısı kurulamadı.",
+                "Anket oluşturulurken API bağlantısı kurulamadı.",
             );
         } finally {
             setIsSaving(false);
@@ -476,7 +476,7 @@ export default function FormBuilderPage() {
                 setErrorMessage(
                     result.errors?.join(" ") ||
                     result.message ||
-                    "Form yayınlanamadı.",
+                    "Anket yayınlanamadı.",
                 );
                 return;
             }
@@ -484,7 +484,7 @@ export default function FormBuilderPage() {
             setCreatedForm(result.data);
         } catch {
             setErrorMessage(
-                "Form yayınlanırken API bağlantısı kurulamadı.",
+                "Anket yayınlanırken API bağlantısı kurulamadı.",
             );
         } finally {
             setIsPublishing(false);
@@ -513,7 +513,7 @@ export default function FormBuilderPage() {
                 py: 0,
             }}
         >
-            <BrandHeader pageTitle={isEditMode ? "Taslak Formu Düzenle" : "Yeni Anket"} onHome={() => navigate("/")} onLogout={handleLogout} />
+            <BrandHeader pageTitle={isEditMode ? "Taslak Anketi Düzenle" : "Yeni Anket"} onHome={() => navigate("/")} onLogout={handleLogout} />
             <Container maxWidth="md" sx={{ py: 5 }}>
                 <Stack spacing={3}>
                     <Stack
@@ -525,7 +525,7 @@ export default function FormBuilderPage() {
                     >
                         <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
                             {isEditMode
-                                ? "Taslak Formu Düzenle"
+                                ? "Taslak Anketi Düzenle"
                                 : "Yeni Anket Oluştur"}
                         </Typography>
 
@@ -594,14 +594,14 @@ export default function FormBuilderPage() {
                                     fullWidth
                                 >
                                     <InputLabel id="form-roles-label">
-                                        Formun ait olduğu birimler
+                                        Anketin ait olduğu birimler
                                     </InputLabel>
 
                                     <Select
                                         labelId="form-roles-label"
                                         multiple
                                         value={formDraft.roleIds}
-                                        label="Formun ait olduğu birimler"
+                                        label="Anketin ait olduğu birimler"
                                         renderValue={(selected) =>
                                             availableRoles
                                                 .filter((role) =>
@@ -642,7 +642,7 @@ export default function FormBuilderPage() {
 
                                     <FormHelperText>
                                         {rolesError ||
-                                            "Formu belirli bir birime bağlamak istemiyorsanız boş bırakabilirsiniz."}
+                                            "Anketi belirli bir birime bağlamak istemiyorsanız boş bırakabilirsiniz."}
                                     </FormHelperText>
                                 </FormControl>
 
@@ -809,8 +809,8 @@ export default function FormBuilderPage() {
                                 <Stack spacing={2}>
                                     <Alert severity="success">
                                         {isEditMode
-                                            ? "Taslak form başarıyla güncellendi."
-                                            : "Taslak form başarıyla oluşturuldu."}
+                                            ? "Taslak anket başarıyla güncellendi."
+                                            : "Taslak anket başarıyla oluşturuldu."}
                                     </Alert>
 
                                     <Typography>
@@ -837,7 +837,7 @@ export default function FormBuilderPage() {
                                                 ? "Yayınlanıyor..."
                                                 : createdForm.status === "Published"
                                                     ? "Yayınlandı"
-                                                    : "Formu Yayınla"}
+                                                    : "Anketi Yayınla"}
                                         </Button>
 
                                         {createdForm.status === "Published" && (
@@ -849,7 +849,7 @@ export default function FormBuilderPage() {
                                                     )
                                                 }
                                             >
-                                                Formu Görüntüle
+                                                Anketi Görüntüle
                                             </Button>
                                         )}
 
@@ -879,7 +879,7 @@ export default function FormBuilderPage() {
                             !formDraft.title.trim()
                         }
                     >
-                        {isSaving ? "Kaydediliyor..." : "Formu Kaydet"}
+                        {isSaving ? "Kaydediliyor..." : "Anketi Kaydet"}
                     </Button>
                 </Stack>
             </Container>
