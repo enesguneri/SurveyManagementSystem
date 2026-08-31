@@ -385,8 +385,25 @@ chore(frontend): update dependencies
 
 ```powershell
 npm run lint
+npm test
 npm run build
 git diff --check
+```
+
+## 🧪 Automated Testing (Vitest)
+
+The frontend includes **30 automated unit tests** running via Vitest:
+
+- **Option Import & Parsing:** TXT, CSV, JSON parsing, BOM cleanup, duplicate filtering, 500 option limit (`optionImport.test.ts`)
+- **Authentication & Storage:** LocalStorage session persistence and cleanup (`authStorage.test.ts`)
+- **JWT & Role Recognition:** Token decoding, expiration checks, role recognition (`jwtHelper.test.ts`)
+- **Response Analytics:** Frequency and percentage distributions for charts (`chartAnalytics.test.ts`)
+- **Error Extraction:** Axios and network error extraction with fallback messages (`errorHandler.test.ts`)
+- **Form API Mapping:** Form draft to API request payload mapping with dynamic options (`formApi.test.ts`)
+
+Run all frontend tests:
+```powershell
+npm test
 ```
 
 ## 📌 Project Status
