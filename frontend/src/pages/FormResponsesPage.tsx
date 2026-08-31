@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
 import {
     Alert,
     Box,
@@ -437,6 +437,15 @@ export default function FormResponsesPage() {
                                     spacing={1.5}
                                     sx={{ mt: 2.5 }}
                                 >
+                                    <Button
+                                        component={RouterLink}
+                                        to={`/forms/${publicId}`}
+                                        variant="outlined"
+                                        color="primary"
+                                    >
+                                        Anketi Görüntüle
+                                    </Button>
+
                                     <Button
                                         variant="outlined"
                                         onClick={() => handleExport("csv")}

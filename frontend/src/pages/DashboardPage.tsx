@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
     Box,
     Button,
@@ -100,9 +100,10 @@ export default function DashboardPage() {
                                         </Typography>
                                     </Box>
                                     <Button
+                                        component={RouterLink}
+                                        to="/forms/new"
                                         variant="contained"
                                         endIcon={<ArrowForwardRounded />}
-                                        onClick={() => navigate("/forms/new")}
                                         sx={{ alignSelf: "flex-start" }}
                                     >
                                         Anket Oluştur
@@ -137,9 +138,10 @@ export default function DashboardPage() {
                                         </Typography>
                                     </Box>
                                     <Button
+                                        component={RouterLink}
+                                        to="/forms"
                                         variant="contained"
                                         endIcon={<ArrowForwardRounded />}
-                                        onClick={() => navigate("/forms")}
                                         sx={{ alignSelf: "flex-start" }}
                                     >
                                         Anketleri Görüntüle
@@ -184,10 +186,9 @@ export default function DashboardPage() {
                                     </Box>
 
                                     <Button
+                                        component={RouterLink}
+                                        to="/ai/survey"
                                         variant="contained"
-                                        onClick={() =>
-                                            navigate("/ai/survey")
-                                        }
                                         sx={{ alignSelf: "flex-start" }}
                                     >
                                         AI Asistanını Aç
