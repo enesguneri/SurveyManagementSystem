@@ -33,6 +33,7 @@ import {
     type FormDraft,
     type QuestionType,
 } from "../types/form";
+import { extractErrorMessage } from "../utils/errorHandler";
 import QuestionTypeEditor from "../components/forms/QuestionTypeEditor";
 import { Alert } from "@mui/material";
 import {
@@ -290,9 +291,9 @@ export default function FormBuilderPage() {
                 }
 
                 setAvailableRoles(response.data);
-            } catch {
+            } catch (error) {
                 setRolesError(
-                    "Birim rolleri alınırken API bağlantısı kurulamadı.",
+                    extractErrorMessage(error, "Birim rolleri alınırken API bağlantısı kurulamadı."),
                 );
             }
         }
@@ -325,9 +326,9 @@ export default function FormBuilderPage() {
                 setFormDraft(
                     mapManageableFormToDraft(response.data),
                 );
-            } catch {
+            } catch (error) {
                 setErrorMessage(
-                    "Anket detayları yüklenirken API bağlantısı kurulamadı.",
+                    extractErrorMessage(error, "Anket detayları yüklenirken API bağlantısı kurulamadı."),
                 );
             } finally {
                 setIsLoadingForm(false);
@@ -450,9 +451,9 @@ export default function FormBuilderPage() {
             if (result.data) {
                 setCreatedForm(result.data);
             }
-        } catch {
+        } catch (error) {
             setErrorMessage(
-                "Anket oluşturulurken API bağlantısı kurulamadı.",
+                extractErrorMessage(error, "Anket kaydedilirken bir hata oluştu."),
             );
         } finally {
             setIsSaving(false);
@@ -482,9 +483,9 @@ export default function FormBuilderPage() {
             }
 
             setCreatedForm(result.data);
-        } catch {
+        } catch (error) {
             setErrorMessage(
-                "Anket yayınlanırken API bağlantısı kurulamadı.",
+                extractErrorMessage(error, "Anket yayınlanırken bir hata oluştu."),
             );
         } finally {
             setIsPublishing(false);

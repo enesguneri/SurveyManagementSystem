@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
     Alert,
@@ -21,15 +20,16 @@ import {
 import type { ManageableForm } from "../types/manageableForm";
 import { useAuth } from "../auth/useAuth";
 import BrandHeader from "../components/layout/BrandHeader";
+import { extractErrorMessage } from "../utils/errorHandler";
 
 function getStatusLabel(status: ManageableForm["status"]) {
     switch (status) {
         case "Draft":
             return "Taslak";
         case "Published":
-            return "Yayımlandı";
+            return "Yayında";
         case "Closed":
-            return "Kapalı";
+            return "Kapatıldı";
         default:
             return status;
     }
@@ -37,35 +37,42 @@ function getStatusLabel(status: ManageableForm["status"]) {
 
 function getStatusColor(
     status: ManageableForm["status"],
-) {
+): "default" | "success" | "warning" {
     switch (status) {
         case "Draft":
-            return "warning";
+            return "default";
         case "Published":
             return "success";
         case "Closed":
-            return "default";
+            return "warning";
         default:
             return "default";
+    }
+}
+
+function getAccessTypeLabel(accessType: ManageableForm["accessType"]) {
+    switch (accessType) {
+        case "Public":
+            return "Herkese Açık";
+        case "Authenticated":
+            return "Giriş Zorunlu";
+        default:
+            return accessType;
     }
 }
 
 export default function ManageableFormsPage() {
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const [forms, setForms] = useState<ManageableForm[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [actionFormId, setActionFormId] = useState<number | null>(null);
 
     function handleLogout() {
         logout();
         navigate("/login");
     }
-
-    const [forms, setForms] = useState<ManageableForm[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
-
-    // Aynı anda yalnızca işlem yapılan formun butonu pasifleşir.
-    const [actionFormId, setActionFormId] =
-        useState<number | null>(null);
 
     useEffect(() => {
         async function loadForms() {
@@ -74,26 +81,15 @@ export default function ManageableFormsPage() {
 
                 if (!response.isSuccess || !response.data) {
                     setErrorMessage(
-                        response.message ??
-                        "Anketler yüklenemedi.",
+                        response.message ?? "Anketler yüklenemedi.",
                     );
                     return;
                 }
 
                 setForms(response.data);
             } catch (error) {
-                if (
-                    axios.isAxiosError(error) &&
-                    error.response?.status === 401
-                ) {
-                    setErrorMessage(
-                        "Anketleri görmek için giriş yapmalısınız.",
-                    );
-                    return;
-                }
-
                 setErrorMessage(
-                    "Anketler yüklenirken API bağlantısı kurulamadı.",
+                    extractErrorMessage(error, "Anketler yüklenirken API bağlantısı kurulamadı."),
                 );
             } finally {
                 setIsLoading(false);
@@ -132,9 +128,9 @@ export default function ManageableFormsPage() {
                         : form,
                 ),
             );
-        } catch {
+        } catch (error) {
             setErrorMessage(
-                "Anket yayımlanırken API bağlantısı kurulamadı.",
+                extractErrorMessage(error, "Anket yayımlanırken bir hata oluştu."),
             );
         } finally {
             setActionFormId(null);
@@ -170,9 +166,9 @@ export default function ManageableFormsPage() {
                         : form,
                 ),
             );
-        } catch {
+        } catch (error) {
             setErrorMessage(
-                "Anket kapatılırken API bağlantısı kurulamadı.",
+                extractErrorMessage(error, "Anket kapatılırken bir hata oluştu."),
             );
         } finally {
             setActionFormId(null);
@@ -205,7 +201,7 @@ export default function ManageableFormsPage() {
             <Container maxWidth="lg" sx={{ py: 5 }}>
                 <Stack spacing={3}>
                     <Box>
-                        <Typography variant="h4" component="h1">
+                        <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }}>
                             Anketlerim
                         </Typography>
 
@@ -219,7 +215,7 @@ export default function ManageableFormsPage() {
                     </Box>
 
                     {errorMessage && (
-                        <Alert severity="error">
+                        <Alert severity="error" onClose={() => setErrorMessage("")}>
                             {errorMessage}
                         </Alert>
                     )}
@@ -232,8 +228,8 @@ export default function ManageableFormsPage() {
 
                     <Stack spacing={2}>
                         {forms.map((form) => (
-                            <Card key={form.id}>
-                                <CardContent>
+                            <Card key={form.id} elevation={0} sx={{ borderRadius: 2.5, border: "1px solid", borderColor: "divider" }}>
+                                <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                                     <Stack spacing={2}>
                                         <Stack
                                             direction="row"
@@ -253,135 +249,154 @@ export default function ManageableFormsPage() {
                                                 {form.title}
                                             </Typography>
 
-                                            <Chip
-                                                label={getStatusLabel(
-                                                    form.status,
-                                                )}
-                                                color={getStatusColor(
-                                                    form.status,
-                                                )}
-                                            />
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                            >
+                                                <Chip
+                                                    label={getStatusLabel(
+                                                        form.status,
+                                                    )}
+                                                    color={getStatusColor(
+                                                        form.status,
+                                                    )}
+                                                    size="small"
+                                                    sx={{ fontWeight: 700 }}
+                                                />
+                                                <Chip
+                                                    label={getAccessTypeLabel(
+                                                        form.accessType,
+                                                    )}
+                                                    variant="outlined"
+                                                    size="small"
+                                                />
+                                            </Stack>
                                         </Stack>
 
                                         {form.description && (
-                                            <Typography
-                                                color="text.secondary"
-                                            >
+                                            <Typography color="text.secondary">
                                                 {form.description}
                                             </Typography>
                                         )}
 
-                                        <Typography variant="body2">
-                                            Oluşturan:{" "}
-                                            {form.createdByUserName}
-                                        </Typography>
+                                        <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1, sm: 3 }}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Oluşturan: <strong>{form.createdByUserName}</strong>
+                                            </Typography>
 
-                                        <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                        >
-                                            Oluşturulma:{" "}
-                                            {new Date(
-                                                form.createdAt,
-                                            ).toLocaleString("tr-TR")}
-                                        </Typography>
+                                            <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                            >
+                                                Oluşturulma:{" "}
+                                                {new Date(
+                                                    form.createdAt,
+                                                ).toLocaleString("tr-TR")}
+                                            </Typography>
 
-                                        <Typography
-                                            variant="body2"
-                                            sx={{ fontWeight: 600 }}
-                                        >
-                                            Yanıt sayısı: {form.responseCount}
-                                        </Typography>
-
-                                        <Stack
-                                            direction="row"
-                                            spacing={1}
-                                            sx={{
-                                                flexWrap: "wrap",
-                                                gap: 1,
-                                            }}
-                                        >
-                                            {form.roleNames.map(
-                                                (roleName) => (
-                                                    <Chip
-                                                        key={roleName}
-                                                        label={roleName}
-                                                        size="small"
-                                                        variant="outlined"
-                                                    />
-                                                ),
-                                            )}
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ fontWeight: 600, color: "primary.main" }}
+                                            >
+                                                Yanıt sayısı: {form.responseCount}
+                                            </Typography>
                                         </Stack>
 
-                                        {form.status === "Draft" && (
-                                            <Button
-                                                variant="contained"
-                                                color="success"
-                                                onClick={() =>
-                                                    handlePublish(form.id, form.publicId)
-                                                }
-                                                disabled={actionFormId === form.id}
+                                        {form.roleNames.length > 0 && (
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                                sx={{
+                                                    flexWrap: "wrap",
+                                                    gap: 1,
+                                                }}
                                             >
-                                                {actionFormId === form.id
-                                                    ? "Yayımlanıyor..."
-                                                    : "Anketi Yayınla"}
-                                            </Button>
+                                                {form.roleNames.map(
+                                                    (roleName: string) => (
+                                                        <Chip
+                                                            key={roleName}
+                                                            label={roleName}
+                                                            size="small"
+                                                            variant="outlined"
+                                                        />
+                                                    ),
+                                                )}
+                                            </Stack>
                                         )}
 
-                                        {form.status === "Draft" && (
-                                            <Button
-                                                variant="contained"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/forms/${form.publicId}/edit`,
-                                                    )
-                                                }
-                                            >
-                                                Düzenle
-                                            </Button>
-                                        )}
+                                        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1, pt: 1 }}>
+                                            {form.status === "Draft" && (
+                                                <Button
+                                                    variant="contained"
+                                                    color="success"
+                                                    onClick={() =>
+                                                        handlePublish(form.id, form.publicId)
+                                                    }
+                                                    disabled={actionFormId === form.id}
+                                                >
+                                                    {actionFormId === form.id
+                                                        ? "Yayımlanıyor..."
+                                                        : "Anketi Yayınla"}
+                                                </Button>
+                                            )}
 
-                                        {form.status === "Published" && (
-                                            <Button
-                                                variant="outlined"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/forms/${form.publicId}`,
-                                                    )
-                                                }
-                                            >
-                                                Anketi Görüntüle
-                                            </Button>
-                                        )}
+                                            {/* ✏️ Düzenle: Hem Taslak hem Yayındaki Anketler İçin Aktif */}
+                                            {form.status !== "Closed" && (
+                                                <Button
+                                                    variant="outlined"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/forms/${form.publicId}/edit`,
+                                                        )
+                                                    }
+                                                >
+                                                    Düzenle
+                                                </Button>
+                                            )}
 
-                                        {form.status === "Published" && (
-                                            <Button
-                                                variant="outlined"
-                                                color="warning"
-                                                onClick={() =>
-                                                    handleClose(form.id, form.publicId)
-                                                }
-                                                disabled={actionFormId === form.id}
-                                            >
-                                                {actionFormId === form.id
-                                                    ? "Kapatılıyor..."
-                                                    : "Anketi Kapat"}
-                                            </Button>
-                                        )}
+                                            {form.status === "Published" && (
+                                                <Button
+                                                    variant="outlined"
+                                                    color="primary"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/forms/${form.publicId}`,
+                                                        )
+                                                    }
+                                                >
+                                                    Anketi Görüntüle
+                                                </Button>
+                                            )}
 
-                                        {(form.status === "Published" ||
-                                            form.status === "Closed") && (
-                                            <Button
-                                                variant="contained"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/forms/${form.publicId}/responses`,
-                                                    )
-                                                }
-                                            >
-                                                Yanıtları Görüntüle
-                                            </Button>
-                                        )}
+                                            {form.status === "Published" && (
+                                                <Button
+                                                    variant="outlined"
+                                                    color="warning"
+                                                    onClick={() =>
+                                                        handleClose(form.id, form.publicId)
+                                                    }
+                                                    disabled={actionFormId === form.id}
+                                                >
+                                                    {actionFormId === form.id
+                                                        ? "Kapatılıyor..."
+                                                        : "Anketi Kapat"}
+                                                </Button>
+                                            )}
+
+                                            {(form.status === "Published" ||
+                                                form.status === "Closed") && (
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/forms/${form.publicId}/responses`,
+                                                        )
+                                                    }
+                                                >
+                                                    Yanıtları Görüntüle
+                                                </Button>
+                                            )}
+                                        </Stack>
                                     </Stack>
                                 </CardContent>
                             </Card>

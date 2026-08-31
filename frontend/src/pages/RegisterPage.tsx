@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import {
     Alert,
     Box,
@@ -14,6 +13,7 @@ import {
     Typography,
 } from "@mui/material";
 import { register as registerRequest } from "../api/authApi";
+import { extractErrorMessage } from "../utils/errorHandler";
 
 export default function RegisterPage() {
     const navigate = useNavigate();
@@ -51,13 +51,11 @@ export default function RegisterPage() {
 
             navigate("/login");
         } catch (error: unknown) {
-            const apiErrors = axios.isAxiosError(error) ? error.response?.data?.errors : undefined;
-            const apiMessage = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
-
             setErrorMessage(
-                apiErrors?.join(" ") ||
-                apiMessage ||
-                "API bağlantısı kurulamadı veya kayıt başarısız.",
+                extractErrorMessage(
+                    error,
+                    "Kayıt işlemi sırasında bir hata oluştu.",
+                ),
             );
         } finally {
             setIsSubmitting(false);
@@ -75,7 +73,7 @@ export default function RegisterPage() {
             }}
         >
             <Container maxWidth="sm">
-                <Card elevation={4}>
+                <Card elevation={4} sx={{ borderRadius: 3 }}>
                     <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
                         <Stack spacing={3} sx={{ alignItems: "center" }}>
                             <Box
@@ -90,11 +88,11 @@ export default function RegisterPage() {
                             />
 
                             <Box sx={{ textAlign: "center" }}>
-                                <Typography variant="h4" component="h1" gutterBottom>
-                                    Kayıt Ol
+                                <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }} gutterBottom>
+                                    Yeni Hesap Oluştur
                                 </Typography>
 
-                                <Typography variant="body2" color="text.secondary">
+                                <Typography variant="body1" color="text.secondary">
                                     İzmir Bakırçay Üniversitesi Anket Yönetim Sistemi
                                 </Typography>
                             </Box>
@@ -137,10 +135,13 @@ export default function RegisterPage() {
                                         onChange={(event) => setPassword(event.target.value)}
                                         autoComplete="new-password"
                                         required
+                                        helperText="En az 6 karakter olmalıdır."
                                     />
 
                                     {errorMessage && (
-                                        <Alert severity="error">{errorMessage}</Alert>
+                                        <Alert severity="error" onClose={() => setErrorMessage("")}>
+                                            {errorMessage}
+                                        </Alert>
                                     )}
 
                                     <Button

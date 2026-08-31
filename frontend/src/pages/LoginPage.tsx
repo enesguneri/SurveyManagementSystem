@@ -16,6 +16,7 @@ import {
     Typography,
 } from "@mui/material";
 import { useAuth } from "../auth/useAuth";
+import { extractErrorMessage } from "../utils/errorHandler";
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -34,13 +35,17 @@ export default function LoginPage() {
         setIsSubmitting(true);
 
         try {
-            const isSuccessful = await login({
+            const result = await login({
                 usernameOrEmail,
                 password,
             });
 
-            if (!isSuccessful) {
-                setErrorMessage("Kullanıcı adı/e-posta veya şifre hatalı.");
+            if (!result.isSuccess || !result.data) {
+                setErrorMessage(
+                    result.errors?.join(" ") ??
+                    result.message ??
+                    "Kullanıcı adı, e-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol ediniz.",
+                );
                 return;
             }
 
@@ -51,15 +56,19 @@ export default function LoginPage() {
             const returnUrl = searchParams.get("returnUrl");
 
             // Yalnızca uygulama içindeki relative URL'lere izin verilir.
-            // Böylece dış siteye yönlendirme güvenlik açığı oluşmaz.
             const safeReturnUrl =
                 returnUrl && returnUrl.startsWith("/")
                     ? returnUrl
                     : "/";
 
             navigate(safeReturnUrl);
-        } catch {
-            setErrorMessage("Giriş sırasında beklenmeyen bir hata oluştu.");
+        } catch (error) {
+            setErrorMessage(
+                extractErrorMessage(
+                    error,
+                    "Giriş yapılırken bir hata oluştu.",
+                ),
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -76,7 +85,7 @@ export default function LoginPage() {
             }}
         >
             <Container maxWidth="sm">
-                <Card elevation={4}>
+                <Card elevation={4} sx={{ borderRadius: 3 }}>
                     <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
                         <Stack spacing={3} sx={{ alignItems: "center" }}>
                             <Box
@@ -91,12 +100,12 @@ export default function LoginPage() {
                             />
 
                             <Box sx={{ textAlign: "center" }}>
-                                <Typography variant="h4" component="h1" gutterBottom>
-                                    İzmir Bakırçay Üniversitesi Anket Yönetim Sistemi
+                                <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }} gutterBottom>
+                                    İzmir Bakırçay Üniversitesi
                                 </Typography>
 
-                                <Typography variant="body2" color="text.secondary">
-                                    İzmir Bakırçay Üniversitesi
+                                <Typography variant="body1" color="text.secondary">
+                                    Anket Yönetim Sistemi Giriş Paneli
                                 </Typography>
                             </Box>
 
@@ -126,7 +135,9 @@ export default function LoginPage() {
                                     />
 
                                     {errorMessage && (
-                                        <Alert severity="error">{errorMessage}</Alert>
+                                        <Alert severity="error" onClose={() => setErrorMessage("")}>
+                                            {errorMessage}
+                                        </Alert>
                                     )}
 
                                     <Button

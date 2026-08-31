@@ -205,4 +205,77 @@ public class FormResponseServiceTests
         item.RespondentIpAddress.Should().BeNull();
         item.Answers.First().TextValue.Should().Be("Gizli yorum");
     }
+
+    [Fact]
+    public async Task DeleteResponseAsync_WhenAuthorized_ShouldDeleteAndReturnSuccess()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
+        var respondent = TestDbContextFactory.CreateUser(context, "respondent", "resp@test.com");
+        var sut = new FormResponseService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Anket",
+            Status = FormStatus.Published,
+            CreatedByUserId = owner.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        var response = new FormResponse
+        {
+            FormId = form.Id,
+            RespondentUserId = respondent.Id,
+            SubmittedAt = DateTime.UtcNow
+        };
+        context.FormResponses.Add(response);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.DeleteResponseAsync(form.PublicId, response.Id, owner.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        context.FormResponses.Any(r => r.Id == response.Id).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task DeleteResponseAsync_WhenUnauthorized_ShouldReturnForbidden()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
+        var otherUser = TestDbContextFactory.CreateUser(context, "other", "other@test.com");
+        var sut = new FormResponseService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Anket",
+            Status = FormStatus.Published,
+            CreatedByUserId = owner.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        var response = new FormResponse
+        {
+            FormId = form.Id,
+            SubmittedAt = DateTime.UtcNow
+        };
+        context.FormResponses.Add(response);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.DeleteResponseAsync(form.PublicId, response.Id, otherUser.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.HttpStatusCode.Should().Be(403);
+    }
 }

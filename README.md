@@ -3,7 +3,7 @@
 > İzmir Bakırçay Üniversitesi için geliştirilen modern, güvenli ve dinamik anket yönetim platformu.
 
 [![CI Pipeline](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-100%20passed-brightgreen)](https://github.com/enesguneri/SurveyManagementSystem)
+[![Tests](https://img.shields.io/badge/tests-115%20passed-brightgreen)](https://github.com/enesguneri/SurveyManagementSystem)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![React](https://img.shields.io/badge/React-TypeScript-61DAFB)](https://react.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-Passing-729B1B)](https://vitest.dev/)
@@ -16,10 +16,10 @@ The Survey Management System is a full-stack web application that enables author
 
 The platform supports:
 
-- 🔐 Secure authentication and authorization
-- 📝 Dynamic survey creation
+- 🔐 Secure authentication, role-based authorization, and protected Admin routes
+- 📝 Dynamic survey creation and published survey editing
 - 🏢 Unit-based access control
-- 📊 Response management and export
+- 📊 Response management, pagination, deletion, and export
 - 🤖 Gemini AI-assisted survey generation
 - 📥 External option import
 - 🎨 Modern and responsive user interface
@@ -29,11 +29,10 @@ The platform supports:
 ### 🔐 Authentication and Authorization
 
 - User registration and login
-- JWT-based authentication
-- Password hashing and salting
-- Role-based authorization
+- JWT-based authentication with constant-time password verification
+- Role-based authorization and frontend route guards (`AdminRoute`)
 - Unit-based form authorization
-- Admin panel
+- Admin panel (restricted to Admin users)
 - Swagger JWT Bearer authentication
 
 ### 📝 Survey Management
@@ -283,7 +282,7 @@ dotnet ef database update `
 ### ▶️ 4. Run the API
 
 ```powershell
-dotnet run --project .\SurveyManagement.API
+dotnet run --project .\SurveyManagement.API --launch-profile https
 ```
 
 API will start and Swagger UI will be available at:
@@ -483,10 +482,10 @@ chore: update dependencies
 
 ## 🧪 Testing and CI/CD Pipeline
 
-The project includes an automated test suite comprising **100 tests (100% passing)** across both backend and frontend.
+The project includes an automated test suite comprising **115 tests (100% passing)** across both backend and frontend.
 
-### 🛡️ Backend Tests (83 tests)
-- **Unit Tests (76):** Security, 9 question types request validation, response validation, SSRF protection, form lifecycle, response identity masking, unit role authorization, CSV and Excel export.
+### 🛡️ Backend Tests (86 tests)
+- **Unit Tests (79):** Security, 9 question types request validation, response validation, SSRF protection, form lifecycle, response identity masking, unit role authorization, CSV and Excel export, response deletion.
 - **Integration Tests (7):** `WebApplicationFactory<Program>` testing end-to-end HTTP pipeline, authentication, and admin authorization filters.
 
 Run backend tests:
@@ -494,8 +493,8 @@ Run backend tests:
 dotnet test SurveyManagementSystem.slnx
 ```
 
-### ⚡ Frontend Tests (17 tests)
-- **Vitest Suite:** TXT, CSV, JSON parsing, BOM cleanup, 500 option limit, token expiration, and question analytics frequency/percentage calculations.
+### ⚡ Frontend Tests (29 tests)
+- **Vitest Suite:** TXT, CSV, JSON parsing, BOM cleanup, 500 option limit, token expiration, JWT decoding and role recognition, detailed error extraction, and question analytics frequency/percentage calculations.
 
 Run frontend tests:
 ```powershell
@@ -505,8 +504,8 @@ npm test
 
 ### 🤖 GitHub Actions CI/CD Pipeline
 Every push and pull request to `main` or `develop` triggers `.github/workflows/ci.yml`:
-1. **Backend CI:** Restores, builds, and runs all 83 backend tests on Ubuntu with .NET 10.
-2. **Frontend CI:** Installs dependencies, runs ESLint, executes 14 Vitest tests, and generates the production bundle.
+1. **Backend CI:** Restores, builds, and runs all 86 backend tests on Ubuntu with .NET 10.
+2. **Frontend CI:** Installs dependencies, runs ESLint, executes 29 Vitest tests, and generates the production bundle.
 
 ## 🗺️ Sprint Roadmap
 

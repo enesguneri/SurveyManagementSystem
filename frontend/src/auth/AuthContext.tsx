@@ -5,8 +5,10 @@ import {
 } from "react";
 import { login as loginRequest } from "../api/authApi";
 import { clearToken, getToken, saveToken } from "./authStorage";
+import type { ApiResponse } from "../types/api";
 import type { LoginRequest, TokenResponse } from "../types/auth";
 import { AuthContext } from "./AuthContextValue";
+import { decodeJwt } from "./jwtHelper";
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -15,19 +17,18 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
     const [token, setToken] = useState<string | null>(() => getToken());
 
-    async function login(request: LoginRequest): Promise<boolean> {
+    const user = useMemo(() => decodeJwt(token), [token]);
+    const isAdmin = user?.isAdmin ?? false;
+
+    async function login(request: LoginRequest): Promise<ApiResponse<TokenResponse>> {
         const result = await loginRequest(request);
 
-        if (!result.isSuccess || !result.data) {
-            return false;
+        if (result.isSuccess && result.data) {
+            saveToken(result.data);
+            setToken(result.data.accessToken);
         }
 
-        const tokenResponse: TokenResponse = result.data;
-
-        saveToken(tokenResponse);
-        setToken(tokenResponse.accessToken);
-
-        return true;
+        return result;
     }
 
     function logout(): void {
@@ -39,10 +40,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         () => ({
             token,
             isAuthenticated: token !== null,
+            isAdmin,
+            user,
             login,
             logout,
         }),
-        [token],
+        [token, isAdmin, user],
     );
 
     return (

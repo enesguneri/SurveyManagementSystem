@@ -188,14 +188,14 @@ public class FormServiceTests
     {
         // Arrange
         using var context = TestDbContextFactory.Create();
-        var user = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
+        var user = TestDbContextFactory.CreateUser(context, "creator", "creator@test.com");
         var sut = new FormService(context, _validator, new FormAuthorizationService(context));
 
         var form = new Form
         {
             PublicId = Guid.NewGuid(),
-            Title = "Yayınlanmış Form",
-            Status = FormStatus.Published,
+            Title = "Kapatılmış Form",
+            Status = FormStatus.Closed,
             CreatedByUserId = user.Id,
             CreatedAt = DateTime.UtcNow
         };
@@ -217,7 +217,44 @@ public class FormServiceTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.HttpStatusCode.Should().Be(400);
-        result.Errors.Should().Contain("Yalnızca taslak formlar güncellenebilir.");
+        result.Errors.Should().Contain("Kapatılmış formlar güncellenemez.");
+    }
+
+    [Fact]
+    public async Task UpdateDraftAsync_WhenFormIsPublished_ShouldSucceed()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var user = TestDbContextFactory.CreateUser(context, "creator", "creator@test.com");
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Yayındaki Form",
+            Status = FormStatus.Published,
+            CreatedByUserId = user.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        var updateRequest = new CreateFormDto
+        {
+            Title = "Güncellenmiş Başlık",
+            Questions = new List<CreateQuestionDto>
+            {
+                new() { Title = "Yeni Soru", Type = QuestionType.ShortText }
+            }
+        };
+
+        // Act
+        var result = await sut.UpdateDraftAsync(form.PublicId, updateRequest, user.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Title.Should().Be("Güncellenmiş Başlık");
     }
 
     [Fact]

@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import AdminRoute from "./auth/AdminRoute";
 import DashboardPage from "./pages/DashboardPage";
 import FormBuilderPage from "./pages/FormBuilderPage";
 import PublishedFormPage from "./pages/PublishedFormPage";
@@ -21,11 +22,14 @@ function App() {
                   <Route path="/" element={<DashboardPage />} />
                   <Route path="/forms/new" element={<FormBuilderPage />} />
                   <Route path="/forms/:publicId/edit" element={<FormBuilderPage />}/>
-                  <Route path="/admin" element={<AdminPanelPage />} />
                   <Route path="/forms/:publicId/responses" element={<FormResponsesPage />}/>
                   <Route path="/ai/survey" element={<AiSurveyAssistantPage />}/>
-                  <Route path="/forms" element={<ManageableFormsPage />}
-                  />
+                  <Route path="/forms" element={<ManageableFormsPage />} />
+
+                  {/* 👑 Sadece Admin Rolüne Sahip Kullanıcılar Erişebilir */}
+                  <Route element={<AdminRoute />}>
+                      <Route path="/admin" element={<AdminPanelPage />} />
+                  </Route>
               </Route>
 
               <Route

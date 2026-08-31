@@ -135,3 +135,15 @@ export async function downloadFormResponses(
 
     return response.data;
 }
+
+// Belirli bir anket yanıtını siler.
+export async function deleteFormResponse(
+    publicId: string,
+    responseId: number,
+): Promise<ApiResponse<boolean>> {
+    const response = await apiClient.delete<ApiResponse<boolean>>(
+        `/forms/${publicId}/responses/${responseId}`,
+    );
+
+    return response.data;
+}

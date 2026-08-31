@@ -33,10 +33,10 @@ import {
 } from "../api/roleApi";
 import type { Role } from "../types/role";
 import type { AdminUser } from "../types/admin";
-import type { ApiResponse } from "../types/api";
 
 import { useAuth } from "../auth/useAuth";
 import BrandHeader from "../components/layout/BrandHeader";
+import { extractErrorMessage } from "../utils/errorHandler";
 
 export default function AdminPanelPage() {
     const navigate = useNavigate();
@@ -90,7 +90,7 @@ export default function AdminPanelPage() {
                 }
 
                 setErrorMessage(
-                    "Kullanıcılar yüklenirken API bağlantısı kurulamadı.",
+                    extractErrorMessage(error, "Kullanıcılar yüklenirken API bağlantısı kurulamadı."),
                 );
             } finally {
                 setIsLoading(false);
@@ -113,9 +113,9 @@ export default function AdminPanelPage() {
                 }
 
                 setRoles(response.data);
-            } catch {
+            } catch (error) {
                 setAssignmentMessage(
-                    "Roller yüklenirken API bağlantısı kurulamadı.",
+                    extractErrorMessage(error, "Roller yüklenirken API bağlantısı kurulamadı."),
                 );
             }
         }
@@ -174,23 +174,8 @@ export default function AdminPanelPage() {
                 setUsers(usersResponse.data);
             }
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                const apiError =
-                    error.response?.data as
-                        | ApiResponse<unknown>
-                        | undefined;
-
-                setAssignmentMessage(
-                    apiError?.errors?.join(" ") ??
-                    apiError?.message ??
-                    "Rol atanamadı.",
-                );
-
-                return;
-            }
-
             setAssignmentMessage(
-                "Rol atanırken API bağlantısı kurulamadı.",
+                extractErrorMessage(error, "Rol atanırken bir hata oluştu."),
             );
         } finally {
             setIsAssigning(false);
@@ -236,9 +221,9 @@ export default function AdminPanelPage() {
             if (rolesResponse.isSuccess && rolesResponse.data) {
                 setRoles(rolesResponse.data);
             }
-        } catch {
+        } catch (error) {
             setRoleCreationMessage(
-                "Rol oluşturulurken API bağlantısı kurulamadı.",
+                extractErrorMessage(error, "Rol oluşturulurken bir hata oluştu."),
             );
         } finally {
             setIsCreatingRole(false);

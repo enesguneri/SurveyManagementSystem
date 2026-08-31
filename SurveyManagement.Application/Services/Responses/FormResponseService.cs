@@ -368,6 +368,57 @@ public class FormResponseService : IFormResponseService
         return ApiResponse<FormResponsesDto>.SuccessResult(responseDto);
     }
 
+    public async Task<ApiResponse<bool>> DeleteResponseAsync(
+        Guid formPublicId,
+        int responseId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var form = await _context.Forms
+            .Include(f => f.FormRoles)
+            .FirstOrDefaultAsync(
+                f => f.PublicId == formPublicId,
+                cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<bool>.FailureResult(
+                "İlişkili form bulunamadı.",
+                404);
+        }
+
+        var canManageForm = await _formAuthorizationService.CanManageFormAsync(
+            form,
+            requesterUserId,
+            cancellationToken);
+
+        if (!canManageForm)
+        {
+            return ApiResponse<bool>.FailureResult(
+                "Bu formu yönetme veya yanıtını silme yetkiniz yok.",
+                403);
+        }
+
+        var response = await _context.FormResponses
+            .FirstOrDefaultAsync(
+                r => r.Id == responseId && r.FormId == form.Id,
+                cancellationToken);
+
+        if (response is null)
+        {
+            return ApiResponse<bool>.FailureResult(
+                "Silinecek yanıt bulunamadı.",
+                404);
+        }
+
+        _context.FormResponses.Remove(response);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ApiResponse<bool>.SuccessResult(
+            true,
+            "Yanıt başarıyla silindi.");
+    }
+
     private static bool HasAnswerValue(
         Question question,
         SubmitAnswerDto answer)
