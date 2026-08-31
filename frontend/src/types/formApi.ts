@@ -1,4 +1,5 @@
 import type {
+    DynamicOptionSourceType,
     FormAccessType,
     FormDraft,
     QuestionType,
@@ -20,6 +21,11 @@ export interface CreateQuestionRequest {
     description: string | null;
     ratingMinLabel: string | null;
     ratingMaxLabel: string | null;
+    optionSourceType?: DynamicOptionSourceType;
+    optionSourceUrl?: string | null;
+    optionJsonPath?: string | null;
+    optionTextProperty?: string | null;
+    optionFileContent?: string | null;
     validation: CreateQuestionValidationRequest | null;
     options: CreateTextRequest[];
     matrixRows: CreateTextRequest[];
@@ -67,6 +73,11 @@ export function toCreateFormRequest(
             description: null,
             ratingMinLabel: null,
             ratingMaxLabel: null,
+            optionSourceType: question.optionSourceType ?? "None",
+            optionSourceUrl: question.optionSourceUrl || null,
+            optionJsonPath: question.optionJsonPath || null,
+            optionTextProperty: question.optionTextProperty || null,
+            optionFileContent: question.optionFileContent || null,
 
             validation: getValidation(question),
 

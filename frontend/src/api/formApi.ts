@@ -62,6 +62,28 @@ export async function publishForm(
     return response.data;
 }
 
+// Kapatılmış formu yeniden yayımlar.
+export async function reopenForm(
+    publicId: string,
+): Promise<ApiResponse<FormCreatedResponse>> {
+    const response = await apiClient.post<
+        ApiResponse<FormCreatedResponse>
+    >(`/forms/${publicId}/reopen`);
+
+    return response.data;
+}
+
+// Formu ve tüm verilerini siler.
+export async function deleteForm(
+    publicId: string,
+): Promise<ApiResponse<boolean>> {
+    const response = await apiClient.delete<ApiResponse<boolean>>(
+        `/forms/${publicId}`,
+    );
+
+    return response.data;
+}
+
 // Kullanıcının yönetebileceği formları getirir.
 export async function getManageableForms(): Promise<
     ApiResponse<ManageableForm[]>

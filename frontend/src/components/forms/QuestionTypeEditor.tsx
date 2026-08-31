@@ -1,5 +1,6 @@
 import {
     Alert,
+    Box,
     Button,
     Collapse,
     IconButton,
@@ -65,6 +66,8 @@ export default function QuestionTypeEditor({
 
             onChange({
                 options: result.options,
+                optionSourceType: "Txt",
+                optionFileContent: content,
             });
         } catch (error) {
             setImportError(
@@ -108,6 +111,10 @@ export default function QuestionTypeEditor({
 
             onChange({
                 options: response.data.options,
+                optionSourceType: "Api",
+                optionSourceUrl: optionApiUrl.trim(),
+                optionJsonPath: optionJsonPath.trim() || null,
+                optionTextProperty: optionTextProperty.trim() || "text",
             });
 
             const skippedMessage =
@@ -116,7 +123,7 @@ export default function QuestionTypeEditor({
                     : "";
 
             setUrlImportInfo(
-                `${response.data.options.length} seçenek içe aktarıldı.${skippedMessage}`,
+                `${response.data.options.length} seçenek aktarıldı.${skippedMessage}`,
             );
         } catch {
             setUrlImportError(
@@ -180,7 +187,7 @@ export default function QuestionTypeEditor({
                     >
                         {isImporting
                             ? "İçe aktarılıyor..."
-                            : "TXT / CSV / JSON'dan aktar"}
+                            : "TXT Dosyasından Aktar"}
                     </Button>
 
                     <Button
@@ -201,7 +208,7 @@ export default function QuestionTypeEditor({
                     <input
                         ref={optionFileInputRef}
                         type="file"
-                        accept=".txt,.csv,.json,text/plain,text/csv,application/json"
+                        accept=".txt,text/plain"
                         hidden
                         onChange={handleOptionFileImport}
                     />
@@ -248,7 +255,7 @@ export default function QuestionTypeEditor({
 
                         <TextField
                             label="JSON yolu"
-                            placeholder="Örneğin: data.items"
+                            placeholder="Örneğin: users"
                             value={optionJsonPath}
                             onChange={(event) =>
                                 setOptionJsonPath(event.target.value)
@@ -263,7 +270,7 @@ export default function QuestionTypeEditor({
                             onChange={(event) =>
                                 setOptionTextProperty(event.target.value)
                             }
-                            helperText="Nesne formatı için varsayılan alan: text"
+                            helperText="Nesne formatı için varsayılan alan: firstName, name vb."
                             fullWidth
                         />
 
@@ -291,35 +298,49 @@ export default function QuestionTypeEditor({
                     </Stack>
                 </Collapse>
 
-                {question.options.map((option, index) => (
-                    <Stack
-                        key={index}
-                        direction="row"
-                        spacing={1}
-                        sx={{ alignItems: "center" }}
+                {question.options.length > 0 && (
+                    <Box
+                        sx={{
+                            maxHeight: 320,
+                            overflowY: "auto",
+                            pr: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1.5,
+                        }}
                     >
-                        <TextField
-                            label={`${index + 1}. seçenek`}
-                            value={option}
-                            onChange={(event) =>
-                                updateOption(index, event.target.value)
-                            }
-                        />
+                        {question.options.map((option, index) => (
+                            <Stack
+                                key={index}
+                                direction="row"
+                                spacing={1}
+                                sx={{ alignItems: "center" }}
+                            >
+                                <TextField
+                                    label={`${index + 1}. seçenek`}
+                                    value={option}
+                                    onChange={(event) =>
+                                        updateOption(index, event.target.value)
+                                    }
+                                    fullWidth
+                                />
 
-                        <IconButton
-                            color="error"
-                            onClick={() =>
-                                onChange({
-                                    options: question.options.filter(
-                                        (_, optionIndex) => optionIndex !== index,
-                                    ),
-                                })
-                            }
-                        >
-                            <DeleteIcon />
-                        </IconButton>
-                    </Stack>
-                ))}
+                                <IconButton
+                                    color="error"
+                                    onClick={() =>
+                                        onChange({
+                                            options: question.options.filter(
+                                                (_, optionIndex) => optionIndex !== index,
+                                            ),
+                                        })
+                                    }
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            </Stack>
+                        ))}
+                    </Box>
+                )}
 
                 <Button
                     variant="outlined"

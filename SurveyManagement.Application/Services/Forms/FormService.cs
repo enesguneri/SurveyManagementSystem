@@ -219,11 +219,11 @@ public class FormService : IFormService
                 403);
         }
 
-        // Bu endpoint yalnızca taslak düzenleme ekranı içindir.
-        if (form.Status != FormStatus.Draft)
+        // Bu endpoint taslak veya yayındaki formların düzenleme ekranı içindir.
+        if (form.Status == FormStatus.Closed)
         {
             return ApiResponse<FormDetailsDto>.FailureResult(
-                "Yalnızca taslak formlar düzenleme amacıyla açılabilir.",
+                "Kapatılmış formlar düzenlenemez.",
                 400);
         }
 
@@ -311,10 +311,102 @@ public class FormService : IFormService
             "Form başarıyla yayımlandı.");
     }
 
+    public async Task<ApiResponse<FormCreatedDto>> ReopenAsync(
+        Guid publicId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var form = await _context.Forms
+            .FirstOrDefaultAsync(
+                currentForm => currentForm.PublicId == publicId,
+                cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Yeniden yayınlanacak form bulunamadı.",
+                404);
+        }
+
+        var canManageForm = await _formAuthorizationService.CanManageFormAsync(
+            form,
+            requesterUserId,
+            cancellationToken);
+
+        if (!canManageForm)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Bu formu yeniden yayınlama yetkiniz yok.",
+                403);
+        }
+
+        if (form.Status == FormStatus.Published)
+        {
+            return ApiResponse<FormCreatedDto>.FailureResult(
+                "Form zaten yayında.",
+                400);
+        }
+
+        form.Status = FormStatus.Published;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var responseDto = new FormCreatedDto
+        {
+            Id = form.Id,
+            PublicId = form.PublicId,
+            Title = form.Title,
+            Status = form.Status,
+            AccessType = form.AccessType,
+            CreatedAt = form.CreatedAt,
+            ShowRespondentIdentity = form.ShowRespondentIdentity
+        };
+
+        return ApiResponse<FormCreatedDto>.SuccessResult(
+            responseDto,
+            "Form başarıyla yeniden yayımlandı.");
+    }
+
+    public async Task<ApiResponse<bool>> DeleteAsync(
+        Guid publicId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var form = await _context.Forms
+            .FirstOrDefaultAsync(
+                f => f.PublicId == publicId,
+                cancellationToken);
+
+        if (form is null)
+        {
+            return ApiResponse<bool>.FailureResult(
+                "Silinecek form bulunamadı.",
+                404);
+        }
+
+        var canManageForm = await _formAuthorizationService.CanManageFormAsync(
+            form,
+            requesterUserId,
+            cancellationToken);
+
+        if (!canManageForm)
+        {
+            return ApiResponse<bool>.FailureResult(
+                "Bu formu silme yetkiniz yok.",
+                403);
+        }
+
+        _context.Forms.Remove(form);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ApiResponse<bool>.SuccessResult(
+            true,
+            "Form ve tüm ilişkili verileri başarıyla silindi.");
+    }
+
     public async Task<ApiResponse<FormDetailsDto>> GetByPublicIdAsync(
-    Guid publicId,
-    int? requesterUserId,
-    CancellationToken cancellationToken = default)
+        Guid publicId,
+        int? requesterUserId,
+        CancellationToken cancellationToken = default)
     {
         // Form yalnızca okunduğu için entity tracking kapatılır.
         var form = await _context.Forms
@@ -337,9 +429,38 @@ public class FormService : IFormService
                 404);
         }
 
-        // Taslak ve kapalı formlar cevaplama ekranına gösterilmez.
+        // Kapatılmış anketlerde anket yöneticisine önizleme izni verilir.
         if (form.Status != FormStatus.Published)
         {
+            if (form.Status == FormStatus.Closed && requesterUserId.HasValue)
+            {
+                var canManageForm = await _formAuthorizationService.CanManageFormAsync(
+                    form,
+                    requesterUserId.Value,
+                    cancellationToken);
+
+                if (canManageForm)
+                {
+                    var previewDto = new FormDetailsDto
+                    {
+                        PublicId = form.PublicId,
+                        Title = form.Title,
+                        Description = form.Description,
+                        Status = form.Status,
+                        AccessType = form.AccessType,
+                        Questions = form.Questions
+                            .OrderBy(question => question.DisplayOrder)
+                            .Select(MapQuestionDetails)
+                            .ToList(),
+                        ShowRespondentIdentity = form.ShowRespondentIdentity,
+                        HasCurrentUserResponded = false,
+                        IsClosedPreview = true
+                    };
+
+                    return ApiResponse<FormDetailsDto>.SuccessResult(previewDto);
+                }
+            }
+
             return ApiResponse<FormDetailsDto>.FailureResult(
                 "Form şu anda cevap kabul etmiyor.",
                 404);
@@ -374,7 +495,8 @@ public class FormService : IFormService
                 .Select(MapQuestionDetails)
                 .ToList(),
             ShowRespondentIdentity = form.ShowRespondentIdentity,
-            HasCurrentUserResponded = hasCurrentUserResponded
+            HasCurrentUserResponded = hasCurrentUserResponded,
+            IsClosedPreview = false
         };
 
         return ApiResponse<FormDetailsDto>.SuccessResult(responseDto);
@@ -382,6 +504,40 @@ public class FormService : IFormService
 
     private static QuestionDetailsDto MapQuestionDetails(Question question)
     {
+        var options = question.Options
+            .OrderBy(option => option.DisplayOrder)
+            .Select(option => new QuestionOptionDetailsDto
+            {
+                Id = option.Id,
+                Text = option.Text,
+                DisplayOrder = option.DisplayOrder
+            })
+            .ToList();
+
+        // Eğer TXT kaynağından dinamik seçenek tanımlıysa ve options tablosu boşsa TXT satırlarından seçenek listesini oluşturur.
+        if (options.Count == 0 &&
+            question.OptionSourceType == DynamicOptionSourceType.Txt &&
+            !string.IsNullOrWhiteSpace(question.OptionFileContent))
+        {
+            var lines = question.OptionFileContent
+                .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Distinct()
+                .Take(500)
+                .ToList();
+
+            for (var i = 0; i < lines.Count; i++)
+            {
+                options.Add(new QuestionOptionDetailsDto
+                {
+                    Id = i + 1,
+                    Text = lines[i],
+                    DisplayOrder = i + 1
+                });
+            }
+        }
+
         return new QuestionDetailsDto
         {
             Id = question.Id,
@@ -392,6 +548,11 @@ public class FormService : IFormService
             DisplayOrder = question.DisplayOrder,
             RatingMinLabel = question.RatingMinLabel,
             RatingMaxLabel = question.RatingMaxLabel,
+            OptionSourceType = question.OptionSourceType,
+            OptionSourceUrl = question.OptionSourceUrl,
+            OptionJsonPath = question.OptionJsonPath,
+            OptionTextProperty = question.OptionTextProperty,
+            OptionFileContent = question.OptionFileContent,
 
             Validation = question.Validation is null
                 ? null
@@ -406,15 +567,7 @@ public class FormService : IFormService
                     MaxDate = question.Validation.MaxDate
                 },
 
-            Options = question.Options
-                .OrderBy(option => option.DisplayOrder)
-                .Select(option => new QuestionOptionDetailsDto
-                {
-                    Id = option.Id,
-                    Text = option.Text,
-                    DisplayOrder = option.DisplayOrder
-                })
-                .ToList(),
+            Options = options,
 
             MatrixRows = question.MatrixRows
                 .OrderBy(row => row.DisplayOrder)
@@ -439,9 +592,9 @@ public class FormService : IFormService
     }
 
     public async Task<ApiResponse<FormCreatedDto>> CloseAsync(
-    Guid publicId,
-    int requesterUserId,
-    CancellationToken cancellationToken = default)
+        Guid publicId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default)
     {
         // Form, paylaşım için kullanılan PublicId üzerinden bulunur.
         var form = await _context.Forms
@@ -725,6 +878,11 @@ public class FormService : IFormService
                 DisplayOrder = questionIndex + 1,
                 RatingMinLabel = NormalizeOptionalText(questionDto.RatingMinLabel),
                 RatingMaxLabel = NormalizeOptionalText(questionDto.RatingMaxLabel),
+                OptionSourceType = questionDto.OptionSourceType,
+                OptionSourceUrl = NormalizeOptionalText(questionDto.OptionSourceUrl),
+                OptionJsonPath = NormalizeOptionalText(questionDto.OptionJsonPath),
+                OptionTextProperty = NormalizeOptionalText(questionDto.OptionTextProperty),
+                OptionFileContent = questionDto.OptionFileContent,
                 CreatedAt = DateTime.UtcNow
             };
 

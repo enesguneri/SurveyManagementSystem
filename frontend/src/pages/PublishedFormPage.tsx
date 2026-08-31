@@ -26,10 +26,12 @@ import {
     getPublishedForm,
     submitFormResponse,
 } from "../api/formApi";
+import { previewOptionsFromUrl } from "../api/optionApi";
 import { extractErrorMessage } from "../utils/errorHandler";
 import type {
     PublishedForm,
     PublishedQuestion,
+    PublishedTextItem,
 } from "../types/publishedForm";
 import type {
     SubmitAnswerRequest,
@@ -328,6 +330,12 @@ function PublishedFormPage() {
                     </CardContent>
                 </Card>
 
+                {(form.isClosedPreview || form.status === "Closed") && (
+                    <Alert severity="warning" sx={{ fontWeight: 600 }}>
+                        ⚠️ Bu anket kapatılmıştır (Yönetici Önizleme Modu). Katılımcılar artık bu ankete yanıt gönderemez.
+                    </Alert>
+                )}
+
                 {form.accessType === "Authenticated" &&
                     form.showRespondentIdentity && (
                         <Alert severity="info">
@@ -362,7 +370,7 @@ function PublishedFormPage() {
                     />
                 ))}
 
-                {!hasSubmitted && (
+                {!hasSubmitted && !form.isClosedPreview && form.status !== "Closed" && (
                     <Button
                         variant="contained"
                         size="large"
@@ -373,6 +381,12 @@ function PublishedFormPage() {
                             ? "Gönderiliyor..."
                             : "Yanıtları Gönder"}
                     </Button>
+                )}
+
+                {(form.isClosedPreview || form.status === "Closed") && (
+                    <Alert severity="info">
+                        Anket kapatıldığı için yeni yanıt kabul edilmemektedir.
+                    </Alert>
                 )}
 
                 {hasSubmitted && !isSubmissionCompleted && (
@@ -412,7 +426,47 @@ function QuestionInput({
                            toggleOption,
                            toggleMatrixCell,
                        }: QuestionInputProps) {
+    const [dynamicOptions, setDynamicOptions] = useState<PublishedTextItem[]>(question.options);
+    const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+        if (question.options.length === 0 && question.optionSourceType === "Api" && question.optionSourceUrl) {
+            previewOptionsFromUrl({
+                url: question.optionSourceUrl,
+                jsonPath: question.optionJsonPath ?? "",
+                textProperty: question.optionTextProperty ?? "text",
+            })
+                .then((res) => {
+                    if (isMounted && res.isSuccess && res.data) {
+                        setDynamicOptions(
+                            res.data.options.map((text, idx) => ({
+                                id: idx + 1,
+                                text,
+                                displayOrder: idx + 1,
+                            })),
+                        );
+                    }
+                })
+                .catch(() => {})
+                .finally(() => {
+                    if (isMounted) {
+                        setIsLoadingOptions(false);
+                    }
+                });
+        }
+        return () => {
+            isMounted = false;
+        };
+    }, [question.options.length, question.optionSourceType, question.optionSourceUrl, question.optionJsonPath, question.optionTextProperty]);
+
+    const effectiveOptions = dynamicOptions.length > 0 ? dynamicOptions : question.options;
+
     const renderQuestionInput = () => {
+        if (isLoadingOptions) {
+            return <CircularProgress size={24} sx={{ my: 1 }} />;
+        }
+
         switch (question.type) {
             case "ShortText":
                 return (
@@ -514,7 +568,7 @@ function QuestionInput({
                             )
                         }
                     >
-                        {question.options.map((option) => (
+                        {effectiveOptions.map((option) => (
                             <FormControlLabel
                                 key={option.id}
                                 value={option.id}
@@ -526,7 +580,7 @@ function QuestionInput({
                 );
             case "Dropdown": {
                 const selectedOption =
-                    question.options.find(
+                    effectiveOptions.find(
                         (option) =>
                             option.id ===
                             answer.selectedOptionIds[0],
@@ -535,7 +589,7 @@ function QuestionInput({
                 return (
                     <Autocomplete
                         fullWidth
-                        options={question.options}
+                        options={effectiveOptions}
                         value={selectedOption}
                         getOptionLabel={(option) => option.text}
                         isOptionEqualToValue={(option, value) =>
@@ -563,7 +617,7 @@ function QuestionInput({
             case "MultipleChoice":
                 return (
                     <FormGroup>
-                        {question.options.map((option) => (
+                        {effectiveOptions.map((option) => (
                             <FormControlLabel
                                 key={option.id}
                                 control={

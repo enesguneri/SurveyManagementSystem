@@ -1,4 +1,4 @@
-﻿using SurveyManagement.Domain.Enums;
+using SurveyManagement.Domain.Enums;
 
 namespace SurveyManagement.Application.DTOs.Forms;
 
@@ -13,6 +13,13 @@ public class QuestionDetailsDto
 
     public string? RatingMinLabel { get; set; }
     public string? RatingMaxLabel { get; set; }
+
+    // Dinamik dış kaynak seçenek alanları
+    public DynamicOptionSourceType OptionSourceType { get; set; } = DynamicOptionSourceType.None;
+    public string? OptionSourceUrl { get; set; }
+    public string? OptionJsonPath { get; set; }
+    public string? OptionTextProperty { get; set; }
+    public string? OptionFileContent { get; set; }
 
     public QuestionValidationDetailsDto? Validation { get; set; }
 
