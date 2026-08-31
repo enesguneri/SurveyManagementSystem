@@ -210,6 +210,25 @@ namespace SurveyManagement.Persistence.Migrations
                     b.Property<bool>("IsRequired")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("OptionFileContent")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("OptionJsonPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("OptionSourceType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("OptionSourceUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("OptionTextProperty")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
                     b.Property<string>("RatingMaxLabel")
                         .HasColumnType("longtext");
 
