@@ -2,7 +2,7 @@ import { AppBar, Box, Button, Stack, Toolbar, Tooltip, Typography } from "@mui/m
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 
 interface BrandHeaderProps {
@@ -15,7 +15,6 @@ interface BrandHeaderProps {
 /** Uygulamadaki korumalı sayfalar için ortak üniversite başlığı. */
 export default function BrandHeader({ pageTitle, onHome, onLogout }: BrandHeaderProps) {
     const { isAdmin } = useAuth();
-    const navigate = useNavigate();
 
     return (
         <AppBar
@@ -41,6 +40,8 @@ export default function BrandHeader({ pageTitle, onHome, onLogout }: BrandHeader
             >
                 <Tooltip title="Ana Sayfaya Git" arrow>
                     <Stack
+                        component={RouterLink}
+                        to="/"
                         direction="row"
                         spacing={1.5}
                         sx={{
@@ -49,13 +50,14 @@ export default function BrandHeader({ pageTitle, onHome, onLogout }: BrandHeader
                             cursor: "pointer",
                             p: 0.75,
                             borderRadius: 2,
+                            textDecoration: "none",
+                            color: "inherit",
                             transition: "all 0.2s ease-in-out",
                             "&:hover": {
                                 backgroundColor: "rgba(15, 118, 110, 0.06)",
                                 transform: "translateY(-1px)",
                             },
                         }}
-                        onClick={() => navigate("/")}
                     >
                         <Box
                             component="img"
@@ -89,10 +91,11 @@ export default function BrandHeader({ pageTitle, onHome, onLogout }: BrandHeader
                 <Stack direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center" }}>
                     {isAdmin && (
                         <Button
+                            component={RouterLink}
+                            to="/admin"
                             color="secondary"
                             variant="outlined"
                             startIcon={<AdminPanelSettingsOutlinedIcon />}
-                            onClick={() => navigate("/admin")}
                             sx={{ display: { xs: "none", md: "inline-flex" }, fontWeight: 700 }}
                         >
                             Admin Paneli
@@ -100,10 +103,11 @@ export default function BrandHeader({ pageTitle, onHome, onLogout }: BrandHeader
                     )}
                     {onHome && (
                         <Button
+                            component={RouterLink}
+                            to="/"
                             color="primary"
                             variant="text"
                             startIcon={<HomeOutlinedIcon />}
-                            onClick={onHome}
                             sx={{ display: { xs: "none", sm: "inline-flex" } }}
                         >
                             Ana Sayfa

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
     Alert,
     Box,
@@ -161,9 +161,10 @@ export default function RegisterPage() {
                             </Box>
 
                             <Button
+                                component={RouterLink}
+                                to="/login"
                                 type="button"
                                 variant="text"
-                                onClick={() => navigate("/login")}
                             >
                                 Zaten hesabınız var mı? Giriş yapın
                             </Button>

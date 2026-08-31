@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+    Link as RouterLink,
     useLocation,
     useNavigate,
     useParams,
@@ -542,8 +543,9 @@ export default function FormBuilderPage() {
                         </Typography>
 
                         <Button
+                            component={RouterLink}
+                            to="/"
                             variant="outlined"
-                            onClick={() => navigate("/")}
                         >
                             Vazgeç
                         </Button>
@@ -883,20 +885,18 @@ export default function FormBuilderPage() {
 
                                         {createdForm.status === "Published" && (
                                             <Button
+                                                component={RouterLink}
+                                                to={`/forms/${createdForm.publicId}`}
                                                 variant="outlined"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/forms/${createdForm.publicId}`,
-                                                    )
-                                                }
                                             >
                                                 Anketi Görüntüle
                                             </Button>
                                         )}
 
                                         <Button
+                                            component={RouterLink}
+                                            to="/"
                                             variant="text"
-                                            onClick={() => navigate("/")}
                                         >
                                              Ana Sayfa'ya Dön
                                         </Button>

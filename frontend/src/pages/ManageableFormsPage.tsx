@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
     Alert,
     Box,
@@ -294,9 +294,10 @@ export default function ManageableFormsPage() {
                         </Box>
 
                         <Button
+                            component={RouterLink}
+                            to="/forms/new"
                             variant="contained"
                             color="primary"
-                            onClick={() => navigate("/forms/new")}
                             sx={{ fontWeight: 700, borderRadius: 2 }}
                         >
                             + Yeni Anket Oluştur
@@ -443,12 +444,9 @@ export default function ManageableFormsPage() {
                                             {/* ✏️ Düzenle: Hem Taslak hem Yayındaki Anketler İçin Aktif */}
                                             {form.status !== "Closed" && (
                                                 <Button
+                                                    component={RouterLink}
+                                                    to={`/forms/${form.publicId}/edit`}
                                                     variant="outlined"
-                                                    onClick={() =>
-                                                        navigate(
-                                                            `/forms/${form.publicId}/edit`,
-                                                        )
-                                                    }
                                                 >
                                                     Düzenle
                                                 </Button>
@@ -457,13 +455,10 @@ export default function ManageableFormsPage() {
                                             {/* Anketi Görüntüle: Yayında ve Kapalı anketler için */}
                                             {(form.status === "Published" || form.status === "Closed") && (
                                                 <Button
+                                                    component={RouterLink}
+                                                    to={`/forms/${form.publicId}`}
                                                     variant="outlined"
                                                     color="primary"
-                                                    onClick={() =>
-                                                        navigate(
-                                                            `/forms/${form.publicId}`,
-                                                        )
-                                                    }
                                                 >
                                                     Anketi Görüntüle
                                                 </Button>
@@ -483,12 +478,9 @@ export default function ManageableFormsPage() {
                                             {(form.status === "Published" ||
                                                 form.status === "Closed") && (
                                                 <Button
+                                                    component={RouterLink}
+                                                    to={`/forms/${form.publicId}/responses`}
                                                     variant="contained"
-                                                    onClick={() =>
-                                                        navigate(
-                                                            `/forms/${form.publicId}/responses`,
-                                                        )
-                                                    }
                                                 >
                                                     Yanıtları Görüntüle
                                                 </Button>
