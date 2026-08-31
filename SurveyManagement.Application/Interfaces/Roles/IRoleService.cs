@@ -34,4 +34,9 @@ public interface IRoleService
     // Admin paneli için rolleri ve her role tanımlı kullanıcıları getirir.
     Task<ApiResponse<List<RoleWithUsersDto>>> GetAllWithUsersAsync(
         CancellationToken cancellationToken = default);
+
+    // Admin tarafından birim rolü silinir.
+    Task<ApiResponse<string>> DeleteAsync(
+        int roleId,
+        CancellationToken cancellationToken = default);
 }

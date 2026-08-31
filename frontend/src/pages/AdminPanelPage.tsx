@@ -40,6 +40,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import GroupIcon from "@mui/icons-material/Group";
 import PersonIcon from "@mui/icons-material/Person";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -48,6 +49,7 @@ import { getAdminUsers } from "../api/adminApi";
 import {
     assignRole,
     createRole,
+    deleteRole,
     getAllRoles,
     getRolesWithUsers,
     removeRoleFromUser,
@@ -97,6 +99,9 @@ export default function AdminPanelPage() {
         roleId: number;
         roleName: string;
     } | null>(null);
+
+    // Birim rolünü tamamen silme teyit modalı
+    const [unitToDelete, setUnitToDelete] = useState<RoleWithUsers | null>(null);
 
     // Birime kullanıcı ekleme state'i (Birim ID -> Seçilen AdminUser)
     const [selectedUserForUnit, setSelectedUserForUnit] = useState<
@@ -286,6 +291,30 @@ export default function AdminPanelPage() {
             await loadData();
         } catch (error) {
             setErrorMessage(extractErrorMessage(error, "Kullanıcı birime eklenirken hata oluştu."));
+        }
+    }
+
+    // Birim rolünü sistemden tamamen silme
+    async function confirmDeleteUnit() {
+        if (!unitToDelete) return;
+        const targetUnit = unitToDelete;
+        setUnitToDelete(null);
+        setErrorMessage("");
+        setSuccessMessage("");
+
+        try {
+            const response = await deleteRole(targetUnit.id);
+            if (!response.isSuccess) {
+                setErrorMessage(
+                    response.errors?.join(" ") ?? response.message ?? "Birim rolü silinemedi.",
+                );
+                return;
+            }
+
+            setSuccessMessage(`"${targetUnit.name}" birim rolü başarıyla silindi.`);
+            await loadData();
+        } catch (error) {
+            setErrorMessage(extractErrorMessage(error, "Birim rolü silinirken bir hata oluştu."));
         }
     }
 
@@ -600,6 +629,44 @@ export default function AdminPanelPage() {
                                                                 </TableBody>
                                                             </Table>
                                                         </TableContainer>
+
+                                                        {/* Birimi / Rolü Sistemden Tamamen Silme Seçeneği */}
+                                                        {!unit.isSystemRole && unit.name !== "Admin" && (
+                                                            <>
+                                                                <Divider sx={{ my: 1 }} />
+                                                                <Stack
+                                                                    direction={{ xs: "column", sm: "row" }}
+                                                                    sx={{
+                                                                        justifyContent: "space-between",
+                                                                        alignItems: { xs: "stretch", sm: "center" },
+                                                                        gap: 1.5,
+                                                                        p: 1.5,
+                                                                        backgroundColor: "rgba(239, 68, 68, 0.04)",
+                                                                        borderRadius: 1.5,
+                                                                        border: "1px dashed rgba(239, 68, 68, 0.3)",
+                                                                    }}
+                                                                >
+                                                                    <Box>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: "error.main" }}>
+                                                                            Bu Birim Rolünü Sil
+                                                                        </Typography>
+                                                                        <Typography variant="caption" color="text.secondary">
+                                                                            Birim silindiğinde tanımlı personellerin bu birime ait yetkileri ve anket bağlantıları kaldırılır.
+                                                                        </Typography>
+                                                                    </Box>
+                                                                    <Button
+                                                                        variant="outlined"
+                                                                        color="error"
+                                                                        size="small"
+                                                                        startIcon={<DeleteForeverIcon />}
+                                                                        onClick={() => setUnitToDelete(unit)}
+                                                                        sx={{ fontWeight: 700, whiteSpace: "nowrap" }}
+                                                                    >
+                                                                        Birimi Sil
+                                                                    </Button>
+                                                                </Stack>
+                                                            </>
+                                                        )}
                                                     </Stack>
                                                 </AccordionDetails>
                                             </Accordion>
@@ -643,6 +710,26 @@ export default function AdminPanelPage() {
                     <Button onClick={() => setRoleToRemove(null)}>İptal</Button>
                     <Button color="error" variant="contained" onClick={confirmRemoveRole}>
                         Kaldır
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Birim Rolünü Tamamen Silme Onay Modalı */}
+            <Dialog open={Boolean(unitToDelete)} onClose={() => setUnitToDelete(null)}>
+                <DialogTitle>Birim Rolünü Kalıcı Olarak Sil</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <strong>{unitToDelete?.name}</strong> birim rolünü sistemden kalıcı olarak silmek istediğinizden emin misiniz?
+                        <br />
+                        <span style={{ color: "red", fontWeight: "bold" }}>
+                            Bu birime tanımlı tüm kullanıcıların birim rolleri iptal edilecektir!
+                        </span>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setUnitToDelete(null)}>Vazgeç</Button>
+                    <Button color="error" variant="contained" onClick={confirmDeleteUnit}>
+                        Evet, Birim Rolünü Sil
                     </Button>
                 </DialogActions>
             </Dialog>

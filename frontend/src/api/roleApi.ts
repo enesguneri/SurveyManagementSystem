@@ -82,3 +82,14 @@ export async function createRole(
 
     return response.data;
 }
+
+// Admin tarafından birim rolünün silinmesini sağlar.
+export async function deleteRole(
+    roleId: number,
+): Promise<ApiResponse<string>> {
+    const response = await apiClient.delete<ApiResponse<string>>(
+        `/roles/${roleId}`,
+    );
+
+    return response.data;
+}

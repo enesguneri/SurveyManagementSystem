@@ -127,4 +127,24 @@ public class RolesController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Delete(
+        [FromRoute] int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _roleService.DeleteAsync(
+            id,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(
+                result.HttpStatusCode,
+                result);
+        }
+
+        return Ok(result);
+    }
 }
