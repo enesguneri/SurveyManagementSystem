@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using SurveyManagement.Application.DTOs.Forms;
 using SurveyManagement.Application.Interfaces.Forms;
 using SurveyManagement.Domain.Enums;
@@ -140,6 +140,26 @@ public class FormRequestValidator : IFormRequestValidator
         if (question.Validation is not null)
         {
             errors.Add($"{prefix} seçim sorusunda ek doğrulama tanımlanamaz.");
+        }
+
+        if (question.OptionSourceType == DynamicOptionSourceType.Txt)
+        {
+            if (string.IsNullOrWhiteSpace(question.OptionFileContent))
+            {
+                errors.Add($"{prefix} için metin dosyası içeriği boş olamaz.");
+            }
+            return;
+        }
+
+        if (question.OptionSourceType == DynamicOptionSourceType.Api)
+        {
+            if (string.IsNullOrWhiteSpace(question.OptionSourceUrl) ||
+                !Uri.TryCreate(question.OptionSourceUrl, UriKind.Absolute, out var uri) ||
+                uri.Scheme != Uri.UriSchemeHttps)
+            {
+                errors.Add($"{prefix} için geçerli bir HTTPS API adresi girilmelidir.");
+            }
+            return;
         }
 
         if (question.Options.Count < 2)

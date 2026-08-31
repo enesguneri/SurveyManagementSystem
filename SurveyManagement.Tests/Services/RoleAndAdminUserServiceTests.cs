@@ -129,4 +129,55 @@ public class RoleAndAdminUserServiceTests
         ahmetDto.Name.Should().Be("Ahmet Yilmaz");
         ahmetDto.Roles.Should().Contain("User");
     }
+
+    [Fact]
+    public async Task RoleService_RemoveFromUserAsync_WhenAssigned_ShouldRemoveAssignment()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var user = TestDbContextFactory.CreateUser(context, "user1", "u1@test.com");
+        var sut = new RoleService(context);
+
+        var role = new Role { Name = "Birim Y", IsSystemRole = false, IsActive = true, CreatedAt = DateTime.UtcNow };
+        context.Roles.Add(role);
+        await context.SaveChangesAsync();
+
+        context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+        await context.SaveChangesAsync();
+
+        var request = new AssignRoleDto { UserId = user.Id, RoleId = role.Id };
+
+        // Act
+        var result = await sut.RemoveFromUserAsync(request);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        context.UserRoles.Any(ur => ur.UserId == user.Id && ur.RoleId == role.Id).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RoleService_GetAllWithUsersAsync_ShouldReturnRolesAndUserList()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var user = TestDbContextFactory.CreateUser(context, "user1", "u1@test.com", "User One");
+        var sut = new RoleService(context);
+
+        var role = new Role { Name = "Birim Z", IsSystemRole = false, IsActive = true, CreatedAt = DateTime.UtcNow };
+        context.Roles.Add(role);
+        await context.SaveChangesAsync();
+
+        context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.GetAllWithUsersAsync();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var roleDto = result.Data!.FirstOrDefault(r => r.Name == "Birim Z");
+        roleDto.Should().NotBeNull();
+        roleDto!.UserCount.Should().Be(1);
+        roleDto.Users.First().Name.Should().Be("User One");
+    }
 }

@@ -1,6 +1,6 @@
 import apiClient from "./apiClient";
 import type { ApiResponse } from "../types/api";
-import type { Role } from "../types/role";
+import type { Role, RoleWithUsers } from "../types/role";
 
 // Kullanıcının seçebileceği aktif rolleri getirir.
 export async function getAvailableRoles(): Promise<
@@ -24,6 +24,17 @@ export async function getAllRoles(): Promise<
     return response.data;
 }
 
+// Admin panelinde rolleri ve tanımlı kullanıcılarını getirir.
+export async function getRolesWithUsers(): Promise<
+    ApiResponse<RoleWithUsers[]>
+> {
+    const response = await apiClient.get<ApiResponse<RoleWithUsers[]>>(
+        "/roles/with-users",
+    );
+
+    return response.data;
+}
+
 // Admin tarafından kullanıcıya rol atanmasını sağlar.
 export async function assignRole(
     userId: number,
@@ -39,6 +50,25 @@ export async function assignRole(
 
     return response.data;
 }
+
+// Admin tarafından kullanıcının rolünün kaldırılmasını sağlar.
+export async function removeRoleFromUser(
+    userId: number,
+    roleId: number,
+): Promise<ApiResponse<string>> {
+    const response = await apiClient.delete<ApiResponse<string>>(
+        "/roles/assignments",
+        {
+            data: {
+                userId,
+                roleId,
+            },
+        },
+    );
+
+    return response.data;
+}
+
 // Admin tarafından yeni birim rolü oluşturulmasını sağlar.
 export async function createRole(
     name: string,

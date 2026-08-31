@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SurveyManagement.Application.Common.Models;
@@ -67,8 +67,8 @@ public class RolesController : ControllerBase
     [HttpPost("assignments")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AssignRole(
-    [FromBody] AssignRoleDto assignRoleDto,
-    CancellationToken cancellationToken)
+        [FromBody] AssignRoleDto assignRoleDto,
+        CancellationToken cancellationToken)
     {
         var result = await _roleService.AssignToUserAsync(
             assignRoleDto,
@@ -86,12 +86,43 @@ public class RolesController : ControllerBase
             result);
     }
 
+    [HttpDelete("assignments")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RemoveRole(
+        [FromBody] AssignRoleDto assignRoleDto,
+        CancellationToken cancellationToken)
+    {
+        var result = await _roleService.RemoveFromUserAsync(
+            assignRoleDto,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(
+                result.HttpStatusCode,
+                result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllActive(
-    CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
         var result = await _roleService.GetAllActiveAsync(
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("with-users")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllWithUsers(
+        CancellationToken cancellationToken)
+    {
+        var result = await _roleService.GetAllWithUsersAsync(
             cancellationToken);
 
         return Ok(result);

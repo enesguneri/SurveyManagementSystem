@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SurveyManagement.Application.Common.Models;
@@ -177,6 +177,58 @@ public class FormsController : ControllerBase
         }
 
         var result = await _formService.CloseAsync(
+            publicId,
+            userId,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(result.HttpStatusCode, result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("{publicId:guid}/reopen")]
+    public async Task<IActionResult> Reopen(
+        Guid publicId,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(ApiResponse<string>.FailureResult(
+                "Kimliği doğrulanmış kullanıcı bilgisi alınamadı."));
+        }
+
+        var result = await _formService.ReopenAsync(
+            publicId,
+            userId,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(result.HttpStatusCode, result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpDelete("{publicId:guid}")]
+    public async Task<IActionResult> Delete(
+        Guid publicId,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(ApiResponse<string>.FailureResult(
+                "Kimliği doğrulanmış kullanıcı bilgisi alınamadı."));
+        }
+
+        var result = await _formService.DeleteAsync(
             publicId,
             userId,
             cancellationToken);

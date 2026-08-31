@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -119,6 +119,22 @@ public class AppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<Question>()
             .Property(question => question.Type)
             .HasConversion<string>();
+
+        modelBuilder.Entity<Question>()
+            .Property(question => question.OptionSourceType)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Question>()
+            .Property(question => question.OptionSourceUrl)
+            .HasMaxLength(2000);
+
+        modelBuilder.Entity<Question>()
+            .Property(question => question.OptionJsonPath)
+            .HasMaxLength(500);
+
+        modelBuilder.Entity<Question>()
+            .Property(question => question.OptionTextProperty)
+            .HasMaxLength(200);
 
         modelBuilder.Entity<Question>()
             .HasIndex(question => new { question.FormId, question.DisplayOrder })

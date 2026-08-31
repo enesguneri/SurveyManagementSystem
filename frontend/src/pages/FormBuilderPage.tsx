@@ -12,6 +12,11 @@ import {
     CircularProgress,
     Checkbox,
     Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     FormControl,
     FormControlLabel,
     FormHelperText,
@@ -135,6 +140,11 @@ function mapManageableFormToDraft(
             title: question.title,
             type: question.type,
             isRequired: question.isRequired,
+            optionSourceType: question.optionSourceType ?? "None",
+            optionSourceUrl: question.optionSourceUrl ?? null,
+            optionJsonPath: question.optionJsonPath ?? null,
+            optionTextProperty: question.optionTextProperty ?? null,
+            optionFileContent: question.optionFileContent ?? null,
             options: question.options
                 .sort(
                     (first, second) =>
@@ -276,6 +286,7 @@ export default function FormBuilderPage() {
         useState<Role[]>([]);
 
     const [rolesError, setRolesError] = useState("");
+    const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
 
     useEffect(() => {
         async function loadAvailableRoles() {
@@ -711,7 +722,7 @@ export default function FormBuilderPage() {
                                                 size="small"
                                                 color="error"
                                                 onClick={() =>
-                                                    removeQuestion(question.clientId)
+                                                    setQuestionToDelete(question.clientId)
                                                 }
                                                 disabled={formDraft.questions.length === 1}
                                             >
@@ -803,6 +814,35 @@ export default function FormBuilderPage() {
                     >
                         Soru Ekle
                     </Button>
+
+                    <Dialog
+                        open={Boolean(questionToDelete)}
+                        onClose={() => setQuestionToDelete(null)}
+                    >
+                        <DialogTitle>Soruyu Sil</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                Bu soruyu silmek istediğinizden emin misiniz?
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setQuestionToDelete(null)}>
+                                İptal
+                            </Button>
+                            <Button
+                                color="error"
+                                variant="contained"
+                                onClick={() => {
+                                    if (questionToDelete) {
+                                        removeQuestion(questionToDelete);
+                                        setQuestionToDelete(null);
+                                    }
+                                }}
+                            >
+                                Sil
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
 
                     {createdForm && (
                         <Card>

@@ -308,4 +308,86 @@ public class FormServiceTests
         result.HttpStatusCode.Should().Be(401);
         result.Errors.Should().Contain("Bu formu görüntülemek için giriş yapmalısınız.");
     }
+
+    [Fact]
+    public async Task DeleteAsync_WhenAuthorized_ShouldDeleteFormAndReturnSuccess()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Silinecek Form",
+            Status = FormStatus.Draft,
+            CreatedByUserId = owner.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.DeleteAsync(form.PublicId, owner.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        context.Forms.Any(f => f.PublicId == form.PublicId).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ReopenAsync_WhenClosedAndAuthorized_ShouldReopenForm()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Kapalı Form",
+            Status = FormStatus.Closed,
+            CreatedByUserId = owner.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.ReopenAsync(form.PublicId, owner.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data!.Status.Should().Be(FormStatus.Published);
+    }
+
+    [Fact]
+    public async Task GetByPublicIdAsync_WhenClosedAndOwner_ShouldReturnClosedPreview()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var owner = TestDbContextFactory.CreateUser(context, "owner", "owner@test.com");
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Kapalı Önizleme Formu",
+            Status = FormStatus.Closed,
+            CreatedByUserId = owner.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.GetByPublicIdAsync(form.PublicId, requesterUserId: owner.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data!.IsClosedPreview.Should().BeTrue();
+        result.Data.Status.Should().Be(FormStatus.Closed);
+    }
 }

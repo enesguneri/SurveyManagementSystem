@@ -1,4 +1,4 @@
-﻿using SurveyManagement.Domain.Enums;
+using SurveyManagement.Domain.Enums;
 
 namespace SurveyManagement.Domain.Entities;
 
@@ -16,6 +16,13 @@ public class Question : BaseEntity
 
     public string? RatingMinLabel { get; set; }
     public string? RatingMaxLabel { get; set; }
+
+    // Dinamik dış kaynak seçenek yapılandırması (API veya TXT dosyası)
+    public DynamicOptionSourceType OptionSourceType { get; set; } = DynamicOptionSourceType.None;
+    public string? OptionSourceUrl { get; set; }
+    public string? OptionJsonPath { get; set; }
+    public string? OptionTextProperty { get; set; }
+    public string? OptionFileContent { get; set; }
 
     public QuestionValidation? Validation { get; set; }
     public ICollection<QuestionOption> Options { get; set; } = new List<QuestionOption>();

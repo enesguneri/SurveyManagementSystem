@@ -11,6 +11,8 @@ export type QuestionType =
 
 export type FormAccessType = "Public" | "Authenticated";
 
+export type DynamicOptionSourceType = "None" | "Api" | "Txt";
+
 export interface QuestionValidationDraft {
     minLength: number | null;
     maxLength: number | null;
@@ -30,6 +32,13 @@ export interface QuestionDraft {
     matrixRows: string[];
     matrixColumns: string[];
     validation: QuestionValidationDraft;
+
+    // Dinamik dış kaynak seçenek alanları
+    optionSourceType?: DynamicOptionSourceType;
+    optionSourceUrl?: string | null;
+    optionJsonPath?: string | null;
+    optionTextProperty?: string | null;
+    optionFileContent?: string | null;
 }
 
 export interface FormDraft {
@@ -53,6 +62,11 @@ export function createEmptyQuestion(): QuestionDraft {
         options: [],
         matrixRows: [],
         matrixColumns: [],
+        optionSourceType: "None",
+        optionSourceUrl: null,
+        optionJsonPath: null,
+        optionTextProperty: null,
+        optionFileContent: null,
         validation: {
             minLength: null,
             maxLength: null,

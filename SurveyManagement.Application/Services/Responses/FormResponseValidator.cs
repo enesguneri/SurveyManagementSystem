@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using SurveyManagement.Application.DTOs.Responses;
 using SurveyManagement.Application.Interfaces.Responses;
 using SurveyManagement.Domain.Entities;
@@ -244,8 +244,9 @@ public class FormResponseValidator : IFormResponseValidator
         List<string> errors)
     {
         var selectedIds = answer.SelectedOptionIds ?? new List<int>();
+        var hasTextValue = !string.IsNullOrWhiteSpace(answer.TextValue);
 
-        if (selectedIds.Count == 0)
+        if (selectedIds.Count == 0 && !hasTextValue)
         {
             if (question.IsRequired)
             {
@@ -255,25 +256,53 @@ public class FormResponseValidator : IFormResponseValidator
             return;
         }
 
-        if (selectedIds.Distinct().Count() != selectedIds.Count)
+        if (question.OptionSourceType == DynamicOptionSourceType.Txt &&
+            !string.IsNullOrWhiteSpace(question.OptionFileContent))
         {
-            errors.Add($"{prefix} aynı seçenek birden fazla gönderilemez.");
+            var validLines = question.OptionFileContent
+                .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Distinct()
+                .Take(500)
+                .ToList();
+
+            if (selectedIds.Count > 0)
+            {
+                if (selectedIds.Any(id => id < 1 || id > validLines.Count))
+                {
+                    errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
+                }
+            }
+            else if (hasTextValue && !validLines.Contains(answer.TextValue!.Trim()))
+            {
+                errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
+            }
+            return;
         }
 
-        var validOptionIds = question.Options
-            .Select(option => option.Id)
-            .ToHashSet();
-
-        if (selectedIds.Any(id => !validOptionIds.Contains(id)))
+        if (question.Options.Count > 0)
         {
-            errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
-        }
+            if (selectedIds.Distinct().Count() != selectedIds.Count)
+            {
+                errors.Add($"{prefix} aynı seçenek birden fazla gönderilemez.");
+            }
 
-        if ((question.Type == QuestionType.SingleChoice ||
-            question.Type == QuestionType.Dropdown) &&
-            selectedIds.Count != 1)
-        {
-            errors.Add($"{prefix} yalnızca bir seçenek kabul eder.");
+            var validOptionIds = question.Options
+                .Select(option => option.Id)
+                .ToHashSet();
+
+            if (selectedIds.Any(id => !validOptionIds.Contains(id)))
+            {
+                errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
+            }
+
+            if ((question.Type == QuestionType.SingleChoice ||
+                question.Type == QuestionType.Dropdown) &&
+                selectedIds.Count != 1)
+            {
+                errors.Add($"{prefix} yalnızca bir seçenek kabul eder.");
+            }
         }
     }
 

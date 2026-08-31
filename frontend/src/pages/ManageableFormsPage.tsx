@@ -9,13 +9,20 @@ import {
     Chip,
     CircularProgress,
     Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     Stack,
     Typography,
 } from "@mui/material";
 import {
     closeForm,
+    deleteForm,
     getManageableForms,
     publishForm,
+    reopenForm,
 } from "../api/formApi";
 import type { ManageableForm } from "../types/manageableForm";
 import { useAuth } from "../auth/useAuth";
@@ -69,6 +76,11 @@ export default function ManageableFormsPage() {
     const [errorMessage, setErrorMessage] = useState("");
     const [actionFormId, setActionFormId] = useState<number | null>(null);
 
+    // Onay diyalogları için state'ler
+    const [formToClose, setFormToClose] = useState<ManageableForm | null>(null);
+    const [formToDelete, setFormToDelete] = useState<ManageableForm | null>(null);
+    const [formToReopen, setFormToReopen] = useState<ManageableForm | null>(null);
+
     function handleLogout() {
         logout();
         navigate("/login");
@@ -99,10 +111,7 @@ export default function ManageableFormsPage() {
         void loadForms();
     }, []);
 
-    async function handlePublish(
-        formId: number,
-        publicId: string,
-    ) {
+    async function handlePublish(formId: number, publicId: string) {
         setActionFormId(formId);
         setErrorMessage("");
 
@@ -137,15 +146,15 @@ export default function ManageableFormsPage() {
         }
     }
 
-    async function handleClose(
-        formId: number,
-        publicId: string,
-    ) {
-        setActionFormId(formId);
+    async function confirmClose() {
+        if (!formToClose) return;
+        const targetForm = formToClose;
+        setFormToClose(null);
+        setActionFormId(targetForm.id);
         setErrorMessage("");
 
         try {
-            const response = await closeForm(publicId);
+            const response = await closeForm(targetForm.publicId);
 
             if (!response.isSuccess || !response.data) {
                 setErrorMessage(
@@ -158,7 +167,7 @@ export default function ManageableFormsPage() {
 
             setForms((currentForms) =>
                 currentForms.map((form) =>
-                    form.id === formId
+                    form.id === targetForm.id
                         ? {
                             ...form,
                             status: "Closed",
@@ -169,6 +178,75 @@ export default function ManageableFormsPage() {
         } catch (error) {
             setErrorMessage(
                 extractErrorMessage(error, "Anket kapatılırken bir hata oluştu."),
+            );
+        } finally {
+            setActionFormId(null);
+        }
+    }
+
+    async function confirmReopen() {
+        if (!formToReopen) return;
+        const targetForm = formToReopen;
+        setFormToReopen(null);
+        setActionFormId(targetForm.id);
+        setErrorMessage("");
+
+        try {
+            const response = await reopenForm(targetForm.publicId);
+
+            if (!response.isSuccess || !response.data) {
+                setErrorMessage(
+                    response.errors?.join(" ") ??
+                    response.message ??
+                    "Anket yeniden yayımlanamadı.",
+                );
+                return;
+            }
+
+            setForms((currentForms) =>
+                currentForms.map((form) =>
+                    form.id === targetForm.id
+                        ? {
+                            ...form,
+                            status: "Published",
+                        }
+                        : form,
+                ),
+            );
+        } catch (error) {
+            setErrorMessage(
+                extractErrorMessage(error, "Anket yeniden yayımlanırken bir hata oluştu."),
+            );
+        } finally {
+            setActionFormId(null);
+        }
+    }
+
+    async function confirmDelete() {
+        if (!formToDelete) return;
+        const targetForm = formToDelete;
+        setFormToDelete(null);
+        setActionFormId(targetForm.id);
+        setErrorMessage("");
+
+        try {
+            const response = await deleteForm(targetForm.publicId);
+
+            if (!response.isSuccess) {
+                setErrorMessage(
+                    response.errors?.join(" ") ??
+                    response.message ??
+                    "Anket silinemedi.",
+                );
+                return;
+            }
+
+            setForms((currentForms) =>
+                currentForms.filter((form) => form.id !== targetForm.id),
+            );
+        } catch (error) {
+            setErrorMessage(
+                extractErrorMessage(error, "Anket silinirken bir hata oluştu."),
             );
         } finally {
             setActionFormId(null);
@@ -200,18 +278,29 @@ export default function ManageableFormsPage() {
 
             <Container maxWidth="lg" sx={{ py: 5 }}>
                 <Stack spacing={3}>
-                    <Box>
-                        <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }}>
-                            Anketlerim
-                        </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+                        <Box>
+                            <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }}>
+                                Anketlerim
+                            </Typography>
 
-                        <Typography
-                            color="text.secondary"
-                            sx={{ mt: 1 }}
+                            <Typography
+                                color="text.secondary"
+                                sx={{ mt: 1 }}
+                            >
+                                Sahibi olduğunuz veya yetkili olduğunuz birimlere
+                                ait anketleri buradan yönetin.
+                            </Typography>
+                        </Box>
+
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => navigate("/forms/new")}
+                            sx={{ fontWeight: 700, borderRadius: 2 }}
                         >
-                            Sahibi olduğunuz veya yetkili olduğunuz birimlere
-                            ait anketleri buradan yönetin.
-                        </Typography>
+                            + Yeni Anket Oluştur
+                        </Button>
                     </Box>
 
                     {errorMessage && (
@@ -340,6 +429,17 @@ export default function ManageableFormsPage() {
                                                 </Button>
                                             )}
 
+                                            {form.status === "Closed" && (
+                                                <Button
+                                                    variant="contained"
+                                                    color="success"
+                                                    onClick={() => setFormToReopen(form)}
+                                                    disabled={actionFormId === form.id}
+                                                >
+                                                    Tekrar Yayınla
+                                                </Button>
+                                            )}
+
                                             {/* ✏️ Düzenle: Hem Taslak hem Yayındaki Anketler İçin Aktif */}
                                             {form.status !== "Closed" && (
                                                 <Button
@@ -354,7 +454,8 @@ export default function ManageableFormsPage() {
                                                 </Button>
                                             )}
 
-                                            {form.status === "Published" && (
+                                            {/* Anketi Görüntüle: Yayında ve Kapalı anketler için */}
+                                            {(form.status === "Published" || form.status === "Closed") && (
                                                 <Button
                                                     variant="outlined"
                                                     color="primary"
@@ -372,14 +473,10 @@ export default function ManageableFormsPage() {
                                                 <Button
                                                     variant="outlined"
                                                     color="warning"
-                                                    onClick={() =>
-                                                        handleClose(form.id, form.publicId)
-                                                    }
+                                                    onClick={() => setFormToClose(form)}
                                                     disabled={actionFormId === form.id}
                                                 >
-                                                    {actionFormId === form.id
-                                                        ? "Kapatılıyor..."
-                                                        : "Anketi Kapat"}
+                                                    Anketi Kapat
                                                 </Button>
                                             )}
 
@@ -396,6 +493,16 @@ export default function ManageableFormsPage() {
                                                     Yanıtları Görüntüle
                                                 </Button>
                                             )}
+
+                                            {/* Anketi Sil Butonu */}
+                                            <Button
+                                                variant="outlined"
+                                                color="error"
+                                                onClick={() => setFormToDelete(form)}
+                                                disabled={actionFormId === form.id}
+                                            >
+                                                Anketi Sil
+                                            </Button>
                                         </Stack>
                                     </Stack>
                                 </CardContent>
@@ -404,6 +511,58 @@ export default function ManageableFormsPage() {
                     </Stack>
                 </Stack>
             </Container>
+
+            {/* Anket Kapatma Onay Modalı */}
+            <Dialog open={Boolean(formToClose)} onClose={() => setFormToClose(null)}>
+                <DialogTitle>Anketi Kapat</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <strong>{formToClose?.title}</strong> anketini kapatmak istediğinizden emin misiniz?
+                        Kapatılan anketlere katılımcılar artık yeni yanıt gönderemez.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setFormToClose(null)}>İptal</Button>
+                    <Button color="warning" variant="contained" onClick={confirmClose}>
+                        Anketi Kapat
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Anketi Yeniden Yayınlama Onay Modalı */}
+            <Dialog open={Boolean(formToReopen)} onClose={() => setFormToReopen(null)}>
+                <DialogTitle>Anketi Tekrar Yayınla</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <strong>{formToReopen?.title}</strong> anketini tekrar yayına almak istediğinizden emin misiniz?
+                        Katılımcılar yeniden forma erişip yanıt gönderebilecektir.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setFormToReopen(null)}>İptal</Button>
+                    <Button color="success" variant="contained" onClick={confirmReopen}>
+                        Tekrar Yayınla
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Anket Silme Onay Modalı */}
+            <Dialog open={Boolean(formToDelete)} onClose={() => setFormToDelete(null)}>
+                <DialogTitle>Anketi Kalıcı Olarak Sil</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <strong>{formToDelete?.title}</strong> anketini ve bu ankete ait <strong>tüm soru ve yanıtları</strong> kalıcı olarak silmek istediğinizden emin misiniz?
+                        <br />
+                        <span style={{ color: "red", fontWeight: "bold" }}>Bu işlem geri alınamaz!</span>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setFormToDelete(null)}>Vazgeç</Button>
+                    <Button color="error" variant="contained" onClick={confirmDelete}>
+                        Evet, Kalıcı Olarak Sil
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

@@ -1,4 +1,4 @@
-﻿using SurveyManagement.Application.Common.Models;
+using SurveyManagement.Application.Common.Models;
 using SurveyManagement.Application.DTOs.Roles;
 
 namespace SurveyManagement.Application.Interfaces.Roles;
@@ -22,8 +22,16 @@ public interface IRoleService
         AssignRoleDto assignRoleDto,
         CancellationToken cancellationToken = default);
 
+    // Admin tarafından kullanıcının belirli bir rolü kaldırılır.
+    Task<ApiResponse<string>> RemoveFromUserAsync(
+        AssignRoleDto assignRoleDto,
+        CancellationToken cancellationToken = default);
+
     // Admin paneli için tüm aktif rolleri getirir.
-    // Sistem rolleri ve birim rolleri dahil edilir.
     Task<ApiResponse<List<RoleDto>>> GetAllActiveAsync(
+        CancellationToken cancellationToken = default);
+
+    // Admin paneli için rolleri ve her role tanımlı kullanıcıları getirir.
+    Task<ApiResponse<List<RoleWithUsersDto>>> GetAllWithUsersAsync(
         CancellationToken cancellationToken = default);
 }

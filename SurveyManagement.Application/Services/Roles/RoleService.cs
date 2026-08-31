@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.Common.Models;
 using SurveyManagement.Application.DTOs.Roles;
 using SurveyManagement.Application.Interfaces.Context;
@@ -88,8 +88,8 @@ public class RoleService : IRoleService
     }
 
     public async Task<ApiResponse<string>> AssignToUserAsync(
-    AssignRoleDto assignRoleDto,
-    CancellationToken cancellationToken = default)
+        AssignRoleDto assignRoleDto,
+        CancellationToken cancellationToken = default)
     {
         var userExists = await _context.Users
             .AnyAsync(
@@ -133,7 +133,7 @@ public class RoleService : IRoleService
                 400);
         }
 
-        _context.UserRoles.Add(new Domain.Entities.UserRole
+        _context.UserRoles.Add(new UserRole
         {
             UserId = assignRoleDto.UserId,
             RoleId = assignRoleDto.RoleId
@@ -145,8 +145,33 @@ public class RoleService : IRoleService
             "Rol kullanıcıya başarıyla atandı.");
     }
 
+    public async Task<ApiResponse<string>> RemoveFromUserAsync(
+        AssignRoleDto assignRoleDto,
+        CancellationToken cancellationToken = default)
+    {
+        var assignment = await _context.UserRoles
+            .FirstOrDefaultAsync(
+                userRole =>
+                    userRole.UserId == assignRoleDto.UserId &&
+                    userRole.RoleId == assignRoleDto.RoleId,
+                cancellationToken);
+
+        if (assignment is null)
+        {
+            return ApiResponse<string>.FailureResult(
+                "Kullanıcıya atanmış bu rol bulunamadı.",
+                404);
+        }
+
+        _context.UserRoles.Remove(assignment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ApiResponse<string>.SuccessResult(
+            "Rol kullanıcıdan başarıyla kaldırıldı.");
+    }
+
     public async Task<ApiResponse<List<RoleDto>>> GetAllActiveAsync(
-    CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var roles = await _context.Roles
             .AsNoTracking()
@@ -160,5 +185,39 @@ public class RoleService : IRoleService
             .ToListAsync(cancellationToken);
 
         return ApiResponse<List<RoleDto>>.SuccessResult(roles);
+    }
+
+    public async Task<ApiResponse<List<RoleWithUsersDto>>> GetAllWithUsersAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var roles = await _context.Roles
+            .AsNoTracking()
+            .Where(role => role.IsActive)
+            .Include(role => role.UserRoles)
+                .ThenInclude(userRole => userRole.User)
+            .OrderBy(role => role.Name)
+            .Select(role => new RoleWithUsersDto
+            {
+                Id = role.Id,
+                Name = role.Name,
+                IsSystemRole = role.IsSystemRole,
+                IsActive = role.IsActive,
+                UserCount = role.UserRoles.Count(ur => ur.User.IsActive),
+                Users = role.UserRoles
+                    .Where(ur => ur.User.IsActive)
+                    .Select(ur => new RoleUserDto
+                    {
+                        Id = ur.User.Id,
+                        Name = ur.User.Name,
+                        Username = ur.User.Username,
+                        Email = ur.User.Email,
+                        IsActive = ur.User.IsActive
+                    })
+                    .OrderBy(u => u.Name)
+                    .ToList()
+            })
+            .ToListAsync(cancellationToken);
+
+        return ApiResponse<List<RoleWithUsersDto>>.SuccessResult(roles);
     }
 }
