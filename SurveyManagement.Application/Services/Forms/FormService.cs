@@ -552,21 +552,16 @@ public class FormService : IFormService
                 roleScopeResult.StatusCode);
         }
 
-        // Yayınlanmış veya kapatılmış formlar bu endpoint ile değiştirilemez.
-        if (form.Status != FormStatus.Draft)
+        // Kapatılmış formlar bu endpoint ile değiştirilemez.
+        if (form.Status == FormStatus.Closed)
         {
             return ApiResponse<FormCreatedDto>.FailureResult(
-                "Yalnızca taslak formlar güncellenebilir.",
+                "Kapatılmış formlar güncellenemez.",
                 400);
         }
 
-        // Taslak formun eski soru ağacı kaldırılır.
-        // Soru altındaki seçenek, validation ve matrix kayıtları
-        // veritabanındaki cascade kurallarıyla temizlenir.
-        var oldQuestions = form.Questions.ToList();
-
-        _context.Questions.RemoveRange(oldQuestions);
-        form.Questions.Clear();
+        var hasResponses = await _context.FormResponses
+            .AnyAsync(r => r.FormId == form.Id, cancellationToken);
 
         // Formun kimliği ve sahibi korunur; düzenlenebilir alanlar güncellenir.
         form.Title = updateFormDto.Title.Trim();
@@ -587,8 +582,16 @@ public class FormService : IFormService
             });
         }
 
-        // Yeni soru ağacı oluşturulur.
-        AddQuestionsToForm(form, updateFormDto.Questions);
+        // Eğer forma henüz yanıt verilmemişse sorular tamamen yenilenir.
+        if (!hasResponses)
+        {
+            var oldQuestions = form.Questions.ToList();
+            _context.Questions.RemoveRange(oldQuestions);
+            form.Questions.Clear();
+
+            // Yeni soru ağacı oluşturulur.
+            AddQuestionsToForm(form, updateFormDto.Questions);
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SurveyManagement.Application.Common.Models;
@@ -125,5 +125,38 @@ public class ResponsesController : ControllerBase
             result.Data.Content,
             result.Data.ContentType,
             result.Data.FileName);
+    }
+
+    [HttpDelete("{responseId:int}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteResponse(
+        Guid publicId,
+        int responseId,
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(
+                ApiResponse<bool>.FailureResult(
+                    "Kimliği doğrulanmış kullanıcı bilgisi alınamadı."));
+        }
+
+        var result = await _formResponseService.DeleteResponseAsync(
+            publicId,
+            responseId,
+            userId,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return StatusCode(
+                result.HttpStatusCode,
+                result);
+        }
+
+        return Ok(result);
     }
 }

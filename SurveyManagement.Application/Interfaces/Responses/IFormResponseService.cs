@@ -1,4 +1,4 @@
-﻿using SurveyManagement.Application.Common.Models;
+using SurveyManagement.Application.Common.Models;
 using SurveyManagement.Application.DTOs.Responses;
 
 namespace SurveyManagement.Application.Interfaces.Responses;
@@ -16,6 +16,13 @@ public interface IFormResponseService
     // Bir forma ait yanıtları form sahibi veya Admin için listeler.
     Task<ApiResponse<FormResponsesDto>> GetByFormAsync(
         Guid formPublicId,
+        int requesterUserId,
+        CancellationToken cancellationToken = default);
+
+    // Bir forma ait belirli bir yanıtı form sahibi veya Admin için siler.
+    Task<ApiResponse<bool>> DeleteResponseAsync(
+        Guid formPublicId,
+        int responseId,
         int requesterUserId,
         CancellationToken cancellationToken = default);
 }

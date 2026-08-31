@@ -85,9 +85,12 @@ Run Vitest unit tests:
 npm test
 ```
 
-The test suite covers:
+The test suite covers (29 tests, 100% passing):
+- `jwtHelper.test.ts`: JWT claim decoding, user ID/email/username parsing, and Admin role recognition.
+- `errorHandler.test.ts`: Error handling across network failures, 400 Bad Request validation lists, 401 Unauthorized, 403 Forbidden, 409 Conflict, 500 server errors, and native Error instances.
 - `optionImport.test.ts`: TXT, CSV (PapaParse), JSON array/object parsing, UTF-8 BOM stripping, and 500 options limit.
 - `authStorage.test.ts`: LocalStorage token persistence, expiration checking (`isExpired`), and secure session clearing.
+- `chartAnalytics.test.ts`: SingleChoice, Dropdown, MultipleChoice, Rating score averages, and Matrix distribution analytics.
 
 ## 🧹 Linting
 
@@ -107,18 +110,18 @@ npm run build
 
 ## 🧭 Application Routes
 
-| Route | Description |
-|---|---|
-| `/` | Home page |
-| `/login` | User login |
-| `/register` | User registration |
-| `/forms/new` | Create a new survey |
-| `/forms` | Manageable surveys |
-| `/forms/:publicId/edit` | Edit a draft survey |
-| `/forms/:publicId` | View and complete a published survey |
-| `/forms/:publicId/responses` | View survey responses |
-| `/ai/survey` | Gemini AI-assisted survey creation |
-| `/admin` | Administration panel |
+| Route | Description | Guard |
+|---|---|---|
+| `/` | Home page | `ProtectedRoute` |
+| `/login` | User login | Public |
+| `/register` | User registration | Public |
+| `/forms/new` | Create a new survey | `ProtectedRoute` |
+| `/forms` | Manageable surveys | `ProtectedRoute` |
+| `/forms/:publicId/edit` | Edit a draft or published survey | `ProtectedRoute` |
+| `/forms/:publicId` | View and complete a published survey | Public / Authenticated |
+| `/forms/:publicId/responses` | View, paginate, delete, and export survey responses | `ProtectedRoute` |
+| `/ai/survey` | Gemini AI-assisted survey creation | `ProtectedRoute` |
+| `/admin` | Administration panel (User and Unit Role Management) | `ProtectedRoute` + `AdminRoute` |
 
 ## ✨ Main Capabilities
 

@@ -1,10 +1,14 @@
 import { createContext } from "react";
-import type { LoginRequest } from "../types/auth";
+import type { ApiResponse } from "../types/api";
+import type { LoginRequest, TokenResponse } from "../types/auth";
+import type { DecodedUser } from "./jwtHelper";
 
 export interface AuthContextValue {
     token: string | null;
     isAuthenticated: boolean;
-    login: (request: LoginRequest) => Promise<boolean>;
+    isAdmin: boolean;
+    user: DecodedUser | null;
+    login: (request: LoginRequest) => Promise<ApiResponse<TokenResponse>>;
     logout: () => void;
 }
 

@@ -26,6 +26,7 @@ import {
     getPublishedForm,
     submitFormResponse,
 } from "../api/formApi";
+import { extractErrorMessage } from "../utils/errorHandler";
 import type {
     PublishedForm,
     PublishedQuestion,
@@ -120,7 +121,7 @@ function PublishedFormPage() {
                 }
 
                 setErrorMessage(
-                    "Anket yüklenirken sunucuya bağlanılamadı.",
+                    extractErrorMessage(error, "Anket yüklenirken bir hata oluştu."),
                 );
             } finally {
                 setIsLoading(false);
@@ -266,7 +267,7 @@ function PublishedFormPage() {
             }
 
             setErrorMessage(
-                "Yanıt gönderilirken sunucuya bağlanılamadı.",
+                extractErrorMessage(error, "Yanıt gönderilirken bir hata oluştu."),
             );
         } finally {
             setIsSubmitting(false);
