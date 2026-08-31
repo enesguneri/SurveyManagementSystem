@@ -180,4 +180,49 @@ public class RoleAndAdminUserServiceTests
         roleDto!.UserCount.Should().Be(1);
         roleDto.Users.First().Name.Should().Be("User One");
     }
+
+    [Fact]
+    public async Task RoleService_DeleteAsync_WhenRoleExists_ShouldDeactivateAndCleanAssignments()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var user = TestDbContextFactory.CreateUser(context, "user1", "u1@test.com");
+        var sut = new RoleService(context);
+
+        var role = new Role { Name = "Silinecek Birim", IsSystemRole = false, IsActive = true, CreatedAt = DateTime.UtcNow };
+        context.Roles.Add(role);
+        await context.SaveChangesAsync();
+
+        context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.DeleteAsync(role.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var dbRole = context.Roles.Find(role.Id);
+        dbRole!.IsActive.Should().BeFalse();
+        context.UserRoles.Any(ur => ur.RoleId == role.Id).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RoleService_DeleteAsync_WhenSystemRole_ShouldReturnBadRequest()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var sut = new RoleService(context);
+
+        var adminRole = new Role { Name = "Admin", IsSystemRole = true, IsActive = true, CreatedAt = DateTime.UtcNow };
+        context.Roles.Add(adminRole);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.DeleteAsync(adminRole.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.HttpStatusCode.Should().Be(400);
+        result.Message.Should().Contain("Sistem rolleri silinemez");
+    }
 }

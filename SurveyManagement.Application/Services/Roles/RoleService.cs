@@ -220,4 +220,37 @@ public class RoleService : IRoleService
 
         return ApiResponse<List<RoleWithUsersDto>>.SuccessResult(roles);
     }
+
+    public async Task<ApiResponse<string>> DeleteAsync(
+        int roleId,
+        CancellationToken cancellationToken = default)
+    {
+        var role = await _context.Roles
+            .Include(r => r.UserRoles)
+            .Include(r => r.FormRoles)
+            .FirstOrDefaultAsync(r => r.Id == roleId, cancellationToken);
+
+        if (role is null || !role.IsActive)
+        {
+            return ApiResponse<string>.FailureResult(
+                "Silinecek rol bulunamadı.",
+                404);
+        }
+
+        if (role.IsSystemRole || string.Equals(role.Name, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return ApiResponse<string>.FailureResult(
+                "Sistem rolleri silinemez.",
+                400);
+        }
+
+        _context.UserRoles.RemoveRange(role.UserRoles);
+        _context.FormRoles.RemoveRange(role.FormRoles);
+        role.IsActive = false;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ApiResponse<string>.SuccessResult(
+            "Birim rolü başarıyla silindi.");
+    }
 }
