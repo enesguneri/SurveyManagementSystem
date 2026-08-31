@@ -451,7 +451,7 @@ chore: update dependencies
 - Matrix questions
 - Validation rules
 - Draft editing
-- Publishing and closing
+- Publishing, closing, and reopening
 - Unit-based form ownership
 
 ### Sprint 4 — Survey Responses
@@ -475,99 +475,7 @@ chore: update dependencies
 - Survey builder
 - Survey listing
 - Response viewer
-- Admin panel
-- Unit-based role management
-- Responsive Turkish interface
-- İzmir Bakırçay University branding
-
-## 🧪 Testing and CI/CD Pipeline
-
-The project includes an automated test suite comprising **115 tests (100% passing)** across both backend and frontend.
-
-### 🛡️ Backend Tests (86 tests)
-- **Unit Tests (79):** Security, 9 question types request validation, response validation, SSRF protection, form lifecycle, response identity masking, unit role authorization, CSV and Excel export, response deletion.
-- **Integration Tests (7):** `WebApplicationFactory<Program>` testing end-to-end HTTP pipeline, authentication, and admin authorization filters.
-
-Run backend tests:
-```powershell
-dotnet test SurveyManagementSystem.slnx
-```
-
-### ⚡ Frontend Tests (29 tests)
-- **Vitest Suite:** TXT, CSV, JSON parsing, BOM cleanup, 500 option limit, token expiration, JWT decoding and role recognition, detailed error extraction, and question analytics frequency/percentage calculations.
-
-Run frontend tests:
-```powershell
-cd frontend
-npm test
-```
-
-### 🤖 GitHub Actions CI/CD Pipeline
-Every push and pull request to `main` or `develop` triggers `.github/workflows/ci.yml`:
-1. **Backend CI:** Restores, builds, and runs all 86 backend tests on Ubuntu with .NET 10.
-2. **Frontend CI:** Installs dependencies, runs ESLint, executes 29 Vitest tests, and generates the production bundle.
-
-## 🗺️ Sprint Roadmap
-
-### Sprint 1 — Architecture and Database Infrastructure
-
-**Status: Completed ✅**
-
-- Layered architecture
-- Entity modeling
-- MySQL integration
-- Fluent API relationships
-- Data seeding
-- EF Core migrations
-- PostgreSQL-to-MySQL data migration
-
-### Sprint 2 — Authentication and Authorization
-
-**Status: Completed ✅**
-
-- Registration and login
-- Password hashing
-- JWT token generation
-- Swagger Bearer authentication
-- Global exception middleware
-- Role-based authorization
-
-### Sprint 3 — Survey Domain and Form Management
-
-**Status: Completed ✅**
-
-- Dynamic survey creation
-- Question types
-- Question options
-- Dropdown support
-- Matrix questions
-- Validation rules
-- Draft editing
-- Publishing and closing
-- Unit-based form ownership
-
-### Sprint 4 — Survey Responses
-
-**Status: Completed ✅**
-
-- Response submission
-- Date and rating responses
-- Matrix responses
-- Respondent metadata
-- IP address tracking
-- Response viewing
-- One response per authenticated user
-- Duplicate race-condition handling
-
-### Sprint 5 — Frontend and Administration
-
-**Status: Completed ✅**
-
-- React frontend
-- Survey builder
-- Survey listing
-- Response viewer
-- Admin panel
+- 2-Tab Admin panel (Users & Units)
 - Unit-based role management
 - Responsive Turkish interface
 - İzmir Bakırçay University branding
@@ -579,14 +487,39 @@ Every push and pull request to `main` or `develop` triggers `.github/workflows/c
 - Gemini AI assistant
 - Clarification questions
 - Visual AI draft preview
-- TXT, CSV, JSON, and API option import
+- Dynamic external options (API & TXT) with validation
 - Searchable dropdowns
-- CSV response export
-- Excel response export
+- CSV & Excel response export
 - Secure external API handling
-- 83 Backend Unit & Integration Tests (`xUnit`, `Moq`, `WebApplicationFactory`)
-- 14 Frontend Unit Tests (`Vitest`)
+- Automated test suite (93 Backend xUnit + 30 Frontend Vitest)
 - GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`)
+
+## 🧪 Testing and CI/CD Pipeline
+
+The project includes an automated test suite comprising **123 tests (100% passing)** across both backend and frontend.
+
+### 🛡️ Backend Tests (93 tests)
+- **Unit Tests (86):** Security, 9 question types request validation, response validation, SSRF protection, form lifecycle (create, update, publish, close, reopen, delete), response identity masking, unit role authorization, CSV and Excel export, response deletion.
+- **Integration Tests (7):** `WebApplicationFactory<Program>` testing end-to-end HTTP pipeline, authentication, and admin authorization filters.
+
+Run backend tests:
+```powershell
+dotnet test SurveyManagementSystem.slnx
+```
+
+### ⚡ Frontend Tests (30 tests)
+- **Vitest Suite:** TXT, CSV, JSON parsing, BOM cleanup, 500 option limit, token expiration, JWT decoding and role recognition, detailed error extraction, form draft API mapping, and question analytics frequency/percentage calculations.
+
+Run frontend tests:
+```powershell
+cd frontend
+npm test
+```
+
+### 🤖 GitHub Actions CI/CD Pipeline
+Every push and pull request to `main` or `develop` triggers `.github/workflows/ci.yml`:
+1. **Backend CI:** Restores, builds, and runs all 93 backend tests on Ubuntu with .NET 10.
+2. **Frontend CI:** Installs dependencies, runs ESLint, executes 30 Vitest tests, and generates the production bundle.
 
 ## 📌 Development Principles
 
