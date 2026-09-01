@@ -42,8 +42,25 @@ The platform supports:
 - Multiple organizational units per survey
 - Anonymous or authenticated survey access
 - One-response-per-user rule for authenticated surveys
-- Draft survey editing
-- Survey publishing and closing
+- Published survey editing (full question editing when 0 responses, title/description editing when responses exist)
+- Closed survey preview mode for survey owners and administrators (read-only with response submission lockdown)
+- Survey reopening back to published state (`POST /api/forms/{publicId}/reopen`)
+- Permanent survey deletion with cascading cleanup of questions, options, answers, and role assignments (`DELETE /api/forms/{publicId}`)
+- Interactive confirmation dialogs (modals) before deleting questions, deleting surveys, closing, or reopening
+- Card-level scrollable options container in question builder (`maxHeight: 320px`)
+- Middle-click (scroll wheel) and Ctrl+Click new tab support across all navigation buttons using `RouterLink`
+
+### 🏢 Unit and Role Management (Admin Panel)
+
+- 2-Tab management interface: **Kullanıcılar** (Users) and **Birimler** (Organizational Units)
+- Instant user search bar filtering by name, username, or email
+- User role chips with one-click role removal confirmation modal
+- Inline `+ Rol Ekle` popover menu for rapid role assignment
+- Unit creation card with instant name validation
+- Collapsible unit accordions with *"X Kullanıcı Tanımlı"* member badges
+- Unit member table with "Birimden Çıkar" action
+- Autocomplete unit member assignment
+- Permanent unit role deletion (`DELETE /api/roles/{id}`) with safety guards protecting system roles and explicit confirmation modal
 
 ### 🧩 Supported Question Types
 
@@ -493,6 +510,21 @@ chore: update dependencies
 - Secure external API handling
 - Automated test suite (93 Backend xUnit + 30 Frontend Vitest)
 - GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`)
+
+### Sprint 7 — Advanced Form Lifecycle, 2-Tab Admin Suite, Dynamic Options, and UX Polish
+
+**Status: Completed ✅**
+
+- Closed survey preview mode with response submission lockdown
+- Reopening closed surveys back to published state (`POST /api/forms/{publicId}/reopen`)
+- Permanent survey deletion with full cascade cleanup (`DELETE /api/forms/{publicId}`)
+- Interactive confirmation dialogs before deleting questions, deleting surveys, closing, or reopening
+- Dynamic option lazy loading (saving source metadata to `Questions` table without pre-populating database rows)
+- Choice verification against source on form response submission
+- 2-Tab Admin Panel (instant user search, role chips with delete, inline `+ Rol Ekle` popover, unit creation, accordion list with member counts, add/remove members, and permanent unit role deletion)
+- Card-level scrollable options container (`maxHeight: 320px`) in question builder
+- Middle-click (scroll wheel) and Ctrl+Click new tab navigation across all buttons via `component={RouterLink}`
+- Automated test suite expanded to 123 tests (93 Backend + 30 Frontend, 100% passing)
 
 ## 🧪 Testing and CI/CD Pipeline
 
