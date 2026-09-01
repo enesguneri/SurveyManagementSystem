@@ -145,6 +145,12 @@ npm run build
 - Draft saving
 - Survey publishing
 - Survey closing
+- Closed survey preview mode for owners/admins (with disabled submission banner)
+- Reopening closed surveys back to published state
+- Permanent survey deletion with confirmation modal
+- Interactive confirmation dialogs for question deletion and lifecycle actions
+- Card-level scrollable options container in question builder (`maxHeight: 320px`)
+- Native browser middle-click (mouse wheel) and Ctrl+Click support across all navigation buttons
 - Anonymous or authenticated access selection
 - Unit assignment
 - Respondent identity visibility setting
@@ -410,19 +416,25 @@ npm test
 
 Frontend features currently completed:
 
-- Authentication pages
-- Protected routing
-- Dashboard
-- Survey builder
-- Survey editing
-- Survey response page
-- Response viewer
-- Admin panel
-- Unit-based authorization interface
-- Dropdown option importing
+- Authentication pages (Login, Register with route redirection)
+- Protected routing & Admin route guard (`AdminRoute.tsx`)
+- Dashboard with RouterLink quick-action cards
+- Dynamic survey builder with question type editors
+- Card-level scrollable options container (`maxHeight: 320px`)
+- Published survey editing (full question editing when 0 responses)
+- Closed survey preview mode with response submission lockdown
+- Survey reopening and permanent deletion
+- Interactive confirmation dialogs for all destructive actions
+- Survey response page with client-side validation
+- Two-tab response viewer ("Özet ve Grafikler" & "Bireysel Yanıtlar")
+- Interactive SVG Pie Charts, Bar Charts, rating averages, and copy chart feature
+- Response pagination (10, 20, 50, 100) and single response deletion
+- 2-Tab Admin Panel (Users & Units, search, inline assign/remove, unit deletion)
+- Dropdown option importing from `.txt` and external APIs with lazy-loading
 - CSV and Excel export actions
-- Gemini AI survey assistant
-- Vitest automated unit tests
-- Responsive university-themed design
+- Gemini AI survey assistant with clarification & visual preview
+- 30 Vitest automated unit tests
+- Responsive university-themed design with Material UI
+- Native browser middle-click (scroll wheel) and Ctrl+Click new tab navigation
 
 Production deployment configuration is planned for a later stage.
