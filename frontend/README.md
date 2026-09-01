@@ -85,7 +85,7 @@ Run Vitest unit tests:
 npm test
 ```
 
-The test suite covers (29 tests, 100% passing):
+The test suite covers (30 tests, 100% passing):
 - `jwtHelper.test.ts`: JWT claim decoding, user ID/email/username parsing, and Admin role recognition.
 - `errorHandler.test.ts`: Error handling across network failures, 400 Bad Request validation lists, 401 Unauthorized, 403 Forbidden, 409 Conflict, 500 server errors, and native Error instances.
 - `optionImport.test.ts`: TXT, CSV (PapaParse), JSON array/object parsing, UTF-8 BOM stripping, and 500 options limit.
