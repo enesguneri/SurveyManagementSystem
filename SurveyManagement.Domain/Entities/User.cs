@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -13,6 +13,10 @@ public class User : BaseEntity
     // Şifre güvenliği için byte dizileri (byte[]) kullanıyoruz
     public byte[] PasswordHash { get; set; } = Array.Empty<byte>();
     public byte[] PasswordSalt { get; set; } = Array.Empty<byte>();
+
+    // Kullanıcıya özel Gemini AI yapılandırması
+    public string? GeminiApiKey { get; set; }
+    public string? GeminiModel { get; set; }
 
     // Çoka-Çok İlişki (Navigation Property)
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();

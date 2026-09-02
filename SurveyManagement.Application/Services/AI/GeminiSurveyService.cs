@@ -1,6 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using SurveyManagement.Application.Common.Models;
 using SurveyManagement.Application.DTOs.AI;
 using SurveyManagement.Application.Interfaces.AI;
+using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Application.Interfaces.Forms;
 using SurveyManagement.Application.Options;
 using System.Net.Http;
@@ -17,6 +20,7 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
     private readonly HttpClient _httpClient;
     private readonly GeminiOptions _options;
     private readonly IFormRequestValidator _formRequestValidator;
+    private readonly IAppDbContext? _context;
     private readonly ILogger<GeminiSurveyService> _logger;
 
     private readonly JsonSerializerOptions _jsonOptions =
@@ -29,12 +33,14 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
         HttpClient httpClient,
         GeminiOptions options,
         IFormRequestValidator formRequestValidator,
-        ILogger<GeminiSurveyService> logger)
+        ILogger<GeminiSurveyService> logger,
+        IAppDbContext? context = null)
     {
         _httpClient = httpClient;
         _options = options;
         _formRequestValidator = formRequestValidator;
         _logger = logger;
+        _context = context;
 
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
     }
@@ -43,14 +49,47 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
         GenerateSurveyDraftRequestDto request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        return await GenerateDraftAsync(request, null, cancellationToken);
+    }
+
+    public async Task<GenerateSurveyDraftResponseDto> GenerateDraftAsync(
+        GenerateSurveyDraftRequestDto request,
+        int? requesterUserId = null,
+        CancellationToken cancellationToken = default)
+    {
+        string? effectiveApiKey = null;
+        string? effectiveModel = null;
+
+        if (_context is not null && requesterUserId.HasValue)
         {
-            return FailedResponse("Gemini API anahtarı yapılandırılmamış.");
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == requesterUserId.Value, cancellationToken);
+
+            if (user is not null && !string.IsNullOrWhiteSpace(user.GeminiApiKey))
+            {
+                effectiveApiKey = user.GeminiApiKey;
+                effectiveModel = !string.IsNullOrWhiteSpace(user.GeminiModel)
+                    ? user.GeminiModel
+                    : _options.Model;
+            }
         }
 
-        if (string.IsNullOrWhiteSpace(_options.Model))
+        // Eğer kullanıcıya özel anahtar yoksa genel ayarlar kontrol edilir (fallback).
+        if (string.IsNullOrWhiteSpace(effectiveApiKey))
         {
-            return FailedResponse("Gemini modeli yapılandırılmamış.");
+            effectiveApiKey = _options.ApiKey;
+            effectiveModel = _options.Model;
+        }
+
+        if (string.IsNullOrWhiteSpace(effectiveApiKey))
+        {
+            return FailedResponse("AI ile anket oluşturabilmek için lütfen önce kişisel Gemini API anahtarınızı yapılandırın.");
+        }
+
+        if (string.IsNullOrWhiteSpace(effectiveModel))
+        {
+            effectiveModel = "gemini-2.5-flash";
         }
 
         if (string.IsNullOrWhiteSpace(request.Prompt))
@@ -84,7 +123,7 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
 
             var requestUrl =
                 $"{_options.BaseUrl.TrimEnd('/')}/v1beta/models/" +
-                $"{Uri.EscapeDataString(_options.Model)}:generateContent";
+                $"{Uri.EscapeDataString(effectiveModel)}:generateContent";
 
             using var httpRequest = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -93,7 +132,7 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
             // API anahtarı URL yerine header üzerinden gönderilir.
             httpRequest.Headers.TryAddWithoutValidation(
                 "x-goog-api-key",
-                _options.ApiKey);
+                effectiveApiKey);
 
             var jsonBody = JsonSerializer.Serialize(
                 requestBody,
@@ -575,5 +614,88 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
                 "draft"
             }
         };
+    }
+
+    public async Task<UserAiConfigDto> GetUserConfigAsync(
+        int userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (_context is null)
+        {
+            return new UserAiConfigDto
+            {
+                HasApiKey = !string.IsNullOrWhiteSpace(_options.ApiKey),
+                MaskedApiKey = MaskApiKey(_options.ApiKey),
+                Model = _options.Model
+            };
+        }
+
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null || string.IsNullOrWhiteSpace(user.GeminiApiKey))
+        {
+            return new UserAiConfigDto
+            {
+                HasApiKey = false,
+                MaskedApiKey = null,
+                Model = _options.Model
+            };
+        }
+
+        return new UserAiConfigDto
+        {
+            HasApiKey = true,
+            MaskedApiKey = MaskApiKey(user.GeminiApiKey),
+            Model = !string.IsNullOrWhiteSpace(user.GeminiModel) ? user.GeminiModel : _options.Model
+        };
+    }
+
+    public async Task<ApiResponse<bool>> SaveUserConfigAsync(
+        int userId,
+        SaveUserAiConfigRequestDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        if (_context is null)
+        {
+            return ApiResponse<bool>.FailureResult("Veritabanı bağlantısı bulunamadı.", 500);
+        }
+
+        var trimmedKey = dto.ApiKey?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedKey))
+        {
+            return ApiResponse<bool>.FailureResult("Gemini API anahtarı boş bırakılamaz.", 400);
+        }
+
+        if (trimmedKey.Length < 10)
+        {
+            return ApiResponse<bool>.FailureResult("Geçersiz API anahtarı formatı.", 400);
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return ApiResponse<bool>.FailureResult("Kullanıcı bulunamadı.", 404);
+        }
+
+        user.GeminiApiKey = trimmedKey;
+        if (!string.IsNullOrWhiteSpace(dto.Model))
+        {
+            user.GeminiModel = dto.Model.Trim();
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ApiResponse<bool>.SuccessResult(true, "Gemini API yapılandırmanız başarıyla kaydedildi.");
+    }
+
+    private static string? MaskApiKey(string? apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey)) return null;
+        if (apiKey.Length <= 8) return "****";
+        return $"{apiKey[..6]}...{apiKey[^4..]}";
     }
 }
