@@ -21,4 +21,9 @@ public interface IGeminiSurveyService
         int userId,
         SaveUserAiConfigRequestDto dto,
         CancellationToken cancellationToken = default);
+
+    // Kullanıcının kişisel Gemini API yapılandırmasını siler.
+    Task<ApiResponse<bool>> DeleteUserConfigAsync(
+        int userId,
+        CancellationToken cancellationToken = default);
 }

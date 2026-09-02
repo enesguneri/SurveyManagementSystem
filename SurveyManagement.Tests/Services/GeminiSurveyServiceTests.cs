@@ -115,4 +115,33 @@ public class GeminiSurveyServiceTests
         result.Status.Should().Be(AiDraftStatus.Failed);
         result.Message.Should().Contain("Gemini API anahtarınızı");
     }
+
+    [Fact]
+    public async Task DeleteUserConfigAsync_WhenConfigured_ShouldClearKeyAndModelAndReturnTrue()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var user = TestDbContextFactory.CreateUser(context, "geminiuser5", "user5@test.com");
+        user.GeminiApiKey = "AIzaSyD-TestKeyToBeDeleted";
+        user.GeminiModel = "gemini-3.5-flash";
+        await context.SaveChangesAsync();
+
+        var options = new GeminiOptions { ApiKey = "", Model = "gemini-3.5-flash-lite" };
+        var sut = new GeminiSurveyService(_httpClient, options, _validatorMock.Object, _logger, context);
+
+        // Act
+        var result = await sut.DeleteUserConfigAsync(user.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        var updatedUser = await context.Users.FindAsync(user.Id);
+        updatedUser.Should().NotBeNull();
+        updatedUser!.GeminiApiKey.Should().BeNull();
+        updatedUser.GeminiModel.Should().BeNull();
+
+        var config = await sut.GetUserConfigAsync(user.Id);
+        config.HasApiKey.Should().BeFalse();
+        config.MaskedApiKey.Should().BeNull();
+    }
 }

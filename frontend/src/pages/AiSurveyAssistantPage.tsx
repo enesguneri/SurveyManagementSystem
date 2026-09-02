@@ -28,12 +28,17 @@ import {
     VisibilityOff,
     OpenInNew as OpenInNewIcon,
     CheckCircle as CheckCircleIcon,
+    DeleteOutlined as DeleteOutlineIcon,
 } from "@mui/icons-material";
 import axios from "axios";
 import BrandHeader from "../components/layout/BrandHeader";
 import { useAuth } from "../auth/useAuth";
 import { generateSurveyDraft } from "../api/aiApi";
-import { getUserAiConfig, saveUserAiConfig } from "../api/aiConfigApi";
+import {
+    getUserAiConfig,
+    saveUserAiConfig,
+    deleteUserAiConfig,
+} from "../api/aiConfigApi";
 import { extractErrorMessage } from "../utils/errorHandler";
 import type {
     AiConversationMessage,
@@ -76,6 +81,8 @@ export default function AiSurveyAssistantPage() {
     const [modelInput, setModelInput] = useState("gemini-3.5-flash-lite");
     const [showApiKey, setShowApiKey] = useState(false);
     const [isSavingConfig, setIsSavingConfig] = useState(false);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [isDeletingConfig, setIsDeletingConfig] = useState(false);
     const [configErrorMessage, setConfigErrorMessage] = useState("");
     const [configSuccessMessage, setConfigSuccessMessage] = useState("");
 
@@ -145,6 +152,29 @@ export default function AiSurveyAssistantPage() {
             );
         } finally {
             setIsSavingConfig(false);
+        }
+    }
+
+    async function handleDeleteConfig() {
+        setIsDeletingConfig(true);
+        setConfigErrorMessage("");
+        setConfigSuccessMessage("");
+        try {
+            const res = await deleteUserAiConfig();
+            if (res.isSuccess) {
+                setAiConfig({ hasApiKey: false, maskedApiKey: null, model: null });
+                setIsDeleteConfirmOpen(false);
+                setIsConfigModalOpen(false);
+                setApiKeyInput("");
+            } else {
+                setConfigErrorMessage(res.message || "Yapılandırma silinemedi.");
+            }
+        } catch (error) {
+            setConfigErrorMessage(
+                extractErrorMessage(error, "Yapılandırma silinirken bir hata oluştu.")
+            );
+        } finally {
+            setIsDeletingConfig(false);
         }
     }
 
@@ -420,23 +450,35 @@ export default function AiSurveyAssistantPage() {
                                     </Box>
                                 </Stack>
 
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    color="primary"
-                                    startIcon={<SettingsIcon />}
-                                    onClick={() => {
-                                        setConfigErrorMessage("");
-                                        setConfigSuccessMessage("");
-                                        setApiKeyInput("");
-                                        if (aiConfig?.model) {
-                                            setModelInput(aiConfig.model);
-                                        }
-                                        setIsConfigModalOpen(true);
-                                    }}
-                                >
-                                    Yapılandırmayı Güncelle
-                                </Button>
+                                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        color="primary"
+                                        startIcon={<SettingsIcon />}
+                                        onClick={() => {
+                                            setConfigErrorMessage("");
+                                            setConfigSuccessMessage("");
+                                            setApiKeyInput("");
+                                            if (aiConfig?.model) {
+                                                setModelInput(aiConfig.model);
+                                            }
+                                            setIsConfigModalOpen(true);
+                                        }}
+                                    >
+                                        Yapılandırmayı Güncelle
+                                    </Button>
+
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        color="error"
+                                        startIcon={<DeleteOutlineIcon />}
+                                        onClick={() => setIsDeleteConfirmOpen(true)}
+                                    >
+                                        Yapılandırmayı Sil
+                                    </Button>
+                                </Stack>
                             </Stack>
                         </Card>
                     )}
@@ -748,6 +790,17 @@ export default function AiSurveyAssistantPage() {
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
                     <Button
+                        onClick={() => {
+                            setIsConfigModalOpen(false);
+                            setIsDeleteConfirmOpen(true);
+                        }}
+                        color="error"
+                        startIcon={<DeleteOutlineIcon />}
+                        sx={{ mr: "auto" }}
+                    >
+                        Yapılandırmayı Sil
+                    </Button>
+                    <Button
                         onClick={() => setIsConfigModalOpen(false)}
                         disabled={isSavingConfig}
                         color="inherit"
@@ -761,6 +814,42 @@ export default function AiSurveyAssistantPage() {
                         startIcon={isSavingConfig ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
                     >
                         {isSavingConfig ? "Kaydediliyor..." : "Güncellemeyi Kaydet"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* 🗑️ Yapılandırmayı Silme Onay Penceresi */}
+            <Dialog
+                open={isDeleteConfirmOpen}
+                onClose={() => !isDeletingConfig && setIsDeleteConfirmOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1, color: "error.main" }}>
+                    <DeleteOutlineIcon color="error" />
+                    Gemini API Yapılandırmasını Sil
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary">
+                        Kayıtlı Gemini API anahtarınızı ve model tercihinizi silmek istediğinize emin misiniz? Bu işlem sonucunda API anahtarınız veritabanından tamamen silinecek ve AI asistanını kullanabilmek için yeniden anahtar tanımlamanız gerekecektir.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button
+                        onClick={() => setIsDeleteConfirmOpen(false)}
+                        disabled={isDeletingConfig}
+                        color="inherit"
+                    >
+                        Vazgeç
+                    </Button>
+                    <Button
+                        onClick={() => void handleDeleteConfig()}
+                        variant="contained"
+                        color="error"
+                        disabled={isDeletingConfig}
+                        startIcon={isDeletingConfig ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineIcon />}
+                    >
+                        {isDeletingConfig ? "Siliniyor..." : "Evet, Sil"}
                     </Button>
                 </DialogActions>
             </Dialog>

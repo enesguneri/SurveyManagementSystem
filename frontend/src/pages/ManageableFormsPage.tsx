@@ -14,12 +14,22 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
+    Divider,
     Snackbar,
     Stack,
     Typography,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import LockIcon from "@mui/icons-material/Lock";
+import PublicIcon from "@mui/icons-material/Public";
+import PersonIcon from "@mui/icons-material/Person";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import PublishIcon from "@mui/icons-material/Publish";
+import ReplayIcon from "@mui/icons-material/Replay";
 import {
     closeForm,
     deleteForm,
@@ -50,11 +60,11 @@ function getStatusColor(
 ): "default" | "success" | "warning" {
     switch (status) {
         case "Draft":
-            return "default";
+            return "warning";
         case "Published":
             return "success";
         case "Closed":
-            return "warning";
+            return "default";
         default:
             return "default";
     }
@@ -337,192 +347,296 @@ export default function ManageableFormsPage() {
 
                     <Stack spacing={2}>
                         {forms.map((form) => (
-                            <Card key={form.id} elevation={0} sx={{ borderRadius: 2.5, border: "1px solid", borderColor: "divider" }}>
+                            <Card
+                                key={form.id}
+                                elevation={0}
+                                sx={{
+                                    borderRadius: 3,
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    borderLeft: "6px solid",
+                                    borderLeftColor:
+                                        form.status === "Published"
+                                            ? "success.main"
+                                            : form.status === "Draft"
+                                            ? "warning.main"
+                                            : "grey.400",
+                                    transition: "all 0.2s ease-in-out",
+                                    "&:hover": {
+                                        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.07)",
+                                        borderColor: "primary.light",
+                                    },
+                                }}
+                            >
                                 <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                                     <Stack spacing={2}>
+                                        {/* Üst Kısım: Başlık ve Durum Rozetleri */}
                                         <Stack
                                             direction="row"
                                             sx={{
-                                                justifyContent:
-                                                    "space-between",
-                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                alignItems: "flex-start",
                                                 gap: 2,
+                                                flexWrap: "wrap",
                                             }}
                                         >
-                                            <Typography
-                                                variant="h6"
+                                            <Box sx={{ flex: 1, minWidth: 260 }}>
+                                                <Typography
+                                                    variant="h6"
+                                                    sx={{
+                                                        fontWeight: 800,
+                                                        color: "text.primary",
+                                                        letterSpacing: "-0.01em",
+                                                        lineHeight: 1.3,
+                                                    }}
+                                                >
+                                                    {form.title}
+                                                </Typography>
+
+                                                {form.description && (
+                                                    <Typography
+                                                        variant="body2"
+                                                        color="text.secondary"
+                                                        sx={{
+                                                            mt: 0.75,
+                                                            display: "-webkit-box",
+                                                            WebkitLineClamp: 2,
+                                                            WebkitBoxOrient: "vertical",
+                                                            overflow: "hidden",
+                                                        }}
+                                                    >
+                                                        {form.description}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+
+                                            <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexShrink: 0 }}>
+                                                <Chip
+                                                    label={getStatusLabel(form.status)}
+                                                    color={getStatusColor(form.status)}
+                                                    size="small"
+                                                    sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                                                />
+                                                <Chip
+                                                    icon={
+                                                        form.accessType === "Authenticated" ? (
+                                                            <LockIcon sx={{ fontSize: "14px !important" }} />
+                                                        ) : (
+                                                            <PublicIcon sx={{ fontSize: "14px !important" }} />
+                                                        )
+                                                    }
+                                                    label={getAccessTypeLabel(form.accessType)}
+                                                    variant="outlined"
+                                                    size="small"
+                                                    sx={{ borderRadius: 1.5, fontWeight: 500 }}
+                                                />
+                                            </Stack>
+                                        </Stack>
+
+                                        {/* Orta Kısım: Metadata & İstatistikler */}
+                                        <Stack
+                                            direction={{ xs: "column", sm: "row" }}
+                                            spacing={{ xs: 1, sm: 2.5 }}
+                                            sx={{
+                                                alignItems: { xs: "flex-start", sm: "center" },
+                                                py: 1,
+                                                px: 1.5,
+                                                bgcolor: "grey.50",
+                                                borderRadius: 2,
+                                                fontSize: "0.825rem",
+                                                color: "text.secondary",
+                                                flexWrap: "wrap",
+                                                gap: 1,
+                                            }}
+                                        >
+                                            <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+                                                <PersonIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+                                                <span>
+                                                    Oluşturan: <strong>{form.createdByUserName}</strong>
+                                                </span>
+                                            </Stack>
+
+                                            <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+                                                <CalendarTodayIcon sx={{ fontSize: 15, color: "text.disabled" }} />
+                                                <span>
+                                                    {new Date(form.createdAt).toLocaleDateString("tr-TR", {
+                                                        day: "2-digit",
+                                                        month: "long",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                </span>
+                                            </Stack>
+
+                                            <Stack
+                                                direction="row"
+                                                spacing={0.75}
                                                 sx={{
+                                                    alignItems: "center",
+                                                    ml: { sm: "auto !important" },
+                                                    bgcolor: form.responseCount > 0 ? "primary.50" : "transparent",
+                                                    color: form.responseCount > 0 ? "primary.dark" : "text.secondary",
+                                                    px: form.responseCount > 0 ? 1.5 : 0,
+                                                    py: form.responseCount > 0 ? 0.3 : 0,
+                                                    borderRadius: 1.5,
                                                     fontWeight: 700,
                                                 }}
                                             >
-                                                {form.title}
-                                            </Typography>
-
-                                            <Stack
-                                                direction="row"
-                                                spacing={1}
-                                            >
-                                                <Chip
-                                                    label={getStatusLabel(
-                                                        form.status,
-                                                    )}
-                                                    color={getStatusColor(
-                                                        form.status,
-                                                    )}
-                                                    size="small"
-                                                    sx={{ fontWeight: 700 }}
-                                                />
-                                                <Chip
-                                                    label={getAccessTypeLabel(
-                                                        form.accessType,
-                                                    )}
-                                                    variant="outlined"
-                                                    size="small"
-                                                />
+                                                <AssessmentIcon sx={{ fontSize: 17 }} />
+                                                <span>{form.responseCount} Yanıt</span>
                                             </Stack>
                                         </Stack>
 
-                                        {form.description && (
-                                            <Typography color="text.secondary">
-                                                {form.description}
-                                            </Typography>
-                                        )}
-
-                                        <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1, sm: 3 }}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Oluşturan: <strong>{form.createdByUserName}</strong>
-                                            </Typography>
-
-                                            <Typography
-                                                variant="body2"
-                                                color="text.secondary"
-                                            >
-                                                Oluşturulma:{" "}
-                                                {new Date(
-                                                    form.createdAt,
-                                                ).toLocaleString("tr-TR")}
-                                            </Typography>
-
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ fontWeight: 600, color: "primary.main" }}
-                                            >
-                                                Yanıt sayısı: {form.responseCount}
-                                            </Typography>
-                                        </Stack>
-
+                                        {/* Yetkili Birimler */}
                                         {form.roleNames.length > 0 && (
-                                            <Stack
-                                                direction="row"
-                                                spacing={1}
-                                                sx={{
-                                                    flexWrap: "wrap",
-                                                    gap: 1,
-                                                }}
-                                            >
-                                                {form.roleNames.map(
-                                                    (roleName: string) => (
-                                                        <Chip
-                                                            key={roleName}
-                                                            label={roleName}
-                                                            size="small"
-                                                            variant="outlined"
-                                                        />
-                                                    ),
-                                                )}
+                                            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.75, alignItems: "center" }}>
+                                                <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 600 }}>
+                                                    Birimler:
+                                                </Typography>
+                                                {form.roleNames.map((roleName: string) => (
+                                                    <Chip
+                                                        key={roleName}
+                                                        label={roleName}
+                                                        size="small"
+                                                        variant="outlined"
+                                                        sx={{
+                                                            height: 22,
+                                                            fontSize: "0.725rem",
+                                                            borderRadius: 1,
+                                                            borderColor: "grey.300",
+                                                            bgcolor: "background.paper",
+                                                        }}
+                                                    />
+                                                ))}
                                             </Stack>
                                         )}
 
-                                        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", gap: 1, pt: 1 }}>
-                                            {form.status === "Draft" && (
-                                                <Button
-                                                    variant="contained"
-                                                    color="success"
-                                                    onClick={() =>
-                                                        handlePublish(form.id, form.publicId)
-                                                    }
-                                                    disabled={actionFormId === form.id}
-                                                >
-                                                    {actionFormId === form.id
-                                                        ? "Yayımlanıyor..."
-                                                        : "Anketi Yayınla"}
-                                                </Button>
-                                            )}
+                                        <Divider sx={{ my: 0.5 }} />
 
-                                            {form.status === "Closed" && (
-                                                <Button
-                                                    variant="contained"
-                                                    color="success"
-                                                    onClick={() => setFormToReopen(form)}
-                                                    disabled={actionFormId === form.id}
-                                                >
-                                                    Tekrar Yayınla
-                                                </Button>
-                                            )}
-
-                                            {/* ✏️ Düzenle: Hem Taslak hem Yayındaki Anketler İçin Aktif */}
-                                            {form.status !== "Closed" && (
+                                        {/* Butonlar: Sol taraf işlem butonları, Sağ taraf ana aksiyon */}
+                                        <Stack
+                                            direction="row"
+                                            sx={{
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                flexWrap: "wrap",
+                                                gap: 1.25,
+                                            }}
+                                        >
+                                            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+                                                {/* 👁️ Önizle */}
                                                 <Button
                                                     component={RouterLink}
-                                                    to={`/forms/${form.publicId}/edit`}
+                                                    to={`/forms/${form.publicId}?preview=true`}
                                                     variant="outlined"
+                                                    size="small"
+                                                    color="info"
+                                                    startIcon={<VisibilityIcon />}
+                                                    sx={{ borderRadius: 1.5, fontWeight: 600 }}
                                                 >
-                                                    Düzenle
+                                                    Önizle
                                                 </Button>
-                                            )}
 
-                                            {/* 👁️ Önizle: Taslak, Yayında ve Kapalı tüm durumlarda aktif */}
-                                            <Button
-                                                component={RouterLink}
-                                                to={`/forms/${form.publicId}?preview=true`}
-                                                variant="outlined"
-                                                color="info"
-                                                startIcon={<VisibilityIcon />}
-                                            >
-                                                Önizle
-                                            </Button>
+                                                {/* ✏️ Düzenle */}
+                                                {form.status !== "Closed" && (
+                                                    <Button
+                                                        component={RouterLink}
+                                                        to={`/forms/${form.publicId}/edit`}
+                                                        variant="outlined"
+                                                        size="small"
+                                                        color="inherit"
+                                                        startIcon={<EditIcon />}
+                                                        sx={{ borderRadius: 1.5, fontWeight: 600 }}
+                                                    >
+                                                        Düzenle
+                                                    </Button>
+                                                )}
 
-                                            {/* 🔗 Bağlantıyı Kopyala Butonu */}
-                                            <Button
-                                                variant="outlined"
-                                                color="secondary"
-                                                startIcon={<ContentCopyIcon />}
-                                                onClick={() => handleCopyLink(form.publicId, form.status)}
-                                            >
-                                                Bağlantıyı Kopyala
-                                            </Button>
-
-                                            {form.status === "Published" && (
+                                                {/* 🔗 Bağlantıyı Kopyala */}
                                                 <Button
                                                     variant="outlined"
-                                                    color="warning"
-                                                    onClick={() => setFormToClose(form)}
+                                                    size="small"
+                                                    color="secondary"
+                                                    startIcon={<ContentCopyIcon />}
+                                                    onClick={() => handleCopyLink(form.publicId, form.status)}
+                                                    sx={{ borderRadius: 1.5, fontWeight: 600 }}
+                                                >
+                                                    Bağlantı
+                                                </Button>
+
+                                                {/* 🔒 Anketi Kapat */}
+                                                {form.status === "Published" && (
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        color="warning"
+                                                        onClick={() => setFormToClose(form)}
+                                                        disabled={actionFormId === form.id}
+                                                        sx={{ borderRadius: 1.5, fontWeight: 600 }}
+                                                    >
+                                                        Kapat
+                                                    </Button>
+                                                )}
+
+                                                {/* 🗑️ Anketi Sil */}
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    color="error"
+                                                    startIcon={<DeleteOutlineIcon />}
+                                                    onClick={() => setFormToDelete(form)}
                                                     disabled={actionFormId === form.id}
+                                                    sx={{ borderRadius: 1.5, fontWeight: 600 }}
                                                 >
-                                                    Anketi Kapat
+                                                    Sil
                                                 </Button>
-                                            )}
+                                            </Stack>
 
-                                            {(form.status === "Published" ||
-                                                form.status === "Closed") && (
-                                                <Button
-                                                    component={RouterLink}
-                                                    to={`/forms/${form.publicId}/responses`}
-                                                    variant="contained"
-                                                >
-                                                    Yanıtları Görüntüle
-                                                </Button>
-                                            )}
+                                            {/* Sağdaki Ana Aksiyon Butonu */}
+                                            <Box>
+                                                {form.status === "Draft" && (
+                                                    <Button
+                                                        variant="contained"
+                                                        color="success"
+                                                        size="small"
+                                                        startIcon={<PublishIcon />}
+                                                        onClick={() => handlePublish(form.id, form.publicId)}
+                                                        disabled={actionFormId === form.id}
+                                                        sx={{ borderRadius: 1.5, fontWeight: 700, px: 2 }}
+                                                    >
+                                                        {actionFormId === form.id ? "Yayımlanıyor..." : "Anketi Yayınla"}
+                                                    </Button>
+                                                )}
 
-                                            {/* Anketi Sil Butonu */}
-                                            <Button
-                                                variant="outlined"
-                                                color="error"
-                                                onClick={() => setFormToDelete(form)}
-                                                disabled={actionFormId === form.id}
-                                            >
-                                                Anketi Sil
-                                            </Button>
+                                                {form.status === "Closed" && (
+                                                    <Button
+                                                        variant="contained"
+                                                        color="success"
+                                                        size="small"
+                                                        startIcon={<ReplayIcon />}
+                                                        onClick={() => setFormToReopen(form)}
+                                                        disabled={actionFormId === form.id}
+                                                        sx={{ borderRadius: 1.5, fontWeight: 700, px: 2 }}
+                                                    >
+                                                        Tekrar Yayınla
+                                                    </Button>
+                                                )}
+
+                                                {(form.status === "Published" || form.status === "Closed") && (
+                                                    <Button
+                                                        component={RouterLink}
+                                                        to={`/forms/${form.publicId}/responses`}
+                                                        variant="contained"
+                                                        color="primary"
+                                                        size="small"
+                                                        startIcon={<AssessmentIcon />}
+                                                        sx={{ borderRadius: 1.5, fontWeight: 700, px: 2 }}
+                                                    >
+                                                        Yanıtları İncele
+                                                    </Button>
+                                                )}
+                                            </Box>
                                         </Stack>
                                     </Stack>
                                 </CardContent>
