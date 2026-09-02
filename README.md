@@ -3,7 +3,7 @@
 > İzmir Bakırçay Üniversitesi için geliştirilen modern, güvenli ve dinamik anket yönetim platformu.
 
 [![CI Pipeline](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/enesguneri/SurveyManagementSystem/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-132%20passed-brightgreen)](https://github.com/enesguneri/SurveyManagementSystem)
+[![Tests](https://img.shields.io/badge/tests-133%20passed-brightgreen)](https://github.com/enesguneri/SurveyManagementSystem)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![React](https://img.shields.io/badge/React-TypeScript-61DAFB)](https://react.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-Passing-729B1B)](https://vitest.dev/)
@@ -549,15 +549,15 @@ chore: update dependencies
 - Middle-click (scroll wheel) and Ctrl+Click new tab navigation across all buttons via `component={RouterLink}`
 - Universal Preview Mode across all survey states (`Draft`, `Published`, `Closed`) with non-persisting test submission simulation
 - One-click public survey link copying both on survey cards and in the preview banner
-- User-specific Gemini API Key & model configuration associated with the user profile, setup prompt, and masked key storage
-- Automated test suite expanded to 132 tests (102 Backend + 30 Frontend, 100% passing)
+- User-specific Gemini API Key & model configuration associated with the user profile, setup prompt, configuration deletion, and masked key storage
+- Automated test suite expanded to 133 tests (103 Backend + 30 Frontend, 100% passing)
 
 ## 🧪 Testing and CI/CD Pipeline
 
-The project includes an automated test suite comprising **132 tests (100% passing)** across both backend and frontend.
+The project includes an automated test suite comprising **133 tests (100% passing)** across both backend and frontend.
 
-### 🛡️ Backend Tests (102 tests)
-- **Unit Tests (95):** Security, 9 question types request validation, response validation, dynamic API/TXT choice validation, on-demand option persistence, SSRF protection, form lifecycle (create, update, publish, close, reopen, delete, draft/closed preview), response identity masking, unit role authorization, CSV and Excel export, response deletion, user-specific Gemini AI configuration.
+### 🛡️ Backend Tests (103 tests)
+- **Unit Tests (96):** Security, 9 question types request validation, response validation, dynamic API/TXT choice validation, on-demand option persistence, SSRF protection, form lifecycle (create, update, publish, close, reopen, delete, draft/closed preview), response identity masking, unit role authorization, CSV and Excel export, response deletion, user-specific Gemini AI configuration & deletion.
 - **Integration Tests (7):** `WebApplicationFactory<Program>` testing end-to-end HTTP pipeline, authentication, and admin authorization filters.
 
 Run backend tests:
@@ -576,7 +576,7 @@ npm test
 
 ### 🤖 GitHub Actions CI/CD Pipeline
 Every push and pull request to `main` or `develop` triggers `.github/workflows/ci.yml`:
-1. **Backend CI:** Restores, builds, and runs all 102 backend tests on Ubuntu with .NET 10.
+1. **Backend CI:** Restores, builds, and runs all 103 backend tests on Ubuntu with .NET 10.
 2. **Frontend CI:** Installs dependencies, runs ESLint, executes 30 Vitest tests, and generates the production bundle.
 
 ## 📌 Development Principles

@@ -13,3 +13,8 @@ export async function saveUserAiConfig(
     const response = await apiClient.put<ApiResponse<boolean>>("/ai/config", request);
     return response.data;
 }
+
+export async function deleteUserAiConfig(): Promise<ApiResponse<boolean>> {
+    const response = await apiClient.delete<ApiResponse<boolean>>("/ai/config");
+    return response.data;
+}

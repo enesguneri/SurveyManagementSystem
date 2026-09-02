@@ -53,6 +53,24 @@ public class AiController : ControllerBase
         return Ok(result);
     }
 
+    [HttpDelete("config")]
+    public async Task<IActionResult> DeleteUserConfig(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(ApiResponse<bool>.FailureResult("Yetkisiz erişim.", 401));
+        }
+
+        var result = await _geminiSurveyService.DeleteUserConfigAsync(userId, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return StatusCode(result.HttpStatusCode, result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpPost("survey-draft")]
     public async Task<IActionResult> GenerateSurveyDraft(
         [FromBody] GenerateSurveyDraftRequestDto request,

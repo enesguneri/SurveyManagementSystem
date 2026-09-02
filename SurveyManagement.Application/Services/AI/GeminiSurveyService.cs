@@ -692,6 +692,31 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
         return ApiResponse<bool>.SuccessResult(true, "Gemini API yapılandırmanız başarıyla kaydedildi.");
     }
 
+    public async Task<ApiResponse<bool>> DeleteUserConfigAsync(
+        int userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (_context is null)
+        {
+            return ApiResponse<bool>.FailureResult("Veritabanı bağlantısı bulunamadı.", 500);
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return ApiResponse<bool>.FailureResult("Kullanıcı bulunamadı.", 404);
+        }
+
+        user.GeminiApiKey = null;
+        user.GeminiModel = null;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ApiResponse<bool>.SuccessResult(true, "Gemini API yapılandırmanız başarıyla silindi.");
+    }
+
     private static string? MaskApiKey(string? apiKey)
     {
         if (string.IsNullOrWhiteSpace(apiKey)) return null;
