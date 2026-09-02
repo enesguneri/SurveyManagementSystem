@@ -6,6 +6,7 @@ import {
     Card,
     CardContent,
     Checkbox,
+    Chip,
     CircularProgress,
     Container,
     Divider,
@@ -13,6 +14,7 @@ import {
     FormGroup,
     Radio,
     RadioGroup,
+    Snackbar,
     Stack,
     Table,
     TableBody,
@@ -22,6 +24,8 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
     getPublishedForm,
     submitFormResponse,
@@ -39,7 +43,7 @@ import type {
     SubmitMatrixCellRequest,
 } from "../types/response";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import BrandHeader from "../components/layout/BrandHeader";
 
 function createEmptyAnswer(
@@ -67,6 +71,72 @@ function PublishedFormPage() {
 
     const navigate = useNavigate();
     const { publicId } = useParams<{ publicId: string }>();
+    const [searchParams] = useSearchParams();
+
+    const isPreviewQuery = searchParams.get("preview") === "true";
+    const isPreviewMode =
+        isPreviewQuery ||
+        Boolean(form?.isPreview) ||
+        Boolean(form?.isClosedPreview) ||
+        form?.status === "Draft" ||
+        form?.status === "Closed" ||
+        (Boolean(form?.canManage) && isPreviewQuery);
+
+    const [isCopySnackbarOpen, setIsCopySnackbarOpen] = useState(false);
+
+    function handleCopyShareLink() {
+        if (!publicId) return;
+        const url = `${window.location.origin}/forms/${publicId}`;
+        void navigator.clipboard.writeText(url).then(() => {
+            setIsCopySnackbarOpen(true);
+        });
+    }
+
+    function handleTestSubmitPreview() {
+        if (!form) return;
+        const missing = form.questions.filter((q) => {
+            if (!q.isRequired) return false;
+            const ans = answers[q.id];
+            if (!ans) return true;
+            if (q.type === "MultipleChoiceGrid" || q.type === "CheckboxGrid") {
+                return q.matrixRows.some(
+                    (row) =>
+                        !ans.matrixSelections.some(
+                            (cell) => cell.matrixRowId === row.id,
+                        ),
+                );
+            }
+            if (q.type === "Rating") {
+                return ans.numericValue === null;
+            }
+            if (q.type === "Date") {
+                return !ans.dateValue;
+            }
+            if (
+                q.type === "SingleChoice" ||
+                q.type === "Dropdown" ||
+                q.type === "MultipleChoice"
+            ) {
+                return ans.selectedOptionIds.length === 0;
+            }
+            return !ans.textValue?.trim();
+        });
+
+        if (missing.length > 0) {
+            setErrorMessage(
+                `Zorunlu ${missing.length} adet soru yanıtlanmamış: ${missing
+                    .map((q) => `"${q.title}"`)
+                    .join(", ")}`,
+            );
+            setSuccessMessage("");
+            return;
+        }
+
+        setErrorMessage("");
+        setSuccessMessage(
+            "✅ Önizleme Testi Başarılı! Tüm zorunlu alanlar ve form kontrolleri eksiksiz çalışıyor. (Önizleme modunda yanıtlar veritabanına kaydedilmez).",
+        );
+    }
 
     const [hasSubmitted, setHasSubmitted] =
         useState(false);
@@ -323,10 +393,83 @@ function PublishedFormPage() {
                     </CardContent>
                 </Card>
 
-                {(form.isClosedPreview || form.status === "Closed") && (
-                    <Alert severity="warning" sx={{ fontWeight: 600 }}>
-                        ⚠️ Bu anket kapatılmıştır (Yönetici Önizleme Modu). Katılımcılar artık bu ankete yanıt gönderemez.
-                    </Alert>
+                {isPreviewMode && (
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            p: 2,
+                            bgcolor: "info.50",
+                            borderColor: "info.300",
+                            borderRadius: 2,
+                        }}
+                    >
+                        <Stack spacing={1.5}>
+                            <Stack
+                                direction="row"
+                                sx={{
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    flexWrap: "wrap",
+                                    gap: 1,
+                                }}
+                            >
+                                <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    sx={{ alignItems: "center" }}
+                                >
+                                    <VisibilityIcon color="info" />
+                                    <Typography
+                                        variant="subtitle1"
+                                        sx={{
+                                            fontWeight: 700,
+                                            color: "info.dark",
+                                        }}
+                                    >
+                                        Yönetici Önizleme Modu
+                                    </Typography>
+                                    <Chip
+                                        label={
+                                            form.status === "Draft"
+                                                ? "Taslak"
+                                                : form.status === "Published"
+                                                ? "Yayında"
+                                                : "Kapatıldı"
+                                        }
+                                        size="small"
+                                        color={
+                                            form.status === "Published"
+                                                ? "success"
+                                                : form.status === "Draft"
+                                                ? "warning"
+                                                : "default"
+                                        }
+                                    />
+                                </Stack>
+
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="info"
+                                    startIcon={<ContentCopyIcon />}
+                                    onClick={handleCopyShareLink}
+                                >
+                                    Katılımcı Bağlantısını Kopyala
+                                </Button>
+                            </Stack>
+
+                            <Typography
+                                variant="body2"
+                                sx={{ color: "text.secondary" }}
+                            >
+                                {form.status === "Draft"
+                                    ? "Bu anket henüz taslak aşamasındadır. Katılımcılar bu bağlantıya erişemez. Bu ekranda anketin katılımcılara nasıl görüneceğini test edebilirsiniz."
+                                    : form.status === "Closed"
+                                    ? "Bu anket kapatılmıştır. Katılımcılardan yeni yanıt kabul edilmez. Soruları inceleyebilirsiniz."
+                                    : "Anket yayındadır ancak siz Yönetici Önizleme Modundasınız. Bu ekranda yapacağınız form denemeleri veritabanına kaydedilmez ve gerçek yanıt istatistiklerini kirletmez."}
+                            </Typography>
+                        </Stack>
+                    </Card>
                 )}
 
                 {form.accessType === "Authenticated" &&
@@ -362,7 +505,22 @@ function PublishedFormPage() {
                     />
                 ))}
 
-                {!hasSubmitted && !form.isClosedPreview && form.status !== "Closed" && (
+                {/* Gönderim / Test Butonları */}
+                {form.status === "Closed" ? (
+                    <Alert severity="info">
+                        Anket kapatıldığı için yeni yanıt kabul edilmemektedir.
+                    </Alert>
+                ) : isPreviewMode ? (
+                    <Button
+                        variant="contained"
+                        color="info"
+                        size="large"
+                        onClick={handleTestSubmitPreview}
+                        startIcon={<VisibilityIcon />}
+                    >
+                        Test Yanıtını Gönder (Önizleme)
+                    </Button>
+                ) : !hasSubmitted ? (
                     <Button
                         variant="contained"
                         size="large"
@@ -373,21 +531,23 @@ function PublishedFormPage() {
                             ? "Gönderiliyor..."
                             : "Yanıtları Gönder"}
                     </Button>
-                )}
+                ) : null}
 
-                {(form.isClosedPreview || form.status === "Closed") && (
-                    <Alert severity="info">
-                        Anket kapatıldığı için yeni yanıt kabul edilmemektedir.
-                    </Alert>
-                )}
-
-                {hasSubmitted && !isSubmissionCompleted && (
+                {hasSubmitted && !isSubmissionCompleted && !isPreviewMode && (
                     <Alert severity="info">
                         Bu ankete daha önce yanıt verdiniz.
                     </Alert>
                 )}
 
             </Stack>
+
+            <Snackbar
+                open={isCopySnackbarOpen}
+                autoHideDuration={3500}
+                onClose={() => setIsCopySnackbarOpen(false)}
+                message="Katılımcı anket bağlantısı panoya kopyalandı!"
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            />
             </Container>
         </>
     );

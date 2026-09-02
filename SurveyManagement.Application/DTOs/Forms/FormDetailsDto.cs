@@ -14,6 +14,8 @@ public class FormDetailsDto
     public FormAccessType AccessType { get; set; }
     public bool HasCurrentUserResponded { get; set; }
     public bool IsClosedPreview { get; set; }
+    public bool IsPreview { get; set; }
+    public bool CanManage { get; set; }
 
     // Formun bağlı olduğu birim rollerinin Id değerleri.
     public List<int> RoleIds { get; set; } = new();

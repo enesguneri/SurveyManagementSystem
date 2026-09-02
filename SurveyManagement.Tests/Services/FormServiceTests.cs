@@ -388,6 +388,63 @@ public class FormServiceTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Data!.IsClosedPreview.Should().BeTrue();
+        result.Data.IsPreview.Should().BeTrue();
         result.Data.Status.Should().Be(FormStatus.Closed);
+    }
+
+    [Fact]
+    public async Task GetByPublicIdAsync_WhenDraftAndOwner_ShouldReturnDraftPreview()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var owner = TestDbContextFactory.CreateUser(context, "draftowner", "draftowner@test.com");
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Taslak Önizleme Formu",
+            Status = FormStatus.Draft,
+            CreatedByUserId = owner.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await sut.GetByPublicIdAsync(form.PublicId, requesterUserId: owner.Id);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data!.IsPreview.Should().BeTrue();
+        result.Data.CanManage.Should().BeTrue();
+        result.Data.Status.Should().Be(FormStatus.Draft);
+    }
+
+    [Fact]
+    public async Task GetByPublicIdAsync_WhenDraftAndAnonymous_ShouldReturnNotFound()
+    {
+        // Arrange
+        using var context = TestDbContextFactory.Create();
+        var owner = TestDbContextFactory.CreateUser(context, "draftowner2", "draftowner2@test.com");
+        var sut = new FormService(context, _validator, new FormAuthorizationService(context));
+
+        var form = new Form
+        {
+            PublicId = Guid.NewGuid(),
+            Title = "Taslak Form",
+            Status = FormStatus.Draft,
+            CreatedByUserId = owner.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Forms.Add(form);
+        await context.SaveChangesAsync();
+
+        // Act (Anonymous tries to access draft)
+        var result = await sut.GetByPublicIdAsync(form.PublicId, requesterUserId: null);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.HttpStatusCode.Should().Be(404);
     }
 }
