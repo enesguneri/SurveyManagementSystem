@@ -43,10 +43,12 @@ The platform supports:
 - Anonymous or authenticated survey access
 - One-response-per-user rule for authenticated surveys
 - Published survey editing (full question editing when 0 responses, title/description editing when responses exist)
-- Closed survey preview mode for survey owners and administrators (read-only with response submission lockdown)
+- Universal survey preview mode across all statuses (`Draft`, `Published`, `Closed`) for survey owners and administrators with non-persisting test submission validation
+- One-click participant link copying directly from survey cards and the preview banner
 - Survey reopening back to published state (`POST /api/forms/{publicId}/reopen`)
 - Permanent survey deletion with cascading cleanup of questions, options, answers, and role assignments (`DELETE /api/forms/{publicId}`)
 - Interactive confirmation dialogs (modals) before deleting questions, deleting surveys, closing, or reopening
+- Dynamic option lazy loading (saving source metadata without database row bloating) and on-demand option persistence on response submission
 - Card-level scrollable options container in question builder (`maxHeight: 320px`)
 - Middle-click (scroll wheel) and Ctrl+Click new tab support across all navigation buttons using `RouterLink`
 
@@ -117,11 +119,12 @@ The platform supports:
 
 ### 🤖 Gemini AI Assistant
 
-- AI-assisted survey draft generation
+- AI-assisted survey draft generation using Google Gemini
 - Clarification questions for incomplete prompts
-- Visual draft preview
-- Manual review before database registration
-- No automatic database save without user confirmation
+- User-specific Gemini API Key & model configuration (`gemini-3.5-flash-lite`, `gemini-3.5-flash`)
+- Interactive configuration onboarding and masked key storage
+- Visual draft preview and 1-click export to Form Builder
+- Manual review before database registration (no automatic database save without user confirmation)
 
 ## 🛠️ Technology Stack
 
@@ -279,12 +282,13 @@ dotnet user-secrets init --project .\SurveyManagement.API
 # Set JWT Secret Key (required - at least 64 bytes)
 dotnet user-secrets set "JwtSettings:SecretKey" "YOUR_SUPER_SECRET_KEY_THAT_IS_AT_LEAST_64_BYTES_LONG_1234567890_SECURE" --project .\SurveyManagement.API
 
-# Set Gemini AI API Key (optional - required only for AI assistant)
+# Set Gemini AI API Key (optional fallback - users can also configure their personal key directly via the Web UI)
 dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" --project .\SurveyManagement.API
 dotnet user-secrets set "Gemini:Model" "gemini-3.5-flash-lite" --project .\SurveyManagement.API
 ```
 
 > ⚠️ Never commit real database passwords, JWT secrets, or Gemini API keys to GitHub.
+> 💡 *Note: Users can also enter and manage their own Gemini API key directly from the AI Assistant web interface (`/ai-assistant`).*
 
 ### 🔄 3. Apply Database Migrations
 
@@ -333,23 +337,42 @@ npm run dev
 The application will be accessible at:
 - **Web UI:** `http://localhost:5173`
 
----
-
-## 🤖 Gemini AI Workflow
-
-### 🏗️ Frontend Build
+### 🏗️ 4. Build for Production
 
 ```powershell
 cd frontend
 npm run build
 ```
 
-### 🧹 Frontend Lint
+### 🧹 5. Code Linting
 
 ```powershell
 cd frontend
 npm run lint
 ```
+
+---
+
+## 🤖 Gemini AI Workflow
+
+The application integrates Google's Gemini generative AI for conversational survey drafting:
+
+1. **User-Specific API Key Configuration:**
+   - Every authorized user can manage their personal Google Gemini API key directly from the `/ai-assistant` interface.
+   - If a user has not configured a key, an onboarding banner guides them to Google AI Studio with a direct link (`https://aistudio.google.com/app/apikey`) to obtain a free key.
+   - Users can select their preferred model: `gemini-3.5-flash-lite` (Recommended, fast) or `gemini-3.5-flash`.
+   - Keys are stored securely in the database and masked (`AIzaSy...9X2A`) in the UI.
+
+2. **Conversational Survey Generation:**
+   - The user describes the target audience and survey goals in natural language.
+   - If information is insufficient, Gemini responds with clarification questions (`NeedsClarification`).
+   - Once all requirements are understood, Gemini generates a structured survey draft (`Ready`).
+
+3. **Live Draft Preview & Transfer:**
+   - The assistant displays an interactive visual preview of all questions, option choices, matrices, and validations.
+   - With a single click ("Bu Taslağı Form Oluşturucuya Aktar"), the generated survey is loaded into the Form Builder for final customization, unit assignment, and publishing.
+
+---
 
 ## 📥 Option Import
 
@@ -553,7 +576,7 @@ npm test
 
 ### 🤖 GitHub Actions CI/CD Pipeline
 Every push and pull request to `main` or `develop` triggers `.github/workflows/ci.yml`:
-1. **Backend CI:** Restores, builds, and runs all 93 backend tests on Ubuntu with .NET 10.
+1. **Backend CI:** Restores, builds, and runs all 102 backend tests on Ubuntu with .NET 10.
 2. **Frontend CI:** Installs dependencies, runs ESLint, executes 30 Vitest tests, and generates the production bundle.
 
 ## 📌 Development Principles
