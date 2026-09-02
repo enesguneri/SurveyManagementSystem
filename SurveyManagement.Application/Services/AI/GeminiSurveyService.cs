@@ -89,7 +89,7 @@ public sealed class GeminiSurveyService : IGeminiSurveyService
 
         if (string.IsNullOrWhiteSpace(effectiveModel))
         {
-            effectiveModel = "gemini-2.5-flash";
+            effectiveModel = "gemini-3.5-flash-lite";
         }
 
         if (string.IsNullOrWhiteSpace(request.Prompt))

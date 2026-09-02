@@ -25,7 +25,7 @@ public class GeminiSurveyServiceTests
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "geminiuser1", "user1@test.com");
 
-        var options = new GeminiOptions { ApiKey = "", Model = "gemini-2.5-flash" };
+        var options = new GeminiOptions { ApiKey = "", Model = "gemini-3.5-flash-lite" };
         var sut = new GeminiSurveyService(_httpClient, options, _validatorMock.Object, _logger, context);
 
         // Act
@@ -44,13 +44,13 @@ public class GeminiSurveyServiceTests
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "geminiuser2", "user2@test.com");
 
-        var options = new GeminiOptions { ApiKey = "", Model = "gemini-2.5-flash" };
+        var options = new GeminiOptions { ApiKey = "", Model = "gemini-3.5-flash-lite" };
         var sut = new GeminiSurveyService(_httpClient, options, _validatorMock.Object, _logger, context);
 
         var dto = new SaveUserAiConfigRequestDto
         {
             ApiKey = "AIzaSyD-SecretKey1234567890",
-            Model = "gemini-1.5-pro"
+            Model = "gemini-3.5-flash"
         };
 
         // Act
@@ -62,12 +62,12 @@ public class GeminiSurveyServiceTests
         var updatedUser = await context.Users.FindAsync(user.Id);
         updatedUser.Should().NotBeNull();
         updatedUser!.GeminiApiKey.Should().Be("AIzaSyD-SecretKey1234567890");
-        updatedUser.GeminiModel.Should().Be("gemini-1.5-pro");
+        updatedUser.GeminiModel.Should().Be("gemini-3.5-flash");
 
         var config = await sut.GetUserConfigAsync(user.Id);
         config.HasApiKey.Should().BeTrue();
         config.MaskedApiKey.Should().Contain("...");
-        config.Model.Should().Be("gemini-1.5-pro");
+        config.Model.Should().Be("gemini-3.5-flash");
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class GeminiSurveyServiceTests
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "geminiuser3", "user3@test.com");
 
-        var options = new GeminiOptions { ApiKey = "", Model = "gemini-2.5-flash" };
+        var options = new GeminiOptions { ApiKey = "", Model = "gemini-3.5-flash-lite" };
         var sut = new GeminiSurveyService(_httpClient, options, _validatorMock.Object, _logger, context);
 
         var dto = new SaveUserAiConfigRequestDto
@@ -100,7 +100,7 @@ public class GeminiSurveyServiceTests
         using var context = TestDbContextFactory.Create();
         var user = TestDbContextFactory.CreateUser(context, "geminiuser4", "user4@test.com");
 
-        var options = new GeminiOptions { ApiKey = "", Model = "gemini-2.5-flash" };
+        var options = new GeminiOptions { ApiKey = "", Model = "gemini-3.5-flash-lite" };
         var sut = new GeminiSurveyService(_httpClient, options, _validatorMock.Object, _logger, context);
 
         var request = new GenerateSurveyDraftRequestDto
