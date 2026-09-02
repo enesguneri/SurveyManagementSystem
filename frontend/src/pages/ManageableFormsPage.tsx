@@ -108,15 +108,10 @@ export default function ManageableFormsPage() {
 
     const totalItems = forms.length;
     const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
-    const paginatedForms = pageSize === -1 ? forms : forms.slice((page - 1) * pageSize, page * pageSize);
-    const startItem = totalItems === 0 ? 0 : pageSize === -1 ? 1 : (page - 1) * pageSize + 1;
-    const endItem = pageSize === -1 ? totalItems : Math.min(page * pageSize, totalItems);
-
-    useEffect(() => {
-        if (page > totalPages) {
-            setPage(Math.max(1, totalPages));
-        }
-    }, [page, totalPages]);
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const paginatedForms = pageSize === -1 ? forms : forms.slice((safePage - 1) * pageSize, safePage * pageSize);
+    const startItem = totalItems === 0 ? 0 : pageSize === -1 ? 1 : (safePage - 1) * pageSize + 1;
+    const endItem = pageSize === -1 ? totalItems : Math.min(safePage * pageSize, totalItems);
 
     function handleCopyLink(publicId: string, status: ManageableForm["status"]) {
         const url = `${window.location.origin}/forms/${publicId}`;
@@ -716,7 +711,7 @@ export default function ManageableFormsPage() {
                                     {pageSize !== -1 && totalPages > 1 && (
                                         <Pagination
                                             count={totalPages}
-                                            page={page}
+                                            page={safePage}
                                             onChange={(_, newPage) => {
                                                 setPage(newPage);
                                                 window.scrollTo({ top: 0, behavior: "smooth" });
