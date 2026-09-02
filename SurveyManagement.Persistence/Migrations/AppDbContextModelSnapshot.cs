@@ -445,6 +445,14 @@ namespace SurveyManagement.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("GeminiApiKey")
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
+                    b.Property<string>("GeminiModel")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 

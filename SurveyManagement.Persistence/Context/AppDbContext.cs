@@ -59,6 +59,14 @@ public class AppDbContext : DbContext, IAppDbContext
             .WithMany(role => role.UserRoles)
             .HasForeignKey(userRole => userRole.RoleId);
 
+        modelBuilder.Entity<User>()
+            .Property(user => user.GeminiApiKey)
+            .HasMaxLength(250);
+
+        modelBuilder.Entity<User>()
+            .Property(user => user.GeminiModel)
+            .HasMaxLength(100);
+
         // FormRole birleşik anahtarı:
         // aynı form-birim ilişkisi iki kez eklenemez.
         modelBuilder.Entity<FormRole>()
