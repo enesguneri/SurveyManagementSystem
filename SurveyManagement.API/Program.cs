@@ -220,6 +220,22 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// 7. Başlangıç Tohum Verilerini (Seed Data) Otomatik Yükle
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        await DbInitializer.SeedAsync(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Seed verileri yüklenirken bir hata oluştu.");
+    }
+}
+
 app.Run();
 
 public partial class Program { }

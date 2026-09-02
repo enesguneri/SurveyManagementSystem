@@ -335,18 +335,16 @@ public class AppDbContext : DbContext, IAppDbContext
                 Id = 1,
                 Name = "Admin",
                 IsSystemRole = true,
-                CreatedAt = new DateTime(
-                2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true
             },
             new Role
             {
                 Id = 2,
-            Name = "User",
-            IsSystemRole = true,
-            CreatedAt = new DateTime(
-            2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            IsActive = true
+                Name = "User",
+                IsSystemRole = true,
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                IsActive = true
             }
         );
     }
