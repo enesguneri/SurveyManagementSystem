@@ -1,3 +1,4 @@
+using Moq;
 using SurveyManagement.Application.DTOs.Responses;
 using SurveyManagement.Application.Services.Responses;
 using SurveyManagement.Domain.Entities;
@@ -368,5 +369,88 @@ public class FormResponseValidatorTests
 
         // Assert
         errors.Should().Contain("1. soru için tarih 2026-01-01 tarihinden önce olamaz.");
+    }
+
+    // --- Dynamic API Answer Validation Tests ---
+    [Fact]
+    public async Task ValidateAsync_WhenApiDynamicOptionExistsInApiResult_ShouldReturnNoErrors()
+    {
+        // Arrange
+        var optionImportMock = new Moq.Mock<SurveyManagement.Application.Interfaces.Options.IOptionImportService>();
+        optionImportMock
+            .Setup(s => s.PreviewFromUrlAsync(Moq.It.IsAny<SurveyManagement.Application.DTOs.Options.ImportOptionsFromUrlRequestDto>(), Moq.It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SurveyManagement.Application.Common.Models.ApiResponse<SurveyManagement.Application.DTOs.Options.ImportOptionsPreviewDto>.SuccessResult(
+                new SurveyManagement.Application.DTOs.Options.ImportOptionsPreviewDto
+                {
+                    Options = new List<string> { "Michael", "Emily", "Sophia" }
+                }));
+
+        var validator = new FormResponseValidator(optionImportMock.Object);
+
+        var question = new Question
+        {
+            Id = 20,
+            DisplayOrder = 1,
+            Title = "API Sorusu",
+            Type = QuestionType.SingleChoice,
+            OptionSourceType = DynamicOptionSourceType.Api,
+            OptionSourceUrl = "https://dummyjson.com/users",
+            IsRequired = true
+        };
+        var form = CreateTestFormWithQuestion(question);
+        var submitDto = new SubmitFormResponseDto
+        {
+            Answers = new List<SubmitAnswerDto>
+            {
+                new() { QuestionId = 20, SelectedOptionTexts = new List<string> { "Emily" } }
+            }
+        };
+
+        // Act
+        var errors = await validator.ValidateAsync(form, submitDto);
+
+        // Assert
+        errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WhenApiDynamicOptionNotInApiResult_ShouldReturnError()
+    {
+        // Arrange
+        var optionImportMock = new Moq.Mock<SurveyManagement.Application.Interfaces.Options.IOptionImportService>();
+        optionImportMock
+            .Setup(s => s.PreviewFromUrlAsync(Moq.It.IsAny<SurveyManagement.Application.DTOs.Options.ImportOptionsFromUrlRequestDto>(), Moq.It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SurveyManagement.Application.Common.Models.ApiResponse<SurveyManagement.Application.DTOs.Options.ImportOptionsPreviewDto>.SuccessResult(
+                new SurveyManagement.Application.DTOs.Options.ImportOptionsPreviewDto
+                {
+                    Options = new List<string> { "Michael", "Emily", "Sophia" }
+                }));
+
+        var validator = new FormResponseValidator(optionImportMock.Object);
+
+        var question = new Question
+        {
+            Id = 20,
+            DisplayOrder = 1,
+            Title = "API Sorusu",
+            Type = QuestionType.SingleChoice,
+            OptionSourceType = DynamicOptionSourceType.Api,
+            OptionSourceUrl = "https://dummyjson.com/users",
+            IsRequired = true
+        };
+        var form = CreateTestFormWithQuestion(question);
+        var submitDto = new SubmitFormResponseDto
+        {
+            Answers = new List<SubmitAnswerDto>
+            {
+                new() { QuestionId = 20, SelectedOptionTexts = new List<string> { "HackerOption" } }
+            }
+        };
+
+        // Act
+        var errors = await validator.ValidateAsync(form, submitDto);
+
+        // Assert
+        errors.Should().Contain(e => e.Contains("HackerOption") && e.Contains("harici API kaynağında bulunamadı"));
     }
 }

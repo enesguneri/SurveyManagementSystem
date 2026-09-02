@@ -2,6 +2,8 @@ import {
     Alert,
     Box,
     Button,
+    Card,
+    Chip,
     Collapse,
     IconButton,
     Stack,
@@ -28,20 +30,34 @@ export default function QuestionTypeEditor({
                                                question,
                                                onChange,
                                            }: QuestionTypeEditorProps) {
-    const [optionApiUrl, setOptionApiUrl] = useState("");
-    const [optionJsonPath, setOptionJsonPath] = useState("");
-    const [optionTextProperty, setOptionTextProperty] =
-        useState("text");
+    const [optionApiUrl, setOptionApiUrl] = useState(
+        question.optionSourceUrl ?? ""
+    );
+    const [optionJsonPath, setOptionJsonPath] = useState(
+        question.optionJsonPath ?? ""
+    );
+    const [optionTextProperty, setOptionTextProperty] = useState(
+        question.optionTextProperty ?? "text"
+    );
 
     const [isUrlImporting, setIsUrlImporting] =
         useState(false);
     const [urlImportError, setUrlImportError] = useState("");
-    const [urlImportInfo, setUrlImportInfo] = useState("");
     const optionFileInputRef =
         useRef<HTMLInputElement>(null);
 
     const [importError, setImportError] = useState("");
     const [isImporting, setIsImporting] = useState(false);
+
+    const [apiTestResult, setApiTestResult] = useState<{
+        totalCount: number;
+        sampleOptions: string[];
+    } | null>(null);
+
+    const [txtTestResult, setTxtTestResult] = useState<{
+        totalCount: number;
+        sampleOptions: string[];
+    } | null>(null);
 
     const [isApiImportOpen, setIsApiImportOpen] =
         useState(false);
@@ -65,9 +81,14 @@ export default function QuestionTypeEditor({
             const result = parseOptionFile(file.name, content);
 
             onChange({
-                options: result.options,
+                options: [], // Veritabanına önceden eklenmez; katılımcı seçtikçe kaydedilir
                 optionSourceType: "Txt",
                 optionFileContent: content,
+            });
+
+            setTxtTestResult({
+                totalCount: result.options.length,
+                sampleOptions: result.options.slice(0, 20),
             });
         } catch (error) {
             setImportError(
@@ -81,7 +102,6 @@ export default function QuestionTypeEditor({
     }
     async function handleOptionUrlImport() {
         setUrlImportError("");
-        setUrlImportInfo("");
 
         if (!optionApiUrl.trim()) {
             setUrlImportError(
@@ -110,24 +130,20 @@ export default function QuestionTypeEditor({
             }
 
             onChange({
-                options: response.data.options,
+                options: [], // Veritabanına önceden eklenmez; katılımcı seçtikçe kaydedilir
                 optionSourceType: "Api",
                 optionSourceUrl: optionApiUrl.trim(),
                 optionJsonPath: optionJsonPath.trim() || null,
                 optionTextProperty: optionTextProperty.trim() || "text",
             });
 
-            const skippedMessage =
-                response.data.skippedCount > 0
-                    ? ` ${response.data.skippedCount} kayıt atlandı.`
-                    : "";
-
-            setUrlImportInfo(
-                `${response.data.options.length} seçenek aktarıldı.${skippedMessage}`,
-            );
+            setApiTestResult({
+                totalCount: response.data.options.length,
+                sampleOptions: response.data.options.slice(0, 20),
+            });
         } catch {
             setUrlImportError(
-                "API bağlantısı kurulamadı.",
+                "API bağlantısı kurulamadı. URL ve CORS ayarlarını kontrol edin.",
             );
         } finally {
             setIsUrlImporting(false);
@@ -197,7 +213,6 @@ export default function QuestionTypeEditor({
                                 (currentValue) => !currentValue,
                             );
                             setUrlImportError("");
-                            setUrlImportInfo("");
                         }}
                     >
                         {isApiImportOpen
@@ -280,8 +295,8 @@ export default function QuestionTypeEditor({
                             disabled={isUrlImporting}
                         >
                             {isUrlImporting
-                                ? "API okunuyor..."
-                                : "Seçenekleri getir"}
+                                ? "Bağlantı test ediliyor..."
+                                : "Bağlantıyı Test Et"}
                         </Button>
 
                         {urlImportError && (
@@ -290,69 +305,282 @@ export default function QuestionTypeEditor({
                             </Alert>
                         )}
 
-                        {urlImportInfo && (
-                            <Alert severity="success">
-                                {urlImportInfo}
-                            </Alert>
+                        {apiTestResult && (
+                            <Stack
+                                spacing={1}
+                                sx={{
+                                    p: 1.5,
+                                    borderRadius: 1.5,
+                                    bgcolor: "success.50",
+                                    border: "1px solid",
+                                    borderColor: "success.200",
+                                }}
+                            >
+                                <Typography
+                                    variant="body2"
+                                    sx={{ fontWeight: 600, color: "success.dark" }}
+                                >
+                                    ✅ Bağlantı başarılı! Toplam {apiTestResult.totalCount} sonuç bulundu.
+                                </Typography>
+                                <Typography
+                                    variant="caption"
+                                    sx={{ fontWeight: 600, color: "text.secondary" }}
+                                >
+                                    İlk {Math.min(apiTestResult.totalCount, 20)} örnek seçenek:
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        flexWrap: "wrap",
+                                        gap: 0.5,
+                                        maxHeight: 120,
+                                        overflowY: "auto",
+                                    }}
+                                >
+                                    {apiTestResult.sampleOptions.map((sample, idx) => (
+                                        <Chip
+                                            key={idx}
+                                            label={sample}
+                                            size="small"
+                                            variant="outlined"
+                                            color="success"
+                                        />
+                                    ))}
+                                </Box>
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        color: "text.secondary",
+                                        fontStyle: "italic",
+                                        mt: 0.5,
+                                    }}
+                                >
+                                    ℹ️ Bilgi: Seçenekler veritabanına önceden eklenmez. Anket yanıtlanırken API'den dinamik çekilecek ve yalnızca katılımcıların işaretlediği seçenekler veritabanında saklanacaktır.
+                                </Typography>
+                            </Stack>
                         )}
                     </Stack>
                 </Collapse>
 
-                {question.options.length > 0 && (
-                    <Box
+                {txtTestResult && (
+                    <Stack
+                        spacing={1}
                         sx={{
-                            maxHeight: 320,
-                            overflowY: "auto",
-                            pr: 1,
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 1.5,
+                            p: 1.5,
+                            borderRadius: 1.5,
+                            bgcolor: "success.50",
+                            border: "1px solid",
+                            borderColor: "success.200",
                         }}
                     >
-                        {question.options.map((option, index) => (
-                            <Stack
-                                key={index}
-                                direction="row"
-                                spacing={1}
-                                sx={{ alignItems: "center" }}
-                            >
-                                <TextField
-                                    label={`${index + 1}. seçenek`}
-                                    value={option}
-                                    onChange={(event) =>
-                                        updateOption(index, event.target.value)
-                                    }
-                                    fullWidth
+                        <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 600, color: "success.dark" }}
+                        >
+                            ✅ TXT dosyası doğrulandı! Toplam {txtTestResult.totalCount} satır tespit edildi.
+                        </Typography>
+                        <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 600, color: "text.secondary" }}
+                        >
+                            İlk {Math.min(txtTestResult.totalCount, 20)} örnek seçenek:
+                        </Typography>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                                maxHeight: 120,
+                                overflowY: "auto",
+                            }}
+                        >
+                            {txtTestResult.sampleOptions.map((sample, idx) => (
+                                <Chip
+                                    key={idx}
+                                    label={sample}
+                                    size="small"
+                                    variant="outlined"
+                                    color="success"
                                 />
-
-                                <IconButton
-                                    color="error"
-                                    onClick={() =>
-                                        onChange({
-                                            options: question.options.filter(
-                                                (_, optionIndex) => optionIndex !== index,
-                                            ),
-                                        })
-                                    }
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Stack>
-                        ))}
-                    </Box>
+                            ))}
+                        </Box>
+                        <Typography
+                            variant="caption"
+                            sx={{
+                                color: "text.secondary",
+                                fontStyle: "italic",
+                                mt: 0.5,
+                            }}
+                        >
+                            ℹ️ Bilgi: Seçenekler veritabanına önceden eklenmez. Katılımcılar formu doldururken sunulacak ve yalnızca katılımcıların işaretlediği seçenekler veritabanında saklanacaktır.
+                        </Typography>
+                    </Stack>
                 )}
 
-                <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={() =>
-                        onChange({
-                            options: [...question.options, ""],
-                        })
-                    }
-                >
-                    Seçenek Ekle
-                </Button>
+                {question.optionSourceType === "Api" ? (
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            p: 2,
+                            bgcolor: "info.50",
+                            borderColor: "info.200",
+                            borderRadius: 2,
+                        }}
+                    >
+                        <Stack spacing={1}>
+                            <Stack
+                                direction="row"
+                                sx={{
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                }}
+                            >
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{ fontWeight: 700, color: "info.dark" }}
+                                >
+                                    🌐 Harici API Seçenek Kaynağı Aktif
+                                </Typography>
+                                <Button
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    onClick={() => {
+                                        onChange({
+                                            optionSourceType: "None",
+                                            optionSourceUrl: null,
+                                            optionJsonPath: null,
+                                            optionTextProperty: null,
+                                            options: ["", ""],
+                                        });
+                                        setApiTestResult(null);
+                                    }}
+                                >
+                                    Manuel Seçeneklere Dön
+                                </Button>
+                            </Stack>
+                            <Typography variant="body2" sx={{ wordBreak: "break-all" }}>
+                                <strong>API URL:</strong> {question.optionSourceUrl}
+                            </Typography>
+                            {question.optionJsonPath && (
+                                <Typography variant="body2">
+                                    <strong>JSON Yolu:</strong> {question.optionJsonPath}
+                                </Typography>
+                            )}
+                            {question.optionTextProperty && (
+                                <Typography variant="body2">
+                                    <strong>Seçenek Alanı:</strong> {question.optionTextProperty}
+                                </Typography>
+                            )}
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                Katılımcı anket doldururken seçenekler bu adresten dinamik çekilecek ve veritabanına yalnızca işaretlenen seçenekler eklenecektir.
+                            </Typography>
+                        </Stack>
+                    </Card>
+                ) : question.optionSourceType === "Txt" ? (
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            p: 2,
+                            bgcolor: "info.50",
+                            borderColor: "info.200",
+                            borderRadius: 2,
+                        }}
+                    >
+                        <Stack spacing={1}>
+                            <Stack
+                                direction="row"
+                                sx={{
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                }}
+                            >
+                                <Typography
+                                    variant="subtitle2"
+                                    sx={{ fontWeight: 700, color: "info.dark" }}
+                                >
+                                    📄 Dinamik TXT Seçenek Kaynağı Aktif
+                                </Typography>
+                                <Button
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    onClick={() => {
+                                        onChange({
+                                            optionSourceType: "None",
+                                            optionFileContent: null,
+                                            options: ["", ""],
+                                        });
+                                        setTxtTestResult(null);
+                                    }}
+                                >
+                                    Manuel Seçeneklere Dön
+                                </Button>
+                            </Stack>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                Katılımcı anket doldururken seçenekler bu dosyadan dinamik sunulacak ve veritabanına yalnızca işaretlenen seçenekler eklenecektir.
+                            </Typography>
+                        </Stack>
+                    </Card>
+                ) : (
+                    <>
+                        {question.options.length > 0 && (
+                            <Box
+                                sx={{
+                                    maxHeight: 320,
+                                    overflowY: "auto",
+                                    pr: 1,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 1.5,
+                                }}
+                            >
+                                {question.options.map((option, index) => (
+                                    <Stack
+                                        key={index}
+                                        direction="row"
+                                        spacing={1}
+                                        sx={{ alignItems: "center" }}
+                                    >
+                                        <TextField
+                                            label={`${index + 1}. seçenek`}
+                                            value={option}
+                                            onChange={(event) =>
+                                                updateOption(index, event.target.value)
+                                            }
+                                            fullWidth
+                                        />
+
+                                        <IconButton
+                                            color="error"
+                                            onClick={() =>
+                                                onChange({
+                                                    options: question.options.filter(
+                                                        (_, optionIndex) => optionIndex !== index,
+                                                    ),
+                                                })
+                                            }
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Stack>
+                                ))}
+                            </Box>
+                        )}
+
+                        <Button
+                            variant="outlined"
+                            startIcon={<AddIcon />}
+                            onClick={() =>
+                                onChange({
+                                    options: [...question.options, ""],
+                                })
+                            }
+                        >
+                            Seçenek Ekle
+                        </Button>
+                    </>
+                )}
             </Stack>
         );
     }

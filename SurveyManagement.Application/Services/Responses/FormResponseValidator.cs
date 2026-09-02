@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
+using SurveyManagement.Application.DTOs.Options;
 using SurveyManagement.Application.DTOs.Responses;
+using SurveyManagement.Application.Interfaces.Options;
 using SurveyManagement.Application.Interfaces.Responses;
 using SurveyManagement.Domain.Entities;
 using SurveyManagement.Domain.Enums;
@@ -8,9 +10,24 @@ namespace SurveyManagement.Application.Services.Responses;
 
 public class FormResponseValidator : IFormResponseValidator
 {
+    private readonly IOptionImportService? _optionImportService;
+
+    public FormResponseValidator(IOptionImportService? optionImportService = null)
+    {
+        _optionImportService = optionImportService;
+    }
+
     public List<string> Validate(
         Form form,
         SubmitFormResponseDto submitDto)
+    {
+        return ValidateAsync(form, submitDto, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    public async Task<List<string>> ValidateAsync(
+        Form form,
+        SubmitFormResponseDto submitDto,
+        CancellationToken cancellationToken = default)
     {
         var errors = new List<string>();
         var answers = submitDto.Answers ?? new List<SubmitAnswerDto>();
@@ -54,16 +71,17 @@ public class FormResponseValidator : IFormResponseValidator
                 continue;
             }
 
-            ValidateQuestionAnswer(question, answer, errors);
+            await ValidateQuestionAnswerAsync(question, answer, errors, cancellationToken);
         }
 
         return errors;
     }
 
-    private static void ValidateQuestionAnswer(
+    private async Task ValidateQuestionAnswerAsync(
         Question question,
         SubmitAnswerDto answer,
-        List<string> errors)
+        List<string> errors,
+        CancellationToken cancellationToken)
     {
         var prefix = $"{question.DisplayOrder}. soru";
 
@@ -85,13 +103,162 @@ public class FormResponseValidator : IFormResponseValidator
             case QuestionType.SingleChoice:
             case QuestionType.Dropdown:
             case QuestionType.MultipleChoice:
-                ValidateChoiceAnswer(question, answer, prefix, errors);
+                await ValidateChoiceAnswerAsync(question, answer, prefix, errors, cancellationToken);
                 break;
 
             case QuestionType.MultipleChoiceGrid:
             case QuestionType.CheckboxGrid:
                 ValidateGridAnswer(question, answer, prefix, errors);
                 break;
+        }
+    }
+
+    private async Task ValidateChoiceAnswerAsync(
+        Question question,
+        SubmitAnswerDto answer,
+        string prefix,
+        List<string> errors,
+        CancellationToken cancellationToken)
+    {
+        var selectedIds = answer.SelectedOptionIds ?? new List<int>();
+        var selectedTexts = new List<string>();
+
+        if (answer.SelectedOptionTexts != null && answer.SelectedOptionTexts.Count > 0)
+        {
+            selectedTexts.AddRange(answer.SelectedOptionTexts
+                .Where(text => !string.IsNullOrWhiteSpace(text))
+                .Select(text => text.Trim()));
+        }
+        else if (!string.IsNullOrWhiteSpace(answer.TextValue))
+        {
+            selectedTexts.Add(answer.TextValue.Trim());
+        }
+
+        var isSingleSelection = question.Type == QuestionType.SingleChoice || question.Type == QuestionType.Dropdown;
+
+        if (selectedIds.Count == 0 && selectedTexts.Count == 0)
+        {
+            if (question.IsRequired)
+            {
+                errors.Add($"{prefix} için en az bir seçenek seçilmelidir.");
+            }
+
+            return;
+        }
+
+        if (isSingleSelection && (selectedIds.Count > 1 || selectedTexts.Count > 1))
+        {
+            errors.Add($"{prefix} yalnızca bir seçenek kabul eder.");
+            return;
+        }
+
+        // 🌐 Harici API Dinamik Seçenek Kontrolü
+        if (question.OptionSourceType == DynamicOptionSourceType.Api &&
+            !string.IsNullOrWhiteSpace(question.OptionSourceUrl))
+        {
+            if (_optionImportService is not null)
+            {
+                var apiResult = await _optionImportService.PreviewFromUrlAsync(
+                    new ImportOptionsFromUrlRequestDto
+                    {
+                        Url = question.OptionSourceUrl,
+                        JsonPath = question.OptionJsonPath ?? string.Empty,
+                        TextProperty = question.OptionTextProperty ?? "text"
+                    },
+                    cancellationToken);
+
+                if (!apiResult.IsSuccess || apiResult.Data?.Options is null)
+                {
+                    errors.Add($"{prefix} için harici API seçenekleri doğrulanamadı.");
+                    return;
+                }
+
+                var validApiOptions = apiResult.Data.Options;
+
+                // ID gönderilmişse ve metin yoksa indeksten metne çevir
+                if (selectedTexts.Count == 0 && selectedIds.Count > 0)
+                {
+                    foreach (var id in selectedIds)
+                    {
+                        if (id >= 1 && id <= validApiOptions.Count)
+                        {
+                            selectedTexts.Add(validApiOptions[id - 1]);
+                        }
+                        else
+                        {
+                            errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
+                            return;
+                        }
+                    }
+                }
+
+                foreach (var selectedText in selectedTexts)
+                {
+                    if (!validApiOptions.Contains(selectedText, StringComparer.OrdinalIgnoreCase))
+                    {
+                        errors.Add($"{prefix} için seçilen '{selectedText}' seçeneği harici API kaynağında bulunamadı.");
+                    }
+                }
+            }
+
+            return;
+        }
+
+        // 📄 TXT Dosyası Dinamik Seçenek Kontrolü
+        if (question.OptionSourceType == DynamicOptionSourceType.Txt &&
+            !string.IsNullOrWhiteSpace(question.OptionFileContent))
+        {
+            var validLines = question.OptionFileContent
+                .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Distinct()
+                .Take(500)
+                .ToList();
+
+            if (selectedTexts.Count == 0 && selectedIds.Count > 0)
+            {
+                foreach (var id in selectedIds)
+                {
+                    if (id >= 1 && id <= validLines.Count)
+                    {
+                        selectedTexts.Add(validLines[id - 1]);
+                    }
+                    else
+                    {
+                        errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
+                        return;
+                    }
+                }
+            }
+
+            foreach (var selectedText in selectedTexts)
+            {
+                if (!validLines.Contains(selectedText, StringComparer.OrdinalIgnoreCase))
+                {
+                    errors.Add($"{prefix} için seçilen '{selectedText}' seçeneği geçerli bir seçenek değil.");
+                }
+            }
+
+            return;
+        }
+
+        // Standart Veritabanı Seçenekleri Kontrolü
+        if (question.Options.Count > 0)
+        {
+            if (selectedIds.Distinct().Count() != selectedIds.Count)
+            {
+                errors.Add($"{prefix} aynı seçenek birden fazla gönderilemez.");
+            }
+
+            var validOptionIds = question.Options
+                .Select(option => option.Id)
+                .ToHashSet();
+
+            if (selectedIds.Any(id => !validOptionIds.Contains(id)))
+            {
+                errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
+            }
         }
     }
 
@@ -237,74 +404,6 @@ public class FormResponseValidator : IFormResponseValidator
         }
     }
 
-    private static void ValidateChoiceAnswer(
-        Question question,
-        SubmitAnswerDto answer,
-        string prefix,
-        List<string> errors)
-    {
-        var selectedIds = answer.SelectedOptionIds ?? new List<int>();
-        var hasTextValue = !string.IsNullOrWhiteSpace(answer.TextValue);
-
-        if (selectedIds.Count == 0 && !hasTextValue)
-        {
-            if (question.IsRequired)
-            {
-                errors.Add($"{prefix} için en az bir seçenek seçilmelidir.");
-            }
-
-            return;
-        }
-
-        if (question.OptionSourceType == DynamicOptionSourceType.Txt &&
-            !string.IsNullOrWhiteSpace(question.OptionFileContent))
-        {
-            var validLines = question.OptionFileContent
-                .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(line => line.Trim())
-                .Where(line => !string.IsNullOrWhiteSpace(line))
-                .Distinct()
-                .Take(500)
-                .ToList();
-
-            if (selectedIds.Count > 0)
-            {
-                if (selectedIds.Any(id => id < 1 || id > validLines.Count))
-                {
-                    errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
-                }
-            }
-            else if (hasTextValue && !validLines.Contains(answer.TextValue!.Trim()))
-            {
-                errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
-            }
-            return;
-        }
-
-        if (question.Options.Count > 0)
-        {
-            if (selectedIds.Distinct().Count() != selectedIds.Count)
-            {
-                errors.Add($"{prefix} aynı seçenek birden fazla gönderilemez.");
-            }
-
-            var validOptionIds = question.Options
-                .Select(option => option.Id)
-                .ToHashSet();
-
-            if (selectedIds.Any(id => !validOptionIds.Contains(id)))
-            {
-                errors.Add($"{prefix} geçersiz bir seçenek içeriyor.");
-            }
-
-            if ((question.Type == QuestionType.SingleChoice ||
-                question.Type == QuestionType.Dropdown) &&
-                selectedIds.Count != 1)
-            {
-                errors.Add($"{prefix} yalnızca bir seçenek kabul eder.");
-            }
-        }
-    }
 
     private static void ValidateGridAnswer(
         Question question,

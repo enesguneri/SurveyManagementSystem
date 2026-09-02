@@ -12,6 +12,7 @@ export interface SubmitAnswerRequest {
     numericValue: number | null;
     dateValue: string | null;
     selectedOptionIds: number[];
+    selectedOptionTexts?: string[];
     matrixSelections: SubmitMatrixCellRequest[];
 }
 

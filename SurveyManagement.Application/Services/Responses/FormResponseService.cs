@@ -92,7 +92,7 @@ public class FormResponseService : IFormResponseService
         }
 
         // Formdaki tüm cevaplar soru kurallarına göre doğrulanır.
-        var validationErrors = _validator.Validate(form, submitDto);
+        var validationErrors = await _validator.ValidateAsync(form, submitDto, cancellationToken);
 
         if (validationErrors.Count > 0)
         {
@@ -435,7 +435,9 @@ public class FormResponseService : IFormResponseService
                 answer.NumericValue.HasValue,
 
             QuestionType.SingleChoice or QuestionType.Dropdown or QuestionType.MultipleChoice =>
-                answer.SelectedOptionIds.Count > 0,
+                answer.SelectedOptionIds.Count > 0 ||
+                (answer.SelectedOptionTexts != null && answer.SelectedOptionTexts.Count > 0) ||
+                !string.IsNullOrWhiteSpace(answer.TextValue),
 
             QuestionType.MultipleChoiceGrid or QuestionType.CheckboxGrid =>
                 answer.MatrixSelections.Count > 0,
@@ -449,6 +451,87 @@ public class FormResponseService : IFormResponseService
         Question question,
         SubmitAnswerDto answerDto)
     {
+        // 🌐 / 📄 Dinamik Seçenek Kaynağı (API veya TXT)
+        // Katılımcılar seçenekleri işaretledikçe veritabanına eklenir. Hiç seçilmeyen seçenekler veritabanına kaydedilmez.
+        if (question.OptionSourceType != DynamicOptionSourceType.None)
+        {
+            var selectedTexts = new List<string>();
+
+            if (answerDto.SelectedOptionTexts != null && answerDto.SelectedOptionTexts.Count > 0)
+            {
+                selectedTexts.AddRange(answerDto.SelectedOptionTexts
+                    .Where(text => !string.IsNullOrWhiteSpace(text))
+                    .Select(text => text.Trim()));
+            }
+            else if (!string.IsNullOrWhiteSpace(answerDto.TextValue))
+            {
+                selectedTexts.Add(answerDto.TextValue.Trim());
+            }
+
+            // TXT kaynağından gelip ID olarak gönderilmişse satırlardan metni çöz
+            if (selectedTexts.Count == 0 &&
+                question.OptionSourceType == DynamicOptionSourceType.Txt &&
+                !string.IsNullOrWhiteSpace(question.OptionFileContent) &&
+                answerDto.SelectedOptionIds.Count > 0)
+            {
+                var validLines = question.OptionFileContent
+                    .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => line.Trim())
+                    .Where(line => !string.IsNullOrWhiteSpace(line))
+                    .Distinct()
+                    .Take(500)
+                    .ToList();
+
+                foreach (var id in answerDto.SelectedOptionIds)
+                {
+                    if (id >= 1 && id <= validLines.Count)
+                    {
+                        selectedTexts.Add(validLines[id - 1]);
+                    }
+                }
+            }
+
+            // Eğer daha önce veritabanına eklenmiş bir QuestionOption Id'si ile eşleşiyorsa metnini al
+            var existingOptionIds = answerDto.SelectedOptionIds.ToHashSet();
+            foreach (var opt in question.Options.Where(o => existingOptionIds.Contains(o.Id)))
+            {
+                if (!selectedTexts.Contains(opt.Text, StringComparer.OrdinalIgnoreCase))
+                {
+                    selectedTexts.Add(opt.Text);
+                }
+            }
+
+            // Seçilen her metin için: Veritabanında (question.Options) varsa mevcut kaydı kullan,
+            // yoksa yalnızca seçilen bu metin için yeni bir QuestionOption oluştur!
+            foreach (var selectedText in selectedTexts.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var existingOption = question.Options
+                    .FirstOrDefault(o => string.Equals(o.Text.Trim(), selectedText, StringComparison.OrdinalIgnoreCase));
+
+                if (existingOption is null)
+                {
+                    existingOption = new QuestionOption
+                    {
+                        Question = question,
+                        QuestionId = question.Id,
+                        Text = selectedText,
+                        DisplayOrder = question.Options.Count + 1,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    question.Options.Add(existingOption);
+                }
+
+                responseAnswer.SelectedOptions.Add(
+                    new ResponseAnswerOption
+                    {
+                        QuestionOption = existingOption
+                    });
+            }
+
+            return;
+        }
+
+        // Standart Statik Seçenekler
         var selectedOptionIds = answerDto.SelectedOptionIds
             .Distinct()
             .ToHashSet();
