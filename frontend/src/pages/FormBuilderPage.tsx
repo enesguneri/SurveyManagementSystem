@@ -58,6 +58,7 @@ import {
     ShortText,
     StarBorder,
     Subject,
+    Visibility,
 } from "@mui/icons-material";
 import {
     ListItemIcon,
@@ -895,6 +896,17 @@ export default function FormBuilderPage() {
 
                                         <Button
                                             component={RouterLink}
+                                            to={`/forms/${createdForm.publicId}?preview=true`}
+                                            target="_blank"
+                                            variant="outlined"
+                                            color="info"
+                                            startIcon={<Visibility />}
+                                        >
+                                            Anketi Önizle
+                                        </Button>
+
+                                        <Button
+                                            component={RouterLink}
                                             to="/"
                                             variant="text"
                                         >
@@ -910,18 +922,34 @@ export default function FormBuilderPage() {
                         <Alert severity="error">{errorMessage}</Alert>
                     )}
 
-                    <Button
-                        variant="contained"
-                        size="large"
-                        onClick={handleSave}
-                        disabled={
-                            isSaving ||
-                            (!isEditMode && Boolean(createdForm)) ||
-                            !formDraft.title.trim()
-                        }
-                    >
-                        {isSaving ? "Kaydediliyor..." : "Anketi Kaydet"}
-                    </Button>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={handleSave}
+                            disabled={
+                                isSaving ||
+                                (!isEditMode && Boolean(createdForm)) ||
+                                !formDraft.title.trim()
+                            }
+                        >
+                            {isSaving ? "Kaydediliyor..." : "Anketi Kaydet"}
+                        </Button>
+
+                        {isEditMode && publicId && (
+                            <Button
+                                component={RouterLink}
+                                to={`/forms/${publicId}?preview=true`}
+                                target="_blank"
+                                variant="outlined"
+                                color="info"
+                                size="large"
+                                startIcon={<Visibility />}
+                            >
+                                Önizle
+                            </Button>
+                        )}
+                    </Stack>
                 </Stack>
             </Container>
         </Box>

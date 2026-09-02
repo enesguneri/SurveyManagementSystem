@@ -434,17 +434,17 @@ public class FormService : IFormService
                 404);
         }
 
-        // Kapatılmış anketlerde anket yöneticisine önizleme izni verilir.
+        // Form yayında değilse (Taslak veya Kapalı), yalnızca yetkili kullanıcıya önizleme izni verilir.
         if (form.Status != FormStatus.Published)
         {
-            if (form.Status == FormStatus.Closed && requesterUserId.HasValue)
+            if (requesterUserId.HasValue)
             {
-                var canManageForm = await _formAuthorizationService.CanManageFormAsync(
+                var canManage = await _formAuthorizationService.CanManageFormAsync(
                     form,
                     requesterUserId.Value,
                     cancellationToken);
 
-                if (canManageForm)
+                if (canManage)
                 {
                     var previewDto = new FormDetailsDto
                     {
@@ -459,7 +459,9 @@ public class FormService : IFormService
                             .ToList(),
                         ShowRespondentIdentity = form.ShowRespondentIdentity,
                         HasCurrentUserResponded = false,
-                        IsClosedPreview = true
+                        IsPreview = true,
+                        IsClosedPreview = form.Status == FormStatus.Closed,
+                        CanManage = true
                     };
 
                     return ApiResponse<FormDetailsDto>.SuccessResult(previewDto);
@@ -479,6 +481,11 @@ public class FormService : IFormService
                 "Bu formu görüntülemek için giriş yapmalısınız.",
                 401);
         }
+
+        var canManagePublishedForm = requesterUserId.HasValue && await _formAuthorizationService.CanManageFormAsync(
+            form,
+            requesterUserId.Value,
+            cancellationToken);
 
         var hasCurrentUserResponded = requesterUserId.HasValue && await _context.FormResponses
             .AsNoTracking()
@@ -501,7 +508,9 @@ public class FormService : IFormService
                 .ToList(),
             ShowRespondentIdentity = form.ShowRespondentIdentity,
             HasCurrentUserResponded = hasCurrentUserResponded,
-            IsClosedPreview = false
+            IsClosedPreview = false,
+            IsPreview = false,
+            CanManage = canManagePublishedForm
         };
 
         return ApiResponse<FormDetailsDto>.SuccessResult(responseDto);

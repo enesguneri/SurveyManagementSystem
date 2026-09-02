@@ -11,6 +11,8 @@ export interface PublishedForm {
     questions: PublishedQuestion[];
     hasCurrentUserResponded: boolean;
     isClosedPreview?: boolean;
+    isPreview?: boolean;
+    canManage?: boolean;
 }
 
 // Form içindeki tek bir sorunun detay modeli.

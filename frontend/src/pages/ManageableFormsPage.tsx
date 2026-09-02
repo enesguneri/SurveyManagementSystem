@@ -14,9 +14,12 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
+    Snackbar,
     Stack,
     Typography,
 } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
     closeForm,
     deleteForm,
@@ -80,6 +83,22 @@ export default function ManageableFormsPage() {
     const [formToClose, setFormToClose] = useState<ManageableForm | null>(null);
     const [formToDelete, setFormToDelete] = useState<ManageableForm | null>(null);
     const [formToReopen, setFormToReopen] = useState<ManageableForm | null>(null);
+
+    // Kopyalama bildirimi state'leri
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
+
+    function handleCopyLink(publicId: string, status: ManageableForm["status"]) {
+        const url = `${window.location.origin}/forms/${publicId}`;
+        void navigator.clipboard.writeText(url).then(() => {
+            if (status === "Published") {
+                setSnackbarMessage("Anket katılım bağlantısı panoya kopyalandı!");
+            } else {
+                setSnackbarMessage("Anket bağlantısı panoya kopyalandı (Bilgi: Anket şu anda yayında değildir).");
+            }
+            setIsSnackbarOpen(true);
+        });
+    }
 
     function handleLogout() {
         logout();
@@ -452,17 +471,26 @@ export default function ManageableFormsPage() {
                                                 </Button>
                                             )}
 
-                                            {/* Anketi Görüntüle: Yayında ve Kapalı anketler için */}
-                                            {(form.status === "Published" || form.status === "Closed") && (
-                                                <Button
-                                                    component={RouterLink}
-                                                    to={`/forms/${form.publicId}`}
-                                                    variant="outlined"
-                                                    color="primary"
-                                                >
-                                                    Anketi Görüntüle
-                                                </Button>
-                                            )}
+                                            {/* 👁️ Önizle: Taslak, Yayında ve Kapalı tüm durumlarda aktif */}
+                                            <Button
+                                                component={RouterLink}
+                                                to={`/forms/${form.publicId}?preview=true`}
+                                                variant="outlined"
+                                                color="info"
+                                                startIcon={<VisibilityIcon />}
+                                            >
+                                                Önizle
+                                            </Button>
+
+                                            {/* 🔗 Bağlantıyı Kopyala Butonu */}
+                                            <Button
+                                                variant="outlined"
+                                                color="secondary"
+                                                startIcon={<ContentCopyIcon />}
+                                                onClick={() => handleCopyLink(form.publicId, form.status)}
+                                            >
+                                                Bağlantıyı Kopyala
+                                            </Button>
 
                                             {form.status === "Published" && (
                                                 <Button
@@ -555,6 +583,15 @@ export default function ManageableFormsPage() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Bağlantı kopyalama bildirimi */}
+            <Snackbar
+                open={isSnackbarOpen}
+                autoHideDuration={3500}
+                onClose={() => setIsSnackbarOpen(false)}
+                message={snackbarMessage}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            />
         </Box>
     );
 }
