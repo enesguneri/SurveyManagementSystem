@@ -21,18 +21,23 @@ import {
     FormControl,
     FormControlLabel,
     FormHelperText,
+    IconButton,
     InputLabel,
     MenuItem,
     Select,
     Stack,
     Switch,
     TextField,
+    Tooltip,
     Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import UndoIcon from "@mui/icons-material/Undo";
+import RedoIcon from "@mui/icons-material/Redo";
+import { useFormHistory } from "../hooks/useFormHistory";
 import {
     createEmptyQuestion,
     type FormAccessType,
@@ -259,19 +264,26 @@ export default function FormBuilderPage() {
 
     const isEditMode = Boolean(publicId);
 
-    const [formDraft, setFormDraft] =
-        useState<FormDraft>(() =>
-            initialAiDraft
-                ? mapAiDraftToFormDraft(initialAiDraft)
-                : {
-                    title: "",
-                    description: "",
-                    accessType: "Authenticated",
-                    showRespondentIdentity: false,
-                    roleIds: [],
-                    questions: [createEmptyQuestion()],
-                },
-        );
+    const {
+        formDraft,
+        setFormDraft,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        resetHistory,
+    } = useFormHistory(() =>
+        initialAiDraft
+            ? mapAiDraftToFormDraft(initialAiDraft)
+            : {
+                title: "",
+                description: "",
+                accessType: "Authenticated",
+                showRespondentIdentity: false,
+                roleIds: [],
+                questions: [createEmptyQuestion()],
+            }
+    );
 
     const [isLoadingForm, setIsLoadingForm] =
         useState(isEditMode);
@@ -336,7 +348,7 @@ export default function FormBuilderPage() {
                     return;
                 }
 
-                setFormDraft(
+                resetHistory(
                     mapManageableFormToDraft(response.data),
                 );
             } catch (error) {
@@ -349,7 +361,33 @@ export default function FormBuilderPage() {
         }
 
         void loadManageableForm();
-    }, [publicId]);
+    }, [publicId, resetHistory]);
+
+    // ⌨️ Google Forms Tarzı Geri/İleri Alma Klavye Kısayolları (Ctrl+Z / Ctrl+Y)
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (!e.ctrlKey && !e.metaKey) return;
+
+            const key = e.key.toLowerCase();
+            const target = e.target as HTMLElement | null;
+            const isTextInput = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
+
+            if (key === "z" && !e.shiftKey) {
+                if (!isTextInput) {
+                    e.preventDefault();
+                    if (canUndo) undo();
+                }
+            } else if (key === "y" || (key === "z" && e.shiftKey)) {
+                if (!isTextInput) {
+                    e.preventDefault();
+                    if (canRedo) redo();
+                }
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [undo, redo, canUndo, canRedo]);
 
     function updateQuestion(
         clientId: string,
@@ -543,13 +581,56 @@ export default function FormBuilderPage() {
                                 : "Yeni Anket Oluştur"}
                         </Typography>
 
-                        <Button
-                            component={RouterLink}
-                            to="/"
-                            variant="outlined"
-                        >
-                            Vazgeç
-                        </Button>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                            {/* Google Forms Tarzı Geri Al / İleri Al */}
+                            <Tooltip title={canUndo ? "Geri Al (Ctrl+Z)" : "Geri alınacak işlem yok"}>
+                                <span>
+                                    <IconButton
+                                        onClick={undo}
+                                        disabled={!canUndo}
+                                        size="medium"
+                                        color="inherit"
+                                        aria-label="Geri Al"
+                                        sx={{
+                                            border: "1px solid",
+                                            borderColor: canUndo ? "divider" : "transparent",
+                                            bgcolor: canUndo ? "background.paper" : "transparent",
+                                            "&:hover": { bgcolor: "action.hover" },
+                                        }}
+                                    >
+                                        <UndoIcon fontSize="small" />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+
+                            <Tooltip title={canRedo ? "İleri Al (Ctrl+Y)" : "İleri alınacak işlem yok"}>
+                                <span>
+                                    <IconButton
+                                        onClick={redo}
+                                        disabled={!canRedo}
+                                        size="medium"
+                                        color="inherit"
+                                        aria-label="İleri Al"
+                                        sx={{
+                                            border: "1px solid",
+                                            borderColor: canRedo ? "divider" : "transparent",
+                                            bgcolor: canRedo ? "background.paper" : "transparent",
+                                            "&:hover": { bgcolor: "action.hover" },
+                                        }}
+                                    >
+                                        <RedoIcon fontSize="small" />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+
+                            <Button
+                                component={RouterLink}
+                                to="/"
+                                variant="outlined"
+                            >
+                                Vazgeç
+                            </Button>
+                        </Stack>
                     </Stack>
 
                     <Card>

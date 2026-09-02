@@ -15,6 +15,10 @@ import {
     DialogContentText,
     DialogTitle,
     Divider,
+    FormControl,
+    MenuItem,
+    Pagination,
+    Select,
     Snackbar,
     Stack,
     Typography,
@@ -97,6 +101,22 @@ export default function ManageableFormsPage() {
     // Kopyalama bildirimi state'leri
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
+
+    // Sayfalama state'leri (5, 10, 20 veya -1: Tümü)
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState<number>(5);
+
+    const totalItems = forms.length;
+    const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
+    const paginatedForms = pageSize === -1 ? forms : forms.slice((page - 1) * pageSize, page * pageSize);
+    const startItem = totalItems === 0 ? 0 : pageSize === -1 ? 1 : (page - 1) * pageSize + 1;
+    const endItem = pageSize === -1 ? totalItems : Math.min(page * pageSize, totalItems);
+
+    useEffect(() => {
+        if (page > totalPages) {
+            setPage(Math.max(1, totalPages));
+        }
+    }, [page, totalPages]);
 
     function handleCopyLink(publicId: string, status: ManageableForm["status"]) {
         const url = `${window.location.origin}/forms/${publicId}`;
@@ -346,7 +366,7 @@ export default function ManageableFormsPage() {
                     )}
 
                     <Stack spacing={2}>
-                        {forms.map((form) => (
+                        {paginatedForms.map((form) => (
                             <Card
                                 key={form.id}
                                 elevation={0}
@@ -643,6 +663,73 @@ export default function ManageableFormsPage() {
                             </Card>
                         ))}
                     </Stack>
+
+                    {/* 📄 Sayfalama Kontrolleri */}
+                    {forms.length > 0 && (
+                        <Card
+                            elevation={0}
+                            sx={{
+                                p: 2,
+                                borderRadius: 2.5,
+                                border: "1px solid",
+                                borderColor: "divider",
+                                bgcolor: "background.paper",
+                            }}
+                        >
+                            <Stack
+                                direction={{ xs: "column", sm: "row" }}
+                                spacing={2}
+                                sx={{
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                <Typography variant="body2" color="text.secondary">
+                                    {pageSize === -1
+                                        ? `Toplam ${totalItems} anket listeleniyor`
+                                        : `Toplam ${totalItems} anketten ${startItem} - ${endItem} arası gösteriliyor`}
+                                </Typography>
+
+                                <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+                                            Sayfa başına:
+                                        </Typography>
+                                        <FormControl size="small" sx={{ minWidth: 95 }}>
+                                            <Select
+                                                value={pageSize}
+                                                onChange={(e) => {
+                                                    setPageSize(Number(e.target.value));
+                                                    setPage(1);
+                                                }}
+                                                sx={{ height: 36, fontSize: "0.875rem", borderRadius: 1.5 }}
+                                            >
+                                                <MenuItem value={5}>5</MenuItem>
+                                                <MenuItem value={10}>10</MenuItem>
+                                                <MenuItem value={20}>20</MenuItem>
+                                                <MenuItem value={-1}>Tümü</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Stack>
+
+                                    {pageSize !== -1 && totalPages > 1 && (
+                                        <Pagination
+                                            count={totalPages}
+                                            page={page}
+                                            onChange={(_, newPage) => {
+                                                setPage(newPage);
+                                                window.scrollTo({ top: 0, behavior: "smooth" });
+                                            }}
+                                            color="primary"
+                                            shape="rounded"
+                                            size="medium"
+                                        />
+                                    )}
+                                </Stack>
+                            </Stack>
+                        </Card>
+                    )}
                 </Stack>
             </Container>
 
