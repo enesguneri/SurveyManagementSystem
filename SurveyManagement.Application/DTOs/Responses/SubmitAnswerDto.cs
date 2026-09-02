@@ -1,4 +1,4 @@
-﻿namespace SurveyManagement.Application.DTOs.Responses;
+namespace SurveyManagement.Application.DTOs.Responses;
 
 public class SubmitAnswerDto
 {
@@ -15,6 +15,9 @@ public class SubmitAnswerDto
 
     // SingleChoice ve MultipleChoice sorularında seçilen seçenekler.
     public List<int> SelectedOptionIds { get; set; } = new();
+
+    // Dinamik (API / TXT) sorularda seçilen seçenek metinleri.
+    public List<string> SelectedOptionTexts { get; set; } = new();
 
     // Matrix sorularındaki satır-sütun seçimleri.
     public List<SubmitMatrixCellDto> MatrixSelections { get; set; } = new();

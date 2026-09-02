@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using SurveyManagement.Application.Common.Models;
 using SurveyManagement.Application.DTOs.Forms;
+using SurveyManagement.Application.DTOs.Options;
 using SurveyManagement.Application.Interfaces.Context;
 using SurveyManagement.Application.Interfaces.Forms;
+using SurveyManagement.Application.Interfaces.Options;
 using SurveyManagement.Application.Interfaces.Services;
 using SurveyManagement.Domain.Entities;
 using SurveyManagement.Domain.Enums;
@@ -14,15 +16,18 @@ public class FormService : IFormService
     private readonly IAppDbContext _context;
     private readonly IFormRequestValidator _formRequestValidator;
     private readonly IFormAuthorizationService _formAuthorizationService;
+    private readonly IOptionImportService? _optionImportService;
 
     public FormService(
         IAppDbContext context,
         IFormRequestValidator formRequestValidator,
-        IFormAuthorizationService formAuthorizationService)
+        IFormAuthorizationService formAuthorizationService,
+        IOptionImportService? optionImportService = null)
     {
         _context = context;
         _formRequestValidator = formRequestValidator;
         _formAuthorizationService = formAuthorizationService;
+        _optionImportService = optionImportService;
     }
 
     public async Task<ApiResponse<List<ManageableFormDto>>> GetManageableAsync(
@@ -502,7 +507,7 @@ public class FormService : IFormService
         return ApiResponse<FormDetailsDto>.SuccessResult(responseDto);
     }
 
-    private static QuestionDetailsDto MapQuestionDetails(Question question)
+    private QuestionDetailsDto MapQuestionDetails(Question question)
     {
         var options = question.Options
             .OrderBy(option => option.DisplayOrder)
@@ -535,6 +540,42 @@ public class FormService : IFormService
                     Text = lines[i],
                     DisplayOrder = i + 1
                 });
+            }
+        }
+
+        // Eğer API kaynağından dinamik seçenek tanımlıysa ve options tablosu henüz boşsa API'den seçenek listesini yükler.
+        if (options.Count == 0 &&
+            question.OptionSourceType == DynamicOptionSourceType.Api &&
+            !string.IsNullOrWhiteSpace(question.OptionSourceUrl) &&
+            _optionImportService != null)
+        {
+            try
+            {
+                var apiResult = _optionImportService.PreviewFromUrlAsync(
+                    new ImportOptionsFromUrlRequestDto
+                    {
+                        Url = question.OptionSourceUrl,
+                        JsonPath = question.OptionJsonPath ?? string.Empty,
+                        TextProperty = question.OptionTextProperty ?? "text"
+                    },
+                    CancellationToken.None).GetAwaiter().GetResult();
+
+                if (apiResult.IsSuccess && apiResult.Data?.Options != null)
+                {
+                    for (var i = 0; i < apiResult.Data.Options.Count; i++)
+                    {
+                        options.Add(new QuestionOptionDetailsDto
+                        {
+                            Id = i + 1,
+                            Text = apiResult.Data.Options[i],
+                            DisplayOrder = i + 1
+                        });
+                    }
+                }
+            }
+            catch
+            {
+                // API erişilemezse boş seçenek döner.
             }
         }
 
@@ -904,17 +945,22 @@ public class FormService : IFormService
             }
 
             // Radio ve checkbox seçenekleri oluşturulur.
-            for (var optionIndex = 0;
-                 optionIndex < questionDto.Options.Count;
-                 optionIndex++)
+            // Dinamik seçenek tanımlıysa (API / TXT) başlangıçta veritabanına seçenek kaydı yapılmaz;
+            // seçenekler kullanıcılar işaretledikçe veritabanına eklenecektir.
+            if (questionDto.OptionSourceType == DynamicOptionSourceType.None)
             {
-                question.Options.Add(new QuestionOption
+                for (var optionIndex = 0;
+                     optionIndex < questionDto.Options.Count;
+                     optionIndex++)
                 {
-                    Question = question,
-                    Text = questionDto.Options[optionIndex].Text.Trim(),
-                    DisplayOrder = optionIndex + 1,
-                    CreatedAt = DateTime.UtcNow
-                });
+                    question.Options.Add(new QuestionOption
+                    {
+                        Question = question,
+                        Text = questionDto.Options[optionIndex].Text.Trim(),
+                        DisplayOrder = optionIndex + 1,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
             }
 
             // Matrix satırları oluşturulur.

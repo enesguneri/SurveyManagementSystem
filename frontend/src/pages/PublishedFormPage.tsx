@@ -147,35 +147,6 @@ function PublishedFormPage() {
         }));
     }
 
-    function toggleOption(
-        questionId: number,
-        optionId: number,
-        isMultiple: boolean,
-    ) {
-        const currentAnswer =
-            answers[questionId] ?? createEmptyAnswer(questionId);
-
-        if (!isMultiple) {
-            updateAnswer(questionId, {
-                selectedOptionIds: [optionId],
-            });
-            return;
-        }
-
-        const isSelected =
-            currentAnswer.selectedOptionIds.includes(optionId);
-
-        const selectedOptionIds = isSelected
-            ? currentAnswer.selectedOptionIds.filter(
-                (id) => id !== optionId,
-            )
-            : [
-                ...currentAnswer.selectedOptionIds,
-                optionId,
-            ];
-
-        updateAnswer(questionId, { selectedOptionIds });
-    }
 
     function toggleMatrixCell(
         question: PublishedQuestion,
@@ -228,11 +199,33 @@ function PublishedFormPage() {
                         first.displayOrder -
                         second.displayOrder,
                 )
-                .map(
-                    (question) =>
+                .map((question) => {
+                    const rawAnswer =
                         answers[question.id] ??
-                        createEmptyAnswer(question.id),
-                ),
+                        createEmptyAnswer(question.id);
+
+                    if (
+                        rawAnswer.selectedOptionIds.length > 0 &&
+                        (!rawAnswer.selectedOptionTexts ||
+                            rawAnswer.selectedOptionTexts.length === 0)
+                    ) {
+                        const texts = question.options
+                            .filter((opt) =>
+                                rawAnswer.selectedOptionIds.includes(opt.id),
+                            )
+                            .map((opt) => opt.text);
+
+                        return {
+                            ...rawAnswer,
+                            selectedOptionTexts: texts,
+                            textValue:
+                                rawAnswer.textValue ||
+                                (texts.length === 1 ? texts[0] : null),
+                        };
+                    }
+
+                    return rawAnswer;
+                }),
         };
 
         try {
@@ -365,7 +358,6 @@ function PublishedFormPage() {
                             createEmptyAnswer(question.id)
                         }
                         updateAnswer={updateAnswer}
-                        toggleOption={toggleOption}
                         toggleMatrixCell={toggleMatrixCell}
                     />
                 ))}
@@ -408,11 +400,6 @@ interface QuestionInputProps {
         questionId: number,
         changes: Partial<SubmitAnswerRequest>,
     ) => void;
-    toggleOption: (
-        questionId: number,
-        optionId: number,
-        isMultiple: boolean,
-    ) => void;
     toggleMatrixCell: (
         question: PublishedQuestion,
         cell: SubmitMatrixCellRequest,
@@ -423,7 +410,6 @@ function QuestionInput({
                            question,
                            answer,
                            updateAnswer,
-                           toggleOption,
                            toggleMatrixCell,
                        }: QuestionInputProps) {
     const [dynamicOptions, setDynamicOptions] = useState<PublishedTextItem[]>(question.options);
@@ -560,13 +546,15 @@ function QuestionInput({
                             answer.selectedOptionIds[0]?.toString() ??
                             ""
                         }
-                        onChange={(event) =>
-                            toggleOption(
-                                question.id,
-                                Number(event.target.value),
-                                false,
-                            )
-                        }
+                        onChange={(event) => {
+                            const selectedId = Number(event.target.value);
+                            const opt = effectiveOptions.find((o) => o.id === selectedId);
+                            updateAnswer(question.id, {
+                                selectedOptionIds: [selectedId],
+                                selectedOptionTexts: opt ? [opt.text] : [],
+                                textValue: opt?.text ?? null,
+                            });
+                        }}
                     >
                         {effectiveOptions.map((option) => (
                             <FormControlLabel
@@ -601,6 +589,10 @@ function QuestionInput({
                                 selectedOptionIds: selectedValue
                                     ? [selectedValue.id]
                                     : [],
+                                selectedOptionTexts: selectedValue
+                                    ? [selectedValue.text]
+                                    : [],
+                                textValue: selectedValue?.text ?? null,
                             });
                         }}
                         renderInput={(params) => (
@@ -625,13 +617,19 @@ function QuestionInput({
                                         checked={answer.selectedOptionIds.includes(
                                             option.id,
                                         )}
-                                        onChange={() =>
-                                            toggleOption(
-                                                question.id,
-                                                option.id,
-                                                true,
-                                            )
-                                        }
+                                        onChange={() => {
+                                            const isSelected = answer.selectedOptionIds.includes(option.id);
+                                            const newIds = isSelected
+                                                ? answer.selectedOptionIds.filter((id) => id !== option.id)
+                                                : [...answer.selectedOptionIds, option.id];
+                                            const newTexts = effectiveOptions
+                                                .filter((o) => newIds.includes(o.id))
+                                                .map((o) => o.text);
+                                            updateAnswer(question.id, {
+                                                selectedOptionIds: newIds,
+                                                selectedOptionTexts: newTexts,
+                                            });
+                                        }}
                                     />
                                 }
                                 label={option.text}
