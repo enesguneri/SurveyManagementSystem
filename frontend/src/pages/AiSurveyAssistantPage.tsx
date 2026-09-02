@@ -73,7 +73,7 @@ export default function AiSurveyAssistantPage() {
     const [isConfigLoading, setIsConfigLoading] = useState(true);
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [apiKeyInput, setApiKeyInput] = useState("");
-    const [modelInput, setModelInput] = useState("gemini-2.5-flash");
+    const [modelInput, setModelInput] = useState("gemini-3.5-flash-lite");
     const [showApiKey, setShowApiKey] = useState(false);
     const [isSavingConfig, setIsSavingConfig] = useState(false);
     const [configErrorMessage, setConfigErrorMessage] = useState("");
@@ -351,9 +351,8 @@ export default function AiSurveyAssistantPage() {
                                             size="small"
                                             sx={{ minWidth: 220 }}
                                         >
-                                            <MenuItem value="gemini-2.5-flash">gemini-2.5-flash (Önerilen, Hızlı)</MenuItem>
-                                            <MenuItem value="gemini-1.5-flash">gemini-1.5-flash</MenuItem>
-                                            <MenuItem value="gemini-1.5-pro">gemini-1.5-pro (Kapsamlı)</MenuItem>
+                                            <MenuItem value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Önerilen, Hızlı)</MenuItem>
+                                            <MenuItem value="gemini-3.5-flash">gemini-3.5-flash</MenuItem>
                                         </TextField>
 
                                         <Button
@@ -413,7 +412,7 @@ export default function AiSurveyAssistantPage() {
                                             />
                                             <Chip
                                                 size="small"
-                                                label={aiConfig?.model || "gemini-2.5-flash"}
+                                                label={aiConfig?.model || "gemini-3.5-flash-lite"}
                                                 variant="filled"
                                                 color="default"
                                             />
@@ -730,9 +729,8 @@ export default function AiSurveyAssistantPage() {
                             size="small"
                             fullWidth
                         >
-                            <MenuItem value="gemini-2.5-flash">gemini-2.5-flash (Önerilen, Hızlı)</MenuItem>
-                            <MenuItem value="gemini-1.5-flash">gemini-1.5-flash</MenuItem>
-                            <MenuItem value="gemini-1.5-pro">gemini-1.5-pro (Kapsamlı)</MenuItem>
+                            <MenuItem value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Önerilen, Hızlı)</MenuItem>
+                            <MenuItem value="gemini-3.5-flash">gemini-3.5-flash</MenuItem>
                         </TextField>
 
                         <Button
